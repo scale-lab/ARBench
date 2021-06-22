@@ -18,6 +18,7 @@ import benchmark.helloar.HelloArActivity;
 
 public class BenchmarkActivity extends AppCompatActivity {
     public static final String FILE_NUMBER = "benchmark.FILE_NUMBER";
+    public static final int NUM_TESTS = 3;
     LinearLayout resultsDisplay;
 
     @Override
@@ -52,7 +53,7 @@ public class BenchmarkActivity extends AppCompatActivity {
                         String[] times = line.split(",");
                         int phase = Integer.decode(times[0]);
                         if (phase != currentPhase) {
-                            float fps = 1000.f*i/(t - startTime);
+                            float fps = 1000.f*(i-1)/(t - startTime);
                             TextView results = new TextView(this);
                             results.setText(
                                     "FPS and Runtimes - Test " + requestCode + " Phase " + currentPhase + "\n"
@@ -80,7 +81,7 @@ public class BenchmarkActivity extends AppCompatActivity {
                         total += Integer.decode(times[6]);
                         i++;
                     } else {
-                        float fps = 1000.f*i/(t - startTime);
+                        float fps = 1000.f*(i-1)/(t - startTime);
                         TextView results = new TextView(this);
                         results.setText(
                                 "FPS and Runtimes - Test " + requestCode + " Phase " + currentPhase + "\n"
@@ -104,10 +105,10 @@ public class BenchmarkActivity extends AppCompatActivity {
             }
         }
 
-        if (requestCode <= 3) {
-//            Intent intent = new Intent(this, HelloArActivity.class);
-//            intent.putExtra(FILE_NUMBER, requestCode + 1);
-//            startActivityForResult(intent, requestCode + 1);
+        if (requestCode < NUM_TESTS) {
+            Intent intent = new Intent(this, HelloArActivity.class);
+            intent.putExtra(FILE_NUMBER, requestCode + 1);
+            startActivityForResult(intent, requestCode + 1);
         }
     }
 
