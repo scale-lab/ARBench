@@ -14,17 +14,20 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 
+import benchmark.augmentedfaces.AugmentedFacesActivity;
 import benchmark.helloar.HelloArActivity;
 
 public class BenchmarkActivity extends AppCompatActivity {
     public static final String FILE_NUMBER = "benchmark.FILE_NUMBER";
-    public static final int NUM_TESTS = 3;
+    public static final int NUM_TESTS = 4;
     LinearLayout resultsDisplay;
+    String filesPath;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        filesPath = this.getExternalFilesDir(null).getAbsolutePath();
         resultsDisplay = (LinearLayout) findViewById(R.id.results_display);
     }
 
@@ -36,13 +39,12 @@ public class BenchmarkActivity extends AppCompatActivity {
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        String logPath = "/storage/emulated/0/Android/data/benchmark.helloar/files/fps.csv";
         super.onActivityResult(requestCode, resultCode, data);
         if (resultCode == RESULT_CANCELED) {
             new AlertDialog.Builder(this).setMessage("Failed to perform test " + requestCode).show();
         } else {
             try {
-                BufferedReader reader = new BufferedReader(new FileReader(logPath));
+                BufferedReader reader = new BufferedReader(new FileReader(filesPath+"/fps.csv"));
                 String line = reader.readLine();
                 int currentPhase = 1;
                 long startTime=Long.decode(line.split(",")[1]), t=0;
@@ -105,8 +107,12 @@ public class BenchmarkActivity extends AppCompatActivity {
             }
         }
 
-        if (requestCode < NUM_TESTS) {
+        if (requestCode < NUM_TESTS-1) {
             Intent intent = new Intent(this, HelloArActivity.class);
+            intent.putExtra(FILE_NUMBER, requestCode + 1);
+            startActivityForResult(intent, requestCode + 1);
+        } else if (requestCode == NUM_TESTS-1) {
+            Intent intent = new Intent(this, AugmentedFacesActivity.class);
             intent.putExtra(FILE_NUMBER, requestCode + 1);
             startActivityForResult(intent, requestCode + 1);
         }

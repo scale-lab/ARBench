@@ -29,7 +29,6 @@ import android.util.Log;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
-import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.PopupMenu;
 import android.widget.Toast;
@@ -52,10 +51,8 @@ import com.google.ar.core.PlaybackStatus;
 import com.google.ar.core.Point;
 import com.google.ar.core.Point.OrientationMode;
 import com.google.ar.core.PointCloud;
-import com.google.ar.core.RecordingConfig;
 import com.google.ar.core.RecordingStatus;
 import com.google.ar.core.Session;
-import com.google.ar.core.Track;
 import com.google.ar.core.TrackData;
 import com.google.ar.core.Trackable;
 import com.google.ar.core.TrackingFailureReason;
@@ -84,7 +81,6 @@ import benchmark.common.samplerender.arcore.SpecularCubemapFilter;
 import com.google.ar.core.exceptions.CameraNotAvailableException;
 import com.google.ar.core.exceptions.NotYetAvailableException;
 import com.google.ar.core.exceptions.PlaybackFailedException;
-import com.google.ar.core.exceptions.RecordingFailedException;
 import com.google.ar.core.exceptions.UnavailableApkTooOldException;
 import com.google.ar.core.exceptions.UnavailableArcoreNotInstalledException;
 import com.google.ar.core.exceptions.UnavailableDeviceNotCompatibleException;
@@ -93,6 +89,7 @@ import com.google.ar.core.exceptions.UnavailableUserDeclinedInstallationExceptio
 
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
@@ -100,11 +97,9 @@ import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 
 import benchmark.benchmark.R;
 
@@ -204,6 +199,7 @@ public class HelloArActivity extends AppCompatActivity implements SampleRender.R
   private final float[] worldLightDirection = {0.0f, 0.0f, 0.0f, 0.0f};
   private final float[] viewLightDirection = new float[4]; // view x world light direction
 
+  public String logPath;
   private BufferedWriter fpsLog;
 
   @Override
@@ -238,7 +234,20 @@ public class HelloArActivity extends AppCompatActivity implements SampleRender.R
 
     Intent intent = getIntent();
     int fileNumber = intent.getIntExtra(BenchmarkActivity.FILE_NUMBER, 0);
-    fileName = "recording-" + fileNumber;
+    fileName = "recording-" + fileNumber + ".mp4";
+    File f = new File(this.getExternalFilesDir(null)+"/"+fileName);
+    if (!f.exists()) try {
+
+      InputStream is = getAssets().open("recordings/"+fileName);
+      int len;
+      byte[] buffer = new byte[1024];
+      FileOutputStream fos = new FileOutputStream(f);
+      while ((len = is.read(buffer)) > 0) {
+        fos.write(buffer, 0 , len);
+      }
+      is.close();
+      fos.close();
+    } catch (Exception e) { throw new RuntimeException(e); }
   }
 
   /** Menu button to launch feature specific settings. */
@@ -325,9 +334,9 @@ public class HelloArActivity extends AppCompatActivity implements SampleRender.R
     }
 
     try {
-      Log.d(TAG, "Logging FPS to " + this.getExternalFilesDir(null).getAbsolutePath() + "/fps.csv");
-//      new AlertDialog.Builder(this).setMessage("Logging FPS to " + this.getExternalFilesDir(null).getAbsolutePath() + "/fps.csv").show();
-      fpsLog = new BufferedWriter(new FileWriter(this.getExternalFilesDir(null).getAbsolutePath() + "/fps.csv"));
+      logPath = this.getExternalFilesDir(null).getAbsolutePath() + "/fps.csv";
+      Log.d(TAG, "Logging FPS to " + logPath);
+      fpsLog = new BufferedWriter(new FileWriter(logPath));
     } catch (IOException e) {
       messageSnackbarHelper.showError(this, "Could not open file to log FPS");
     }
@@ -341,7 +350,7 @@ public class HelloArActivity extends AppCompatActivity implements SampleRender.R
       // `session.setPlaybackDataset(playbackDatasetPath)` before calling `session.resume()`. To
       // learn more about recording and playback, see:
       // https://developers.google.com/ar/develop/java/recording-and-playback
-      String destination = new File(this.getExternalFilesDir(null), fileName + ".mp4").getAbsolutePath();
+      String destination = new File(this.getExternalFilesDir(null), fileName).getAbsolutePath();
       session.setPlaybackDataset(destination);
       session.resume();
     } catch (CameraNotAvailableException e) {
@@ -524,7 +533,7 @@ public class HelloArActivity extends AppCompatActivity implements SampleRender.R
     // UpdateMode.BLOCKING (it is by default), this will throttle the rendering to the
     // camera framerate.
     Frame frame;
-    long trackingTime = System.currentTimeMillis();
+    long updateTime = System.currentTimeMillis();
     try {
       frame = session.update();
     } catch (CameraNotAvailableException e) {
@@ -580,7 +589,7 @@ public class HelloArActivity extends AppCompatActivity implements SampleRender.R
         // spam the logcat with this.
       }
     }
-    trackingTime = System.currentTimeMillis() - trackingTime;
+    updateTime = System.currentTimeMillis() - updateTime;
 
     // Handle one tap per frame.
 
@@ -702,7 +711,7 @@ public class HelloArActivity extends AppCompatActivity implements SampleRender.R
     renderTime = System.currentTimeMillis() - renderTime;
     try {
       if (fpsLog != null) {
-        fpsLog.write(currentPhase + "," + frameTime + "," + trackingTime + "," + handleInputTime + "," + renderBackgroundTime + "," + renderTime + "," + (System.currentTimeMillis() - frameTime) + "\n");
+        fpsLog.write(currentPhase + "," + frameTime + "," + updateTime + "," + handleInputTime + "," + renderBackgroundTime + "," + renderTime + "," + (System.currentTimeMillis() - frameTime) + "\n");
       }
     } catch (IOException e) {
       Log.e(TAG, "Failed to log frame data", e);
@@ -982,7 +991,6 @@ public class HelloArActivity extends AppCompatActivity implements SampleRender.R
     session.configure(config);
   }
 
-  Boolean isRecording = false;
   String fileName;
   int currentPhase = 1;
 
