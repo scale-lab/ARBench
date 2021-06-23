@@ -19,36 +19,39 @@
     android:layout_height="match_parent"
     tools:context="benchmark.benchmark.BenchmarkActivity">
 
-  <android.opengl.GLSurfaceView
-      android:id="@+id/surfaceview"
-      android:layout_width="fill_parent"
-      android:layout_height="fill_parent"
-      android:layout_gravity="top"/>
+    <android.opengl.GLSurfaceView
+        android:id="@+id/surfaceview"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:layout_gravity="top" />
 
-  <ImageButton
-      android:id="@+id/settings_button"
-      android:layout_width="wrap_content"
-      android:layout_height="wrap_content"
-      android:layout_alignParentEnd="true"
-      android:layout_alignParentTop="true"
-      android:layout_margin="25dp"
-      android:src="@drawable/ic_settings"
-      android:background="@android:color/transparent"/>
-
-  <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-      android:id="@+id/results_display"
-      android:layout_width="match_parent"
-      android:layout_height="match_parent"
-      android:orientation="vertical"
-      >
-
-    <Button
+    <ImageButton
+        android:id="@+id/settings_button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Start benchmark"
-        android:onClick="onStartBenchmark"
-        />
+        android:layout_alignParentTop="true"
+        android:layout_alignParentEnd="true"
+        android:layout_margin="25dp"
+        android:background="@android:color/transparent"
+        android:src="@drawable/ic_settings" />
 
-  </LinearLayout>
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <LinearLayout
+            android:id="@+id/results_display"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical">
+
+            <Button
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:onClick="onStartBenchmark"
+                android:text="Start benchmark" />
+
+        </LinearLayout>
+    </ScrollView>
 
 </RelativeLayout>
