@@ -73,6 +73,8 @@ public final class OcrCaptureActivity extends AppCompatActivity {
     private ScaleGestureDetector scaleGestureDetector;
     private GestureDetector gestureDetector;
 
+    public static Translator englishSpanishTranslator;
+
     /**
      * Initializes the UI and creates the detector pipeline.
      */
@@ -166,10 +168,10 @@ public final class OcrCaptureActivity extends AppCompatActivity {
 
         TranslatorOptions options =
                 new TranslatorOptions.Builder()
-                        .setSourceLanguage(TranslateLanguage.SPANISH)
-                        .setTargetLanguage(TranslateLanguage.ENGLISH)
+                        .setSourceLanguage(TranslateLanguage.ENGLISH)
+                        .setTargetLanguage(TranslateLanguage.SPANISH)
                         .build();
-        final Translator englishSpanishTranslator =
+        englishSpanishTranslator =
                 Translation.getClient(options);
 
         DownloadConditions conditions = new DownloadConditions.Builder()
@@ -180,7 +182,7 @@ public final class OcrCaptureActivity extends AppCompatActivity {
                         new OnSuccessListener() {
                             @Override
                             public void onSuccess(Object o) {
-                                textRecognizer.setProcessor(new OcrDetectorProcessor(mGraphicOverlay, englishSpanishTranslator));
+                                textRecognizer.setProcessor(new OcrDetectorProcessor(mGraphicOverlay));
                             }
                         })
                 .addOnFailureListener(
