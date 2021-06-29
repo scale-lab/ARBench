@@ -36,12 +36,11 @@ import com.google.mlkit.nl.translate.Translator;
 public class OcrDetectorProcessor implements Detector.Processor<TextBlock> {
 
     private GraphicOverlay<OcrGraphic> mGraphicOverlay;
-    private Translator translator;
-    private long time;
 
-    public OcrDetectorProcessor(GraphicOverlay<OcrGraphic> ocrGraphicOverlay, Translator translator) {
+    private long lastAdded = System.currentTimeMillis();
+
+    public OcrDetectorProcessor(GraphicOverlay<OcrGraphic> ocrGraphicOverlay) {
         mGraphicOverlay = ocrGraphicOverlay;
-        this.translator = translator;
     }
 
     /**
@@ -58,26 +57,6 @@ public class OcrDetectorProcessor implements Detector.Processor<TextBlock> {
         for (int i = 0; i < items.size(); ++i) {
             TextBlock item = items.valueAt(i);
             OcrGraphic graphic = new OcrGraphic(mGraphicOverlay, item);
-
-            if(System.currentTimeMillis() - time > 5000) {
-                translator.translate(item.getValue()).addOnSuccessListener(
-                        new OnSuccessListener() {
-                            @Override
-                            public void onSuccess(Object o) {
-                                //Log.d("COMPONENTS", item.getComponents().toString());
-                                System.out.println("TRANSLATED TEXT: " + o.toString());
-                                time = System.currentTimeMillis();
-                            }
-                        })
-                        .addOnFailureListener(
-                                new OnFailureListener() {
-                                    @Override
-                                    public void onFailure(@NonNull Exception e) {
-                                        Log.e("FAILURE", "Failed to translate text");
-                                    }
-                                });
-            }
-
             mGraphicOverlay.add(graphic);
         }
     }

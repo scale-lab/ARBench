@@ -20,12 +20,17 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.RectF;
+import android.util.Log;
 
 import androidx.annotation.NonNull;
 
+import com.benchmark.ocr.OcrCaptureActivity;
 import com.benchmark.ocr.camera.GraphicOverlay;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.vision.text.Text;
 import com.google.android.gms.vision.text.TextBlock;
+import com.google.mlkit.nl.translate.Translator;
 
 import java.util.List;
 
@@ -42,6 +47,7 @@ public class OcrGraphic extends GraphicOverlay.Graphic implements Comparable<Ocr
     private static Paint sRectPaint;
     private static Paint sTextPaint;
     private final TextBlock mText;
+
 
     OcrGraphic(GraphicOverlay overlay, TextBlock text) {
         super(overlay);
@@ -120,7 +126,23 @@ public class OcrGraphic extends GraphicOverlay.Graphic implements Comparable<Ocr
         for (Text currentText : textComponents) {
             float left = translateX(currentText.getBoundingBox().left);
             float bottom = translateY(currentText.getBoundingBox().bottom);
-            canvas.drawText(currentText.getValue(), left, bottom, sTextPaint);
+
+            OcrCaptureActivity.englishSpanishTranslator.translate(currentText.getValue()).addOnSuccessListener(
+                    new OnSuccessListener() {
+                        @Override
+                        public void onSuccess(Object o) {
+                            Log.d("TEXT", o.toString());
+                            canvas.drawText(o.toString(), left, bottom, sTextPaint);
+                        }
+                    })
+                    .addOnFailureListener(
+                            new OnFailureListener() {
+                                @Override
+                                public void onFailure(@NonNull Exception e) {
+                                    Log.e("FAILURE", "Failed to translate text");
+                                }
+                            });
+
         }
     }
 
