@@ -18,6 +18,11 @@ package com.benchmark.translate_tess4j;
 
 import android.content.DialogInterface;
 import android.content.res.Resources;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.ImageFormat;
+import android.graphics.Rect;
+import android.graphics.YuvImage;
 import android.media.Image;
 import android.opengl.GLES30;
 import android.opengl.GLSurfaceView;
@@ -28,6 +33,7 @@ import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.PopupMenu;
 import android.widget.Toast;
 import androidx.appcompat.app.AlertDialog;
@@ -77,6 +83,8 @@ import com.google.ar.core.exceptions.UnavailableArcoreNotInstalledException;
 import com.google.ar.core.exceptions.UnavailableDeviceNotCompatibleException;
 import com.google.ar.core.exceptions.UnavailableSdkTooOldException;
 import com.google.ar.core.exceptions.UnavailableUserDeclinedInstallationException;
+
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
@@ -597,48 +605,65 @@ public class MainActivity extends AppCompatActivity implements SampleRender.Rend
   // Handle only one tap per frame, as taps are usually low frequency compared to frame rate.
   private void handleTap(Frame frame, Camera camera) {
     MotionEvent tap = tapHelper.poll();
-    if (tap != null && camera.getTrackingState() == TrackingState.TRACKING) {
-      List<HitResult> hitResultList;
-      if (instantPlacementSettings.isInstantPlacementEnabled()) {
-        hitResultList =
-            frame.hitTestInstantPlacement(tap.getX(), tap.getY(), APPROXIMATE_DISTANCE_METERS);
-      } else {
-        hitResultList = frame.hitTest(tap);
-      }
-      for (HitResult hit : hitResultList) {
-        // If any plane, Oriented Point, or Instant Placement Point was hit, create an anchor.
-        Trackable trackable = hit.getTrackable();
-        // If a plane was hit, check that it was hit inside the plane polygon.
-        // DepthPoints are only returned if Config.DepthMode is set to AUTOMATIC.
-        if ((trackable instanceof Plane
-                && ((Plane) trackable).isPoseInPolygon(hit.getHitPose())
-                && (PlaneRenderer.calculateDistanceToPlane(hit.getHitPose(), camera.getPose()) > 0))
-            || (trackable instanceof Point
-                && ((Point) trackable).getOrientationMode()
-                    == OrientationMode.ESTIMATED_SURFACE_NORMAL)
-            || (trackable instanceof InstantPlacementPoint)
-            || (trackable instanceof DepthPoint)) {
-          // Cap the number of objects created. This avoids overloading both the
-          // rendering system and ARCore.
-          if (anchors.size() >= 20) {
-            anchors.get(0).detach();
-            anchors.remove(0);
-          }
+    if (tap != null) {
+      System.out.println("TAPPED!");
 
-          // Adding an Anchor tells ARCore that it should track this position in
-          // space. This anchor is created on the Plane to place the 3D model
-          // in the correct position relative both to the world and to the plane.
-          anchors.add(hit.createAnchor());
-          // For devices that support the Depth API, shows a dialog to suggest enabling
-          // depth-based occlusion. This dialog needs to be spawned on the UI thread.
-          this.runOnUiThread(this::showOcclusionDialogIfNeeded);
-
-          // Hits are sorted by depth. Consider only closest hit on a plane, Oriented Point, or
-          // Instant Placement Point.
-          break;
+      this.runOnUiThread(() -> {
+        Image image = null;
+        try {
+          image = frame.acquireCameraImage();
+        } catch (NotYetAvailableException e) {
+          e.printStackTrace();
         }
-      }
+        System.out.println(image);
+        if(image == null) return;
+        byte[] bytes =  NV21toJPEG(YUV420toNV21(image), image.getWidth(), image.getHeight(), 100);
+        final Bitmap bitmapImage = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
+        android.graphics.Matrix matrix = new android.graphics.Matrix();
+        matrix.postRotate(90);
+        Bitmap rotatedBitmap = Bitmap.createBitmap(bitmapImage, 0, 0, bitmapImage.getWidth(), bitmapImage.getHeight(), matrix, true);
+
+        ImageView frameImage = new ImageView(this);
+        frameImage.setImageBitmap(rotatedBitmap);
+        new AlertDialog.Builder(MainActivity.this)
+                .setTitle("Frame captured:")
+                .setView(frameImage)
+                .setPositiveButton(
+                        "Close",
+                        (DialogInterface dialog, int which) -> {
+
+                        })
+                .show();
+
+        image.close();
+      });
     }
+  }
+
+  private static byte[] NV21toJPEG(byte[] nv21, int width, int height, int quality) {
+    ByteArrayOutputStream out = new ByteArrayOutputStream();
+    YuvImage yuv = new YuvImage(nv21, ImageFormat.NV21, width, height, null);
+    yuv.compressToJpeg(new Rect(0, 0, width, height), quality, out);
+    return out.toByteArray();
+  }
+
+  private static byte[] YUV420toNV21(Image image) {
+    byte[] nv21;
+    ByteBuffer yBuffer = image.getPlanes()[0].getBuffer();
+    ByteBuffer uBuffer = image.getPlanes()[1].getBuffer();
+    ByteBuffer vBuffer = image.getPlanes()[2].getBuffer();
+
+    int ySize = yBuffer.remaining();
+    int uSize = uBuffer.remaining();
+    int vSize = vBuffer.remaining();
+
+    nv21 = new byte[ySize + uSize + vSize];
+
+    yBuffer.get(nv21, 0, ySize);
+    vBuffer.get(nv21, ySize, vSize);
+    uBuffer.get(nv21, ySize + vSize, uSize);
+
+    return nv21;
   }
 
   /**
