@@ -16,7 +16,10 @@
 
 package com.benchmark.translate_tess4j;
 
+import android.Manifest;
 import android.content.DialogInterface;
+import android.content.pm.PackageManager;
+import android.content.res.AssetManager;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -28,6 +31,7 @@ import android.opengl.GLES30;
 import android.opengl.GLSurfaceView;
 import android.opengl.Matrix;
 import android.os.Bundle;
+import android.os.Environment;
 import android.util.Log;
 import android.view.MenuItem;
 import android.view.MotionEvent;
@@ -38,6 +42,8 @@ import android.widget.PopupMenu;
 import android.widget.Toast;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 
 import com.benchmark.translate_tess4j.R;
 import com.google.ar.core.Anchor;
@@ -83,11 +89,19 @@ import com.google.ar.core.exceptions.UnavailableArcoreNotInstalledException;
 import com.google.ar.core.exceptions.UnavailableDeviceNotCompatibleException;
 import com.google.ar.core.exceptions.UnavailableSdkTooOldException;
 import com.google.ar.core.exceptions.UnavailableUserDeclinedInstallationException;
+import com.googlecode.tesseract.android.TessBaseAPI;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.ByteBuffer;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -183,6 +197,8 @@ public class MainActivity extends AppCompatActivity implements SampleRender.Rend
   private final float[] worldLightDirection = {0.0f, 0.0f, 0.0f, 0.0f};
   private final float[] viewLightDirection = new float[4]; // view x world light direction
 
+  private TessBaseAPI tessBaseAPI;
+
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
@@ -196,6 +212,18 @@ public class MainActivity extends AppCompatActivity implements SampleRender.Rend
 
     // Set up renderer.
     render = new SampleRender(surfaceView, this, getAssets());
+
+    File f = new File(getFilesDir() + "/tesseract/tessdata");
+    File trainedDataFile = new File(f.getPath() + "/" + File.separator + "eng.traineddata");
+    if (!f.exists()) f.mkdirs();
+    copyTrainedData();
+
+    tessBaseAPI = new TessBaseAPI();
+    tessBaseAPI.setDebug(true);
+
+    final String path = getFilesDir() + "/tesseract";
+    tessBaseAPI.init(path, "eng");
+    tessBaseAPI.setPageSegMode(TessBaseAPI.PageSegMode.PSM_AUTO);
 
     installRequested = false;
 
@@ -606,8 +634,6 @@ public class MainActivity extends AppCompatActivity implements SampleRender.Rend
   private void handleTap(Frame frame, Camera camera) {
     MotionEvent tap = tapHelper.poll();
     if (tap != null) {
-      System.out.println("TAPPED!");
-
       this.runOnUiThread(() -> {
         Image image = null;
         try {
@@ -615,29 +641,61 @@ public class MainActivity extends AppCompatActivity implements SampleRender.Rend
         } catch (NotYetAvailableException e) {
           e.printStackTrace();
         }
-        System.out.println(image);
+
         if(image == null) return;
-        byte[] bytes =  NV21toJPEG(YUV420toNV21(image), image.getWidth(), image.getHeight(), 100);
-        final Bitmap bitmapImage = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
-        android.graphics.Matrix matrix = new android.graphics.Matrix();
-        matrix.postRotate(90);
-        Bitmap rotatedBitmap = Bitmap.createBitmap(bitmapImage, 0, 0, bitmapImage.getWidth(), bitmapImage.getHeight(), matrix, true);
-
+        Bitmap bitmapImage = rotateBitmap(imageToBitmap(image));
         ImageView frameImage = new ImageView(this);
-        frameImage.setImageBitmap(rotatedBitmap);
-        new AlertDialog.Builder(MainActivity.this)
-                .setTitle("Frame captured:")
-                .setView(frameImage)
-                .setPositiveButton(
-                        "Close",
-                        (DialogInterface dialog, int which) -> {
+        frameImage.setImageBitmap(bitmapImage);
+        tessBaseAPI.setImage(bitmapImage);
 
-                        })
-                .show();
+        final String ocr = tessBaseAPI.getUTF8Text();
+        System.out.println("OCR::::::::::::::::::" + ocr);
+
+        showFrameAlertDialog(frameImage, ocr);
 
         image.close();
+        tessBaseAPI.clear();
       });
     }
+  }
+
+  private void copyTrainedData() {
+    try {
+      String filepath = getFilesDir() + "/tesseract/tessdata/eng.traineddata";
+      AssetManager assetManager = getAssets();
+      InputStream inStream = assetManager.open("tessdata/eng.traineddata");
+      OutputStream outStream = new FileOutputStream(filepath);
+      byte[] buffer = new byte[1024];
+      int read;
+      while ((read = inStream.read(buffer)) != -1) {
+        outStream.write(buffer, 0, read);
+      }
+      outStream.flush();
+      outStream.close();
+      inStream.close();
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+  }
+
+  private void showFrameAlertDialog(ImageView view, String text) {
+    new AlertDialog.Builder(MainActivity.this)
+    .setTitle("Frame captured:")
+    .setMessage("OCR Text: " + text)
+    .setView(view)
+    .setPositiveButton("Close", (DialogInterface dialog, int which) -> {})
+    .show();
+  }
+
+  private Bitmap imageToBitmap(Image image) {
+    byte[] bytes =  NV21toJPEG(YUV420toNV21(image), image.getWidth(), image.getHeight(), 100);
+    return BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
+  }
+
+  private Bitmap rotateBitmap(Bitmap bitmap) {
+    android.graphics.Matrix matrix = new android.graphics.Matrix();
+    matrix.postRotate(90);
+    return Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
   }
 
   private static byte[] NV21toJPEG(byte[] nv21, int width, int height, int quality) {
@@ -833,6 +891,7 @@ public class MainActivity extends AppCompatActivity implements SampleRender.Rend
   private void configureSession() {
     Config config = session.getConfig();
     config.setLightEstimationMode(Config.LightEstimationMode.ENVIRONMENTAL_HDR);
+    config.setFocusMode(Config.FocusMode.AUTO);
     if (session.isDepthModeSupported(Config.DepthMode.AUTOMATIC)) {
       config.setDepthMode(Config.DepthMode.AUTOMATIC);
     } else {
