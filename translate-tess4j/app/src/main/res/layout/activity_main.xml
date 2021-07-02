@@ -19,6 +19,7 @@
     android:layout_height="match_parent"
     tools:context="com.benchmark.translate_tess4j.MainActivity">
 
+
   <android.opengl.GLSurfaceView
       android:id="@+id/surfaceview"
       android:layout_width="fill_parent"
