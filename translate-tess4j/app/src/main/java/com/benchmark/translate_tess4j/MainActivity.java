@@ -121,6 +121,8 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 
 /**
  * This is a simple example that shows how to create an augmented reality (AR) application using the
@@ -218,6 +220,9 @@ public class MainActivity extends AppCompatActivity implements SampleRender.Rend
 
     private ArFragment arFragment;
     private ViewRenderable viewRenderable;
+
+    private long lastCapturedFrame = System.currentTimeMillis();
+    private int timerMilleseconds = 1000;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -619,7 +624,10 @@ public class MainActivity extends AppCompatActivity implements SampleRender.Rend
         }
 
         // Handle one tap per frame.
-        handleTap(frame, camera);
+        if (System.currentTimeMillis() - lastCapturedFrame > timerMilleseconds) {
+            lastCapturedFrame = System.currentTimeMillis();
+            handleTap(frame, camera);
+        }
 
         // Keep the screen unlocked while tracking, but allow it to lock when tracking stops.
         trackingStateHelper.updateKeepScreenOnFlag(camera.getTrackingState());
@@ -718,47 +726,48 @@ public class MainActivity extends AppCompatActivity implements SampleRender.Rend
 
     // Handle only one tap per frame, as taps are usually low frequency compared to frame rate.
     private void handleTap(Frame frame, Camera camera) {
-
         MotionEvent tap = tapHelper.poll();
-        if (tap != null) {
-            drawTranslatedText(frame, camera, tap);
-            Image image = null;
-            try {
-                image = frame.acquireCameraImage();
-            } catch (NotYetAvailableException e) {
-                e.printStackTrace();
-            }
-
-            if (image == null) return;
-            Bitmap bitmapImage = rotateBitmap(imageToBitmap(image));
-            ImageView frameImage = new ImageView(this);
-            frameImage.setImageBitmap(bitmapImage);
-            tessBaseAPI.setImage(bitmapImage);
-
-            final String ocrText = tessBaseAPI.getUTF8Text();
-
-            englishSpanishTranslator.translate(ocrText)
-                    .addOnSuccessListener(
-                            new OnSuccessListener() {
-                                @Override
-                                public void onSuccess(Object o) {
-                                    Log.d("TEXT", o.toString());
-                                    runOnUiThread(() -> showFrameAlertDialog(frameImage, ocrText, o.toString()));
-                                }
-                            })
-                    .addOnFailureListener(
-                            new OnFailureListener() {
-                                @Override
-                                public void onFailure(@NonNull Exception e) {
-                                    runOnUiThread(() -> showFrameAlertDialog(frameImage, ocrText, "FAILED TO TRANSLATE TEXT"));
-                                }
-                            });
-
-
-            image.close();
-            tessBaseAPI.clear();
+        //drawTranslatedText(frame, camera, tap);
+        Image image = null;
+        try {
+            image = frame.acquireCameraImage();
+        } catch (NotYetAvailableException e) {
+            e.printStackTrace();
         }
+
+        if (image == null) return;
+        Bitmap bitmapImage = rotateBitmap(imageToBitmap(image));
+        ImageView frameImage = new ImageView(this);
+        frameImage.setImageBitmap(bitmapImage);
+        tessBaseAPI.setImage(bitmapImage);
+
+        final String ocrText = tessBaseAPI.getUTF8Text();
+
+        englishSpanishTranslator.translate(ocrText)
+                .addOnSuccessListener(
+                        new OnSuccessListener() {
+                            @Override
+                            public void onSuccess(Object o) {
+                                Log.i("TRANSLATED TEXT", o.toString());
+                                if (tap != null)
+                                    runOnUiThread(() -> showFrameAlertDialog(frameImage, ocrText, o.toString()));
+                            }
+                        })
+                .addOnFailureListener(
+                        new OnFailureListener() {
+                            @Override
+                            public void onFailure(@NonNull Exception e) {
+                                Log.i("FAILURE", "FAILED TO TRANSLATE TEXT");
+                                if (tap != null)
+                                    runOnUiThread(() -> showFrameAlertDialog(frameImage, ocrText, "FAILED TO TRANSLATE TEXT"));
+                            }
+                        });
+
+
+        image.close();
+        tessBaseAPI.clear();
     }
+
 
     private void drawTranslatedText(Frame frame, Camera camera, MotionEvent tap) {
         if (tap != null && camera.getTrackingState() == TrackingState.TRACKING) {
