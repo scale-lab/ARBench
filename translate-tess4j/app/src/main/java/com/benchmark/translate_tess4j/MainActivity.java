@@ -624,10 +624,11 @@ public class MainActivity extends AppCompatActivity implements SampleRender.Rend
         }
 
         // Handle one tap per frame.
-        if (System.currentTimeMillis() - lastCapturedFrame > timerMilleseconds) {
-            lastCapturedFrame = System.currentTimeMillis();
-            handleTap(frame, camera);
-        }
+//        if (System.currentTimeMillis() - lastCapturedFrame > timerMilleseconds) {
+//            lastCapturedFrame = System.currentTimeMillis();
+//            handleTap(frame, camera);
+//        }
+        handleTap(frame, camera);
 
         // Keep the screen unlocked while tracking, but allow it to lock when tracking stops.
         trackingStateHelper.updateKeepScreenOnFlag(camera.getTrackingState());
@@ -727,45 +728,46 @@ public class MainActivity extends AppCompatActivity implements SampleRender.Rend
     // Handle only one tap per frame, as taps are usually low frequency compared to frame rate.
     private void handleTap(Frame frame, Camera camera) {
         MotionEvent tap = tapHelper.poll();
-        //drawTranslatedText(frame, camera, tap);
-        Image image = null;
-        try {
-            image = frame.acquireCameraImage();
-        } catch (NotYetAvailableException e) {
-            e.printStackTrace();
-        }
+        if (tap != null) {
+            //drawTranslatedText(frame, camera, tap);
+            Image image = null;
+            try {
+                image = frame.acquireCameraImage();
+            } catch (NotYetAvailableException e) {
+                e.printStackTrace();
+            }
 
-        if (image == null) return;
-        Bitmap bitmapImage = rotateBitmap(imageToBitmap(image));
-        ImageView frameImage = new ImageView(this);
-        frameImage.setImageBitmap(bitmapImage);
-        tessBaseAPI.setImage(bitmapImage);
+            if (image == null) return;
+            Bitmap bitmapImage = rotateBitmap(imageToBitmap(image));
+            ImageView frameImage = new ImageView(this);
+            frameImage.setImageBitmap(bitmapImage);
+            tessBaseAPI.setImage(bitmapImage);
 
-        final String ocrText = tessBaseAPI.getUTF8Text();
+            final String ocrText = tessBaseAPI.getUTF8Text();
 
-        englishSpanishTranslator.translate(ocrText)
-                .addOnSuccessListener(
-                        new OnSuccessListener() {
-                            @Override
-                            public void onSuccess(Object o) {
-                                Log.i("TRANSLATED TEXT", o.toString());
-                                if (tap != null)
+            englishSpanishTranslator.translate(ocrText)
+                    .addOnSuccessListener(
+                            new OnSuccessListener() {
+                                @Override
+                                public void onSuccess(Object o) {
+                                    Log.i("TRANSLATED TEXT", o.toString());
+
                                     runOnUiThread(() -> showFrameAlertDialog(frameImage, ocrText, o.toString()));
-                            }
-                        })
-                .addOnFailureListener(
-                        new OnFailureListener() {
-                            @Override
-                            public void onFailure(@NonNull Exception e) {
-                                Log.i("FAILURE", "FAILED TO TRANSLATE TEXT");
-                                if (tap != null)
+                                }
+                            })
+                    .addOnFailureListener(
+                            new OnFailureListener() {
+                                @Override
+                                public void onFailure(@NonNull Exception e) {
+                                    Log.i("FAILURE", "FAILED TO TRANSLATE TEXT");
+
                                     runOnUiThread(() -> showFrameAlertDialog(frameImage, ocrText, "FAILED TO TRANSLATE TEXT"));
-                            }
-                        });
+                                }
+                            });
 
-
-        image.close();
-        tessBaseAPI.clear();
+            image.close();
+            tessBaseAPI.clear();
+        }
     }
 
 
