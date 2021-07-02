@@ -16,9 +16,7 @@
 
 package com.benchmark.translate_tess4j;
 
-import android.Manifest;
 import android.content.DialogInterface;
-import android.content.pm.PackageManager;
 import android.content.res.AssetManager;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
@@ -31,23 +29,25 @@ import android.opengl.GLES30;
 import android.opengl.GLSurfaceView;
 import android.opengl.Matrix;
 import android.os.Bundle;
-import android.os.Environment;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewGroup;
+import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.PopupMenu;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
+import androidx.viewpager.widget.PagerAdapter;
+import androidx.viewpager.widget.ViewPager;
 
-import com.benchmark.translate_tess4j.R;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.ar.core.Anchor;
@@ -93,6 +93,15 @@ import com.google.ar.core.exceptions.UnavailableArcoreNotInstalledException;
 import com.google.ar.core.exceptions.UnavailableDeviceNotCompatibleException;
 import com.google.ar.core.exceptions.UnavailableSdkTooOldException;
 import com.google.ar.core.exceptions.UnavailableUserDeclinedInstallationException;
+import com.google.ar.sceneform.AnchorNode;
+import com.google.ar.sceneform.ArSceneView;
+import com.google.ar.sceneform.Sceneform;
+import com.google.ar.sceneform.rendering.ModelRenderable;
+import com.google.ar.sceneform.rendering.Renderable;
+import com.google.ar.sceneform.rendering.RenderableInstance;
+import com.google.ar.sceneform.rendering.ViewRenderable;
+import com.google.ar.sceneform.ux.ArFragment;
+import com.google.ar.sceneform.ux.TransformableNode;
 import com.google.mlkit.common.model.DownloadConditions;
 import com.google.mlkit.nl.translate.TranslateLanguage;
 import com.google.mlkit.nl.translate.Translation;
@@ -100,17 +109,15 @@ import com.google.mlkit.nl.translate.Translator;
 import com.google.mlkit.nl.translate.TranslatorOptions;
 import com.googlecode.tesseract.android.TessBaseAPI;
 
+import org.w3c.dom.Text;
+
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -209,12 +216,60 @@ public class MainActivity extends AppCompatActivity implements SampleRender.Rend
     private TessBaseAPI tessBaseAPI;
     private Translator englishSpanishTranslator;
 
+    private ArFragment arFragment;
+    private ViewRenderable viewRenderable;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
         surfaceView = findViewById(R.id.surfaceview);
         displayRotationHelper = new DisplayRotationHelper(/*context=*/ this);
+
+//        getSupportFragmentManager().addFragmentOnAttachListener((fragmentManager, fragment) -> {
+//            if (fragment.getId() == R.id.arFragment) {
+//                arFragment = (ArFragment) fragment;
+//                arFragment.setOnTapArPlaneListener(
+//                        (HitResult hitResult, Plane plane, MotionEvent motionEvent) -> {
+//                            ViewRenderable.builder()
+//                                    .setView(this, R.layout.view_planet_card)
+//                                    .build()
+//                                    .thenAccept(renderable ->{
+//                                        // update text when the renderable's node is tapped
+//                                        TextView textView=(TextView) renderable.getView().findViewById(R.id.planetInfoCard);
+//                                        textView.setOnClickListener(new View.OnClickListener() {
+//                                            @Override
+//                                            public void onClick(View v) {
+//                                                textView.setText("Clicked!");
+//                                            }
+//                                        });
+//                                        viewRenderable = renderable;
+//
+//                                        Anchor anchor = hitResult.createAnchor();
+//                                        AnchorNode anchorNode = new AnchorNode(anchor);
+//                                        anchorNode.setParent(arFragment.getArSceneView().getScene());
+//
+//                                        TransformableNode view = new TransformableNode(arFragment.getTransformationSystem());
+//                                        view.setParent(anchorNode);
+//                                        view.setRenderable(viewRenderable);
+//                                        view.getRotationController();
+//                                        view.getScaleController();
+//                                        view.getTranslationController();
+//                                        view.select();
+//
+//                                    });
+//                        });
+//            }
+//        });
+        if (savedInstanceState == null) {
+            if (Sceneform.isSupported(this)) {
+                getSupportFragmentManager().beginTransaction()
+                        .add(R.id.arFragment, ArFragment.class, null)
+                        .commit();
+            }
+        }
+
 
         // Set up touch listener.
         tapHelper = new TapHelper(/*context=*/ this);
@@ -663,44 +718,84 @@ public class MainActivity extends AppCompatActivity implements SampleRender.Rend
 
     // Handle only one tap per frame, as taps are usually low frequency compared to frame rate.
     private void handleTap(Frame frame, Camera camera) {
+
         MotionEvent tap = tapHelper.poll();
         if (tap != null) {
-            this.runOnUiThread(() -> {
-                Image image = null;
-                try {
-                    image = frame.acquireCameraImage();
-                } catch (NotYetAvailableException e) {
-                    e.printStackTrace();
+            drawTranslatedText(frame, camera, tap);
+            Image image = null;
+            try {
+                image = frame.acquireCameraImage();
+            } catch (NotYetAvailableException e) {
+                e.printStackTrace();
+            }
+
+            if (image == null) return;
+            Bitmap bitmapImage = rotateBitmap(imageToBitmap(image));
+            ImageView frameImage = new ImageView(this);
+            frameImage.setImageBitmap(bitmapImage);
+            tessBaseAPI.setImage(bitmapImage);
+
+            final String ocrText = tessBaseAPI.getUTF8Text();
+
+            englishSpanishTranslator.translate(ocrText)
+                    .addOnSuccessListener(
+                            new OnSuccessListener() {
+                                @Override
+                                public void onSuccess(Object o) {
+                                    Log.d("TEXT", o.toString());
+                                    runOnUiThread(() -> showFrameAlertDialog(frameImage, ocrText, o.toString()));
+                                }
+                            })
+                    .addOnFailureListener(
+                            new OnFailureListener() {
+                                @Override
+                                public void onFailure(@NonNull Exception e) {
+                                    runOnUiThread(() -> showFrameAlertDialog(frameImage, ocrText, "FAILED TO TRANSLATE TEXT"));
+                                }
+                            });
+
+
+            image.close();
+            tessBaseAPI.clear();
+        }
+    }
+
+    private void drawTranslatedText(Frame frame, Camera camera, MotionEvent tap) {
+        if (tap != null && camera.getTrackingState() == TrackingState.TRACKING) {
+            List<HitResult> hitResultList = frame.hitTestInstantPlacement(tap.getX(), tap.getY(), APPROXIMATE_DISTANCE_METERS);
+            for (HitResult hit : hitResultList) {
+                // If any plane, Oriented Point, or Instant Placement Point was hit, create an anchor.
+                Trackable trackable = hit.getTrackable();
+                // If a plane was hit, check that it was hit inside the plane polygon.
+                // DepthPoints are only returned if Config.DepthMode is set to AUTOMATIC.
+                if ((trackable instanceof Plane
+                        && ((Plane) trackable).isPoseInPolygon(hit.getHitPose())
+                        && (PlaneRenderer.calculateDistanceToPlane(hit.getHitPose(), camera.getPose()) > 0))
+                        || (trackable instanceof Point
+                        && ((Point) trackable).getOrientationMode()
+                        == OrientationMode.ESTIMATED_SURFACE_NORMAL)
+                        || (trackable instanceof InstantPlacementPoint)
+                        || (trackable instanceof DepthPoint)) {
+                    // Cap the number of objects created. This avoids overloading both the
+                    // rendering system and ARCore.
+                    if (anchors.size() >= 20) {
+                        anchors.get(0).detach();
+                        anchors.remove(0);
+                    }
+
+                    // Adding an Anchor tells ARCore that it should track this position in
+                    // space. This anchor is created on the Plane to place the 3D model
+                    // in the correct position relative both to the world and to the plane.
+                    anchors.add(hit.createAnchor());
+                    // For devices that support the Depth API, shows a dialog to suggest enabling
+                    // depth-based occlusion. This dialog needs to be spawned on the UI thread.
+                    this.runOnUiThread(this::showOcclusionDialogIfNeeded);
+
+                    // Hits are sorted by depth. Consider only closest hit on a plane, Oriented Point, or
+                    // Instant Placement Point.
+                    break;
                 }
-
-                if (image == null) return;
-                Bitmap bitmapImage = rotateBitmap(imageToBitmap(image));
-                ImageView frameImage = new ImageView(this);
-                frameImage.setImageBitmap(bitmapImage);
-                tessBaseAPI.setImage(bitmapImage);
-
-                final String ocrText = tessBaseAPI.getUTF8Text();
-
-                englishSpanishTranslator.translate(ocrText)
-                        .addOnSuccessListener(
-                                new OnSuccessListener() {
-                                    @Override
-                                    public void onSuccess(Object o) {
-                                        Log.d("TEXT", o.toString());
-                                        showFrameAlertDialog(frameImage, ocrText, o.toString());
-                                    }
-                                })
-                        .addOnFailureListener(
-                                new OnFailureListener() {
-                                    @Override
-                                    public void onFailure(@NonNull Exception e) {
-                                        showFrameAlertDialog(frameImage, ocrText, "FAILED TO TRANSLATE TEXT");
-                                    }
-                                });
-
-                image.close();
-                tessBaseAPI.clear();
-            });
+            }
         }
     }
 
