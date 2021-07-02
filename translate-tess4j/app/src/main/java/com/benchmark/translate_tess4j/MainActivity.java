@@ -262,13 +262,13 @@ public class MainActivity extends AppCompatActivity implements SampleRender.Rend
 //                        });
 //            }
 //        });
-        if (savedInstanceState == null) {
-            if (Sceneform.isSupported(this)) {
-                getSupportFragmentManager().beginTransaction()
-                        .add(R.id.arFragment, ArFragment.class, null)
-                        .commit();
-            }
-        }
+//        if (savedInstanceState == null) {
+//            if (Sceneform.isSupported(this)) {
+//                getSupportFragmentManager().beginTransaction()
+//                        .add(R.id.arFragment, ArFragment.class, null)
+//                        .commit();
+//            }
+//        }
 
 
         // Set up touch listener.
