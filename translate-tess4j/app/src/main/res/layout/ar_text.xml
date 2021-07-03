@@ -12,13 +12,14 @@
    limitations under the License.
 -->
 <TextView xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/planetInfoCard"
+    android:id="@+id/arText"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
     android:layout_weight="1"
     android:background="@drawable/rounded_bg"
     android:gravity="center"
     android:orientation="vertical"
-    android:padding="6dp"
-    android:text="UnClicked"
+    android:textSize="15sp"
+    android:padding="2dp"
+    android:text=""
     android:textAlignment="center" />
