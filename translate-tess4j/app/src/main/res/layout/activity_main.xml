@@ -13,27 +13,17 @@
    See the License for the specific language governing permissions and
    limitations under the License.
 -->
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="com.benchmark.translate_tess4j.MainActivity">
+    tools:context=".MainActivity">
 
+    <fragment android:name="com.google.ar.sceneform.ux.ArFragment"
+        android:id="@+id/ux_fragment"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
 
-  <android.opengl.GLSurfaceView
-      android:id="@+id/surfaceview"
-      android:layout_width="fill_parent"
-      android:layout_height="fill_parent"
-      android:layout_gravity="top"/>
+</FrameLayout>
 
-  <ImageButton
-      android:id="@+id/settings_button"
-      android:layout_width="wrap_content"
-      android:layout_height="wrap_content"
-      android:layout_alignParentEnd="true"
-      android:layout_alignParentTop="true"
-      android:layout_margin="25dp"
-      android:src="@drawable/ic_settings"
-      android:background="@android:color/transparent"/>
-
-</RelativeLayout>
