@@ -1,19 +1,4 @@
-package com.benchmark.translate_tess4j;/*
- * Copyright 2018 Google LLC. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+package com.benchmark.translate_tess4j;
 
 import android.app.Activity;
 import android.app.ActivityManager;
@@ -39,6 +24,7 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.constraintlayout.solver.widgets.Rectangle;
 
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
@@ -47,6 +33,7 @@ import com.google.ar.core.HitResult;
 import com.google.ar.core.Plane;
 import com.google.ar.core.exceptions.NotYetAvailableException;
 import com.google.ar.sceneform.AnchorNode;
+import com.google.ar.sceneform.math.Vector3;
 import com.google.ar.sceneform.rendering.ViewRenderable;
 import com.google.ar.sceneform.ux.ArFragment;
 import com.google.ar.sceneform.ux.TransformableNode;
@@ -55,6 +42,7 @@ import com.google.mlkit.nl.translate.TranslateLanguage;
 import com.google.mlkit.nl.translate.Translation;
 import com.google.mlkit.nl.translate.Translator;
 import com.google.mlkit.nl.translate.TranslatorOptions;
+import com.googlecode.leptonica.android.Pixa;
 import com.googlecode.tesseract.android.TessBaseAPI;
 
 import java.io.ByteArrayOutputStream;
@@ -64,6 +52,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
+import java.util.Timer;
+import java.util.TimerTask;
 
 public class MainActivity extends AppCompatActivity {
     private static final String TAG = MainActivity.class.getSimpleName();
@@ -206,7 +196,16 @@ public class MainActivity extends AppCompatActivity {
         tessBaseAPI.setImage(bitmapImage);
 
         final String ocrText = tessBaseAPI.getUTF8Text();
+        Pixa words = tessBaseAPI.getTextlines();
+        Vector3 position = null;;
+        if(words.size() > 0) {
+            int x = words.getBoxRect(0).centerX();
+            int z = words.getBoxRect(0).centerY();
+            Log.i("TESSERACT", "TEXT POSITION: (" + x + ", " + z + ")");
+            position = new Vector3(x, 0, z);
+        }
 
+        Vector3 finalPosition = position;
         englishSpanishTranslator.translate(ocrText)
                 .addOnSuccessListener(
                         new OnSuccessListener() {
@@ -214,7 +213,7 @@ public class MainActivity extends AppCompatActivity {
                             public void onSuccess(Object o) {
                                 Log.i("TRANSLATED TEXT", o.toString());
 //                                runOnUiThread(() -> showFrameAlertDialog(frameImage, ocrText, o.toString()));
-                                addTextToScene(hitResult, o.toString());
+                                addTextToScene(hitResult, o.toString(), finalPosition);
                             }
                         })
                 .addOnFailureListener(
@@ -231,7 +230,7 @@ public class MainActivity extends AppCompatActivity {
         tessBaseAPI.clear();
     }
 
-    private void addTextToScene(HitResult hitResult, String translatedText) {
+    private void addTextToScene(HitResult hitResult, String translatedText, Vector3 position) {
         ViewRenderable.builder()
                 .setView(this, R.layout.ar_text)
                 .build()
@@ -244,8 +243,11 @@ public class MainActivity extends AppCompatActivity {
                     Anchor anchor = hitResult.createAnchor();
                     AnchorNode anchorNode = new AnchorNode(anchor);
                     anchorNode.setParent(arFragment.getArSceneView().getScene());
+                    Log.i("ARCORE", "TEXT POSITION: (" + anchorNode.getLocalPosition().x +
+                            ", " + anchorNode.getLocalPosition().y + ", " + anchorNode.getLocalPosition().z + ")");
 
                     TransformableNode view = new TransformableNode(arFragment.getTransformationSystem());
+                    if(position != null) view.setWorldPosition(position);
                     view.setParent(anchorNode);
                     view.setRenderable(viewRenderable);
                     view.getRotationController();
