@@ -18,6 +18,7 @@ package com.benchmark.translate_tess4j.common.samplerender;
 import android.content.res.AssetManager;
 import android.opengl.GLES30;
 import android.opengl.GLSurfaceView;
+
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 

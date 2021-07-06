@@ -18,6 +18,7 @@ package com.benchmark.translate_tess4j.common.helpers;
 import android.app.Activity;
 import android.view.View;
 import android.widget.TextView;
+
 import com.google.android.material.snackbar.BaseTransientBottomBar;
 import com.google.android.material.snackbar.Snackbar;
 

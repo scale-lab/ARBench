@@ -15,12 +15,11 @@
  */
 package com.benchmark.translate_tess4j.common.samplerender;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
-
 import android.content.res.AssetManager;
 import android.opengl.GLES30;
 import android.opengl.GLException;
 import android.util.Log;
+
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
@@ -29,6 +28,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Matcher;
+
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
  * Represents a GPU shader, the state of its associated uniforms, and some additional draw state.
