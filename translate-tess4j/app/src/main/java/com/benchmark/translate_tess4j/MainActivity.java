@@ -18,6 +18,7 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -31,7 +32,16 @@ import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.ar.core.Anchor;
 import com.google.ar.core.HitResult;
 import com.google.ar.core.Plane;
+import com.google.ar.core.RecordingConfig;
+import com.google.ar.core.RecordingStatus;
+import com.google.ar.core.Session;
+import com.google.ar.core.exceptions.CameraNotAvailableException;
 import com.google.ar.core.exceptions.NotYetAvailableException;
+import com.google.ar.core.exceptions.RecordingFailedException;
+import com.google.ar.core.exceptions.UnavailableApkTooOldException;
+import com.google.ar.core.exceptions.UnavailableArcoreNotInstalledException;
+import com.google.ar.core.exceptions.UnavailableDeviceNotCompatibleException;
+import com.google.ar.core.exceptions.UnavailableSdkTooOldException;
 import com.google.ar.sceneform.AnchorNode;
 import com.google.ar.sceneform.math.Vector3;
 import com.google.ar.sceneform.rendering.ViewRenderable;
@@ -61,6 +71,9 @@ public class MainActivity extends AppCompatActivity {
 
     private ArFragment arFragment;
     private ViewRenderable viewRenderable;
+
+    private Session session;
+    private boolean isRecording;
 
     private TessBaseAPI tessBaseAPI;
     private Translator englishSpanishTranslator;
@@ -95,6 +108,53 @@ public class MainActivity extends AppCompatActivity {
 
         arFragment.setOnTapArPlaneListener(
                 (HitResult hitResult, Plane plane, MotionEvent motionEvent) -> handleTap(hitResult));
+    }
+
+    public void onRecordingClick(View view) {
+        if (isRecording) {
+            stopRecording();
+            isRecording = false;
+        } else {
+            startRecording();
+            isRecording = true;
+        }
+
+        if (session.getRecordingStatus() == RecordingStatus.OK) {
+            ((Button) view).setText("Stop recording");
+            Log.v("Recording", "It is recording");
+        }
+
+        if (session.getRecordingStatus() == RecordingStatus.NONE) {
+            ((Button) view).setText("Start Recording");
+            Log.v("Recording", "It is not recording");
+        }
+    }
+
+    private void startRecording() {
+        try {
+            session = new Session(getApplicationContext());
+        } catch (UnavailableArcoreNotInstalledException | UnavailableDeviceNotCompatibleException | UnavailableApkTooOldException | UnavailableSdkTooOldException e) {
+            e.printStackTrace();
+        }
+        String destination = new File(getApplicationContext().getFilesDir(), "recording.mp4").getAbsolutePath();
+        RecordingConfig recordingConfig =
+                new RecordingConfig(session)
+                        .setMp4DatasetFilePath(destination)
+                        .setAutoStopOnPause(true);
+        try {
+            session.startRecording(recordingConfig);
+        } catch (RecordingFailedException e) {
+            Log.e(TAG, "Failed to start recording", e);
+        }
+
+    }
+
+    private void stopRecording() {
+        try {
+            session.stopRecording();
+        } catch (RecordingFailedException e) {
+            Log.e(TAG, "Failed to stop recording", e);
+        }
     }
 
     private void initializeTranslator() {
@@ -197,8 +257,9 @@ public class MainActivity extends AppCompatActivity {
 
         final String ocrText = tessBaseAPI.getUTF8Text();
         Pixa words = tessBaseAPI.getTextlines();
-        Vector3 position = null;;
-        if(words.size() > 0) {
+        Vector3 position = null;
+        ;
+        if (words.size() > 0) {
             int x = words.getBoxRect(0).centerX();
             int z = words.getBoxRect(0).centerY();
             Log.i("TESSERACT", "TEXT POSITION: (" + x + ", " + z + ")");
@@ -247,7 +308,7 @@ public class MainActivity extends AppCompatActivity {
                             ", " + anchorNode.getLocalPosition().y + ", " + anchorNode.getLocalPosition().z + ")");
 
                     TransformableNode view = new TransformableNode(arFragment.getTransformationSystem());
-                    if(position != null) view.setWorldPosition(position);
+                    //if (position != null) view.setWorldPosition(position);
                     view.setParent(anchorNode);
                     view.setRenderable(viewRenderable);
                     view.getRotationController();
