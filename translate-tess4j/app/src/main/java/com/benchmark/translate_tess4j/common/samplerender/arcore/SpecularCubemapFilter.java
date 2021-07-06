@@ -15,19 +15,18 @@
  */
 package com.benchmark.translate_tess4j.common.samplerender.arcore;
 
-import static java.lang.Math.max;
-import static java.lang.Math.min;
-
 import android.opengl.GLES30;
 import android.util.Log;
-import com.google.ar.core.ArImage;
-import com.google.ar.core.ImageFormat;
+
 import com.benchmark.translate_tess4j.common.samplerender.GLError;
 import com.benchmark.translate_tess4j.common.samplerender.Mesh;
 import com.benchmark.translate_tess4j.common.samplerender.SampleRender;
 import com.benchmark.translate_tess4j.common.samplerender.Shader;
 import com.benchmark.translate_tess4j.common.samplerender.Texture;
 import com.benchmark.translate_tess4j.common.samplerender.VertexBuffer;
+import com.google.ar.core.ArImage;
+import com.google.ar.core.ImageFormat;
+
 import java.io.Closeable;
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -36,6 +35,9 @@ import java.nio.FloatBuffer;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
+
+import static java.lang.Math.max;
+import static java.lang.Math.min;
 
 /**
  * Filters a provided cubemap into a cubemap lookup texture which is a function of the direction of

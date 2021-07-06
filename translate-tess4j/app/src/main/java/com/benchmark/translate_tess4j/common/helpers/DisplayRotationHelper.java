@@ -25,6 +25,7 @@ import android.hardware.display.DisplayManager.DisplayListener;
 import android.view.Display;
 import android.view.Surface;
 import android.view.WindowManager;
+
 import com.google.ar.core.Session;
 
 /**

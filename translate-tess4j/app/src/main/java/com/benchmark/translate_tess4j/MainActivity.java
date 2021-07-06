@@ -25,17 +25,20 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.constraintlayout.solver.widgets.Rectangle;
 
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.ar.core.Anchor;
+import com.google.ar.core.CameraConfig;
+import com.google.ar.core.CameraConfigFilter;
+import com.google.ar.core.Config;
+import com.google.ar.core.Frame;
 import com.google.ar.core.HitResult;
 import com.google.ar.core.Plane;
 import com.google.ar.core.RecordingConfig;
 import com.google.ar.core.RecordingStatus;
 import com.google.ar.core.Session;
-import com.google.ar.core.exceptions.CameraNotAvailableException;
+import com.google.ar.core.TrackingState;
 import com.google.ar.core.exceptions.NotYetAvailableException;
 import com.google.ar.core.exceptions.RecordingFailedException;
 import com.google.ar.core.exceptions.UnavailableApkTooOldException;
@@ -62,8 +65,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
     private static final String TAG = MainActivity.class.getSimpleName();
@@ -107,7 +109,8 @@ public class MainActivity extends AppCompatActivity {
         arFragment = (ArFragment) getSupportFragmentManager().findFragmentById(R.id.ux_fragment);
 
         arFragment.setOnTapArPlaneListener(
-                (HitResult hitResult, Plane plane, MotionEvent motionEvent) -> handleTap(hitResult));
+                (HitResult hitResult, Plane plane, MotionEvent motionEvent) -> handleTap());
+
     }
 
     public void onRecordingClick(View view) {
@@ -241,15 +244,18 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
-    private void handleTap(HitResult hitResult) {
+    private void handleTap() {
+        configureSession();
+        Frame frame = null;
         Image image = null;
         try {
-            image = arFragment.getArSceneView().getArFrame().acquireCameraImage();
+            frame = arFragment.getArSceneView().getArFrame();
+            image = frame.acquireCameraImage();
         } catch (NotYetAvailableException e) {
             e.printStackTrace();
         }
 
-        if (image == null) return;
+        if (frame == null || image == null) return;
         Bitmap bitmapImage = rotateBitmap(imageToBitmap(image));
         ImageView frameImage = new ImageView(this);
         frameImage.setImageBitmap(bitmapImage);
@@ -257,14 +263,27 @@ public class MainActivity extends AppCompatActivity {
 
         final String ocrText = tessBaseAPI.getUTF8Text();
         Pixa words = tessBaseAPI.getTextlines();
+        List<HitResult> hitResultList = null;
+//        float r1 = image.getWidth()/bitmapImage.getWidth();
+//        float r2 = image.getHeight()/bitmapImage.getHeight();
         Vector3 position = null;
-        ;
+
         if (words.size() > 0) {
             int x = words.getBoxRect(0).centerX();
-            int z = words.getBoxRect(0).centerY();
-            Log.i("TESSERACT", "TEXT POSITION: (" + x + ", " + z + ")");
-            position = new Vector3(x, 0, z);
+            int y = words.getBoxRect(0).centerY();
+            Log.i("TESSERACT", "TEXT POSITION: (" + x + ", " + y + ")");
+            Config.InstantPlacementMode i = arFragment.getArSceneView().getSession().getConfig().getInstantPlacementMode();
+            position = new Vector3((float)x/image.getWidth(),(float)y/image.getHeight(),0);
+
+            hitResultList = frame.hitTestInstantPlacement(x, y, 0.1f);
         }
+
+        final HitResult textHit;
+        if (hitResultList == null || hitResultList.size() == 0) {
+            return;
+        }
+        textHit = hitResultList.get(0);
+
 
         Vector3 finalPosition = position;
         englishSpanishTranslator.translate(ocrText)
@@ -274,7 +293,7 @@ public class MainActivity extends AppCompatActivity {
                             public void onSuccess(Object o) {
                                 Log.i("TRANSLATED TEXT", o.toString());
 //                                runOnUiThread(() -> showFrameAlertDialog(frameImage, ocrText, o.toString()));
-                                addTextToScene(hitResult, o.toString(), finalPosition);
+                                addTextToScene(textHit, o.toString(), finalPosition);
                             }
                         })
                 .addOnFailureListener(
@@ -292,30 +311,35 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void addTextToScene(HitResult hitResult, String translatedText, Vector3 position) {
-        ViewRenderable.builder()
-                .setView(this, R.layout.ar_text)
-                .build()
-                .thenAccept(renderable -> {
-                    TextView textView = (TextView) renderable.getView().findViewById(R.id.arText);
-                    textView.setText(translatedText);
-
-                    viewRenderable = renderable;
-
-                    Anchor anchor = hitResult.createAnchor();
-                    AnchorNode anchorNode = new AnchorNode(anchor);
-                    anchorNode.setParent(arFragment.getArSceneView().getScene());
-                    Log.i("ARCORE", "TEXT POSITION: (" + anchorNode.getLocalPosition().x +
-                            ", " + anchorNode.getLocalPosition().y + ", " + anchorNode.getLocalPosition().z + ")");
-
-                    TransformableNode view = new TransformableNode(arFragment.getTransformationSystem());
-                    //if (position != null) view.setWorldPosition(position);
-                    view.setParent(anchorNode);
-                    view.setRenderable(viewRenderable);
-                    view.getRotationController();
-                    view.getScaleController();
-                    view.getTranslationController();
-                    view.select();
-                });
+        TextView textView = findViewById(R.id.translated_text);
+        textView.setTranslationX(position.x*textView.getWidth());
+        textView.setTranslationY(position.y*textView.getHeight());
+        textView.setText(translatedText);
+        textView.requestLayout();
+//        ViewRenderable.builder()
+//                .setView(this, R.layout.ar_text)
+//                .build()
+//                .thenAccept(renderable -> {
+//                    TextView textView = (TextView) renderable.getView().findViewById(R.id.arText);
+//                    textView.setText(translatedText);
+//
+//                    viewRenderable = renderable;
+//
+//                    Anchor anchor = hitResult.createAnchor();
+//                    AnchorNode anchorNode = new AnchorNode(anchor);
+//                    anchorNode.setParent(arFragment.getArSceneView().getScene());
+//                    Log.i("ARCORE", "TEXT POSITION: (" + anchorNode.getLocalPosition().x +
+//                            ", " + anchorNode.getLocalPosition().y + ", " + anchorNode.getLocalPosition().z + ")");
+//
+//                    TransformableNode view = new TransformableNode(arFragment.getTransformationSystem());
+//                    //if (position != null) view.setWorldPosition(position);
+//                    view.setParent(anchorNode);
+//                    view.setRenderable(viewRenderable);
+//                    view.getRotationController();
+//                    view.getScaleController();
+//                    view.getTranslationController();
+//                    view.select();
+//                });
     }
 
     public static boolean checkIsSupportedDeviceOrFinish(final Activity activity) {
@@ -337,5 +361,31 @@ public class MainActivity extends AppCompatActivity {
             return false;
         }
         return true;
+    }
+
+    private void configureSession() {
+        Session session = arFragment.getArSceneView().getSession();
+        Config config = session.getConfig();
+        config.setLightEstimationMode(Config.LightEstimationMode.ENVIRONMENTAL_HDR);
+        if (session.isDepthModeSupported(Config.DepthMode.AUTOMATIC)) {
+            config.setDepthMode(Config.DepthMode.AUTOMATIC);
+        } else {
+            config.setDepthMode(Config.DepthMode.DISABLED);
+        }
+        config.setInstantPlacementMode(Config.InstantPlacementMode.LOCAL_Y_UP);
+        // don't detect planes
+//    config.setPlaneFindingMode(Config.PlaneFindingMode.DISABLED);
+        // don't match framerate to camera
+//        config.setUpdateMode(Config.UpdateMode.LATEST_CAMERA_IMAGE);
+        // use stereo camera
+        CameraConfigFilter cameraConfigFilter = new CameraConfigFilter(session);
+        cameraConfigFilter.setStereoCameraUsage(java.util.EnumSet.of(CameraConfig.StereoCameraUsage.REQUIRE_AND_USE));
+        List<CameraConfig> cameraConfigs = session.getSupportedCameraConfigs(cameraConfigFilter);
+        if (!cameraConfigs.isEmpty()) {
+            session.setCameraConfig(cameraConfigs.get(0));
+        } else {
+//      new AlertDialog.Builder(this).setMessage("no stereo").show();
+        }
+        session.configure(config);
     }
 }

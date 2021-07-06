@@ -16,6 +16,7 @@
 package com.benchmark.translate_tess4j.common.samplerender;
 
 import android.opengl.GLES30;
+
 import java.io.Closeable;
 import java.nio.FloatBuffer;
 

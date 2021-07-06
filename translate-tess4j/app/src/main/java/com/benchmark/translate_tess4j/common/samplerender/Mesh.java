@@ -17,15 +17,17 @@ package com.benchmark.translate_tess4j.common.samplerender;
 
 import android.opengl.GLES30;
 import android.util.Log;
-import de.javagl.obj.Obj;
-import de.javagl.obj.ObjData;
-import de.javagl.obj.ObjReader;
-import de.javagl.obj.ObjUtils;
+
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
+
+import de.javagl.obj.Obj;
+import de.javagl.obj.ObjData;
+import de.javagl.obj.ObjReader;
+import de.javagl.obj.ObjUtils;
 
 /**
  * A collection of vertices, faces, and other attributes that define how to render a 3D object.

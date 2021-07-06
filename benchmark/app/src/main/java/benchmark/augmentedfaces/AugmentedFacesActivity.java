@@ -439,6 +439,7 @@ public class AugmentedFacesActivity extends AppCompatActivity implements GLSurfa
   private void configureSession() {
     Config config = new Config(session);
     config.setAugmentedFaceMode(AugmentedFaceMode.MESH3D);
+    config.setUpdateMode(Config.UpdateMode.LATEST_CAMERA_IMAGE);
     session.configure(config);
   }
 

@@ -17,6 +17,7 @@ package com.benchmark.translate_tess4j.common.samplerender;
 
 import android.opengl.GLES30;
 import android.util.Log;
+
 import java.nio.Buffer;
 
 /* package-private */

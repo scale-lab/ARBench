@@ -141,6 +141,7 @@ public class HelloArActivity extends AppCompatActivity implements SampleRender.R
   private boolean installRequested;
 
   private Session session;
+  private Session session2;
   private final SnackbarHelper messageSnackbarHelper = new SnackbarHelper();
   private DisplayRotationHelper displayRotationHelper;
   private final TrackingStateHelper trackingStateHelper = new TrackingStateHelper(this);
@@ -278,6 +279,7 @@ public class HelloArActivity extends AppCompatActivity implements SampleRender.R
       // https://developers.google.com/ar/reference/java/arcore/reference/com/google/ar/core/Session#close()
       session.close();
       session = null;
+      session2.close();
     }
 
     super.onDestroy();
@@ -308,6 +310,7 @@ public class HelloArActivity extends AppCompatActivity implements SampleRender.R
 
         // Create the session.
         session = new Session(/* context= */ this);
+        session2 = new Session(this);
       } catch (UnavailableArcoreNotInstalledException
           | UnavailableUserDeclinedInstallationException e) {
         message = "Please install ARCore";
@@ -353,6 +356,7 @@ public class HelloArActivity extends AppCompatActivity implements SampleRender.R
       String destination = new File(this.getExternalFilesDir(null), fileName).getAbsolutePath();
       session.setPlaybackDataset(destination);
       session.resume();
+      session2.resume();
     } catch (CameraNotAvailableException e) {
       messageSnackbarHelper.showError(this, "Camera not available. Try restarting the app.");
       session = null;
@@ -381,6 +385,7 @@ public class HelloArActivity extends AppCompatActivity implements SampleRender.R
       displayRotationHelper.onPause();
       surfaceView.onPause();
       session.pause();
+      session2.pause();
     }
   }
 
@@ -510,7 +515,7 @@ public class HelloArActivity extends AppCompatActivity implements SampleRender.R
   @Override
   public void onDrawFrame(SampleRender render) {
     long frameTime = System.currentTimeMillis();
-    if (session == null) {
+    if (session == null || session2 == null) {
       return;
     }
 
@@ -520,6 +525,8 @@ public class HelloArActivity extends AppCompatActivity implements SampleRender.R
     if (!hasSetTextureNames) {
       session.setCameraTextureNames(
           new int[] {backgroundRenderer.getCameraColorTexture().getTextureId()});
+//      session2.setCameraTextureNames(
+//              new int[] {backgroundRenderer.getCameraColorTexture().getTextureId()+1});
       hasSetTextureNames = true;
     }
 
@@ -532,9 +539,10 @@ public class HelloArActivity extends AppCompatActivity implements SampleRender.R
     // Obtain the current frame from ARSession. When the configuration is set to
     // UpdateMode.BLOCKING (it is by default), this will throttle the rendering to the
     // camera framerate.
-    Frame frame;
+    Frame frame, frame2;
     long updateTime = System.currentTimeMillis();
     try {
+//      frame2 = session2.update();
       frame = session.update();
     } catch (CameraNotAvailableException e) {
       Log.e(TAG, "Camera not available during onDrawFrame", e);
@@ -711,7 +719,7 @@ public class HelloArActivity extends AppCompatActivity implements SampleRender.R
     renderTime = System.currentTimeMillis() - renderTime;
     try {
       if (fpsLog != null) {
-        fpsLog.write(currentPhase + "," + frameTime + "," + updateTime + "," + handleInputTime + "," + renderBackgroundTime + "," + renderTime + "," + (System.currentTimeMillis() - frameTime) + "\n");
+        fpsLog.write(currentPhase + "," + frameTime + "," + updateTime + "," + handleInputTime + "," + renderBackgroundTime + "," + renderTime + "," + (System.currentTimeMillis() - frameTime) + "," + session.getAllAnchors().size() + "\n");
       }
     } catch (IOException e) {
       Log.e(TAG, "Failed to log frame data", e);
@@ -978,7 +986,7 @@ public class HelloArActivity extends AppCompatActivity implements SampleRender.R
     // don't detect planes
 //    config.setPlaneFindingMode(Config.PlaneFindingMode.DISABLED);
     // don't match framerate to camera
-//    config.setUpdateMode(Config.UpdateMode.LATEST_CAMERA_IMAGE);
+    config.setUpdateMode(Config.UpdateMode.LATEST_CAMERA_IMAGE);
     // use stereo camera
     CameraConfigFilter cameraConfigFilter = new CameraConfigFilter(session);
     cameraConfigFilter.setStereoCameraUsage(java.util.EnumSet.of(CameraConfig.StereoCameraUsage.REQUIRE_AND_USE));
