@@ -31,8 +31,7 @@
         android:id="@+id/translated_text"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:text="Hello"
-        />
+        android:text="" />
 
     <ImageButton
         android:id="@+id/settings_button"
@@ -43,5 +42,16 @@
         android:layout_margin="25dp"
         android:background="@android:color/transparent"
         android:src="@drawable/ic_settings" />
+
+    <Button
+        android:id="@+id/record_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignLeft="@id/surfaceview"
+        android:layout_alignBottom="@id/surfaceview"
+        android:layout_marginBottom="100dp"
+        android:onClick="onClickRecord"
+        android:text="Record"
+        android:textColor="@android:color/holo_red_light" />
 
 </RelativeLayout>
