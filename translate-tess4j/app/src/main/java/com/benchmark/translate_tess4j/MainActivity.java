@@ -35,6 +35,7 @@ import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.ImageView;
@@ -220,11 +221,14 @@ public class MainActivity extends AppCompatActivity implements SampleRender.Rend
     private TessBaseAPI tessBaseAPI;
     private Translator englishSpanishTranslator;
 
-    private ArFragment arFragment;
-    private ViewRenderable viewRenderable;
+    private ArRecorder arRecorder;
 
-    private long lastCapturedFrame = System.currentTimeMillis();
-    private int timerMilleseconds = 1000;
+    public enum AppState {
+        Idle,
+        Recording
+    }
+
+    private AppState appState = AppState.Idle;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -257,6 +261,8 @@ public class MainActivity extends AppCompatActivity implements SampleRender.Rend
 
         installRequested = false;
 
+        arRecorder = new ArRecorder(session, surfaceView);
+
         depthSettings.onCreate(this);
         instantPlacementSettings.onCreate(this);
         ImageButton settingsButton = findViewById(R.id.settings_button);
@@ -270,6 +276,47 @@ public class MainActivity extends AppCompatActivity implements SampleRender.Rend
                         popup.show();
                     }
                 });
+    }
+
+    private void updateRecordButton() {
+        View buttonView = findViewById(R.id.record_button);
+        Button button = (Button) buttonView;
+
+        switch (appState) {
+            case Idle:
+                button.setText("Record");
+                break;
+            case Recording:
+                button.setText("Stop");
+                break;
+        }
+    }
+
+    public void onClickRecord(View view) {
+        Log.d(TAG, "onClickRecord");
+
+        switch (appState) {
+            case Idle: {
+                boolean hasStarted = arRecorder.startRecording(session, this);
+                Log.d(TAG, String.format("onClickRecord start: hasStarted %b", hasStarted));
+                if (hasStarted)
+                    appState = AppState.Recording;
+                break;
+            }
+
+            case Recording: {
+                boolean hasStopped = arRecorder.stopRecording();
+                Log.d(TAG, String.format("onClickRecord stop: hasStopped %b", hasStopped));
+                if (hasStopped)
+                    appState = AppState.Idle;
+                break;
+            }
+
+            default:
+                break;
+        }
+
+        updateRecordButton();
     }
 
     private void initializeTranslator() {
@@ -342,6 +389,7 @@ public class MainActivity extends AppCompatActivity implements SampleRender.Rend
 
                 // Create the session.
                 session = new Session(/* context= */ this);
+                arRecorder.setSession(session);
             } catch (UnavailableArcoreNotInstalledException
                     | UnavailableUserDeclinedInstallationException e) {
                 message = "Please install ARCore";
