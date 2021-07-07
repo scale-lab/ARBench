@@ -29,9 +29,16 @@
 
     <TextView
         android:id="@+id/translated_text"
-        android:layout_width="match_parent"
+        android:layout_width="300dp"
         android:layout_height="match_parent"
-        android:text="" />
+        android:shadowColor="@color/text_shadow"
+        android:shadowDx="1"
+        android:shadowDy="1"
+        android:shadowRadius="2"
+        android:text=""
+        android:textColor="@color/light_font"
+        android:textSize="20sp"
+        android:textStyle="bold" />
 
     <ImageButton
         android:id="@+id/settings_button"

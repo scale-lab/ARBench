@@ -954,20 +954,24 @@ public class MainActivity extends AppCompatActivity implements SampleRender.Rend
             Pixa words = tessBaseAPI.getTextlines();
 //        float r1 = image.getWidth()/bitmapImage.getWidth();
 //        float r2 = image.getHeight()/bitmapImage.getHeight();
+
             float xPos = 0;
             float yPos = 0;
+            int width = 0;
 
             if (words.size() > 0) {
                 int x = words.getBoxRect(0).left;
                 int y = words.getBoxRect(0).top;
                 Log.i("TESSERACT", "TEXT POSITION: (" + x + ", " + y + ")");
 
-                xPos = (float) x / image.getWidth();
-                yPos = (float) y / image.getHeight();
+                xPos = (float) ((float) x / (image.getWidth() * 1.1));
+                yPos = (float) ((float) y / (image.getHeight() * 1.2));
+                width = words.getWidth();
             }
 
             float finalXPos = xPos;
             float finalYPos = yPos;
+            int finalWidth = width;
             englishSpanishTranslator.translate(ocrText)
                     .addOnSuccessListener(
                             new OnSuccessListener() {
@@ -975,7 +979,7 @@ public class MainActivity extends AppCompatActivity implements SampleRender.Rend
                                 public void onSuccess(Object o) {
                                     Log.i("TRANSLATED TEXT", o.toString());
 //                                runOnUiThread(() -> showFrameAlertDialog(frameImage, ocrText, o.toString()));
-                                    addTextToScene(o.toString(), finalXPos, finalYPos);
+                                    addTextToScene(o.toString(), finalXPos, finalYPos, finalWidth);
                                 }
                             })
                     .addOnFailureListener(
@@ -994,8 +998,9 @@ public class MainActivity extends AppCompatActivity implements SampleRender.Rend
         }
     }
 
-    private void addTextToScene(String translatedText, float x, float y) {
+    private void addTextToScene(String translatedText, float x, float y, int width) {
         TextView textView = findViewById(R.id.translated_text);
+        textView.setWidth(width);
         textView.setTranslationX(x * textView.getWidth());
         textView.setTranslationY(y * textView.getHeight());
         textView.setText(translatedText);
