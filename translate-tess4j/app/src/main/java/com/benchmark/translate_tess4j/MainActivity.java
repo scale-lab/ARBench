@@ -485,7 +485,6 @@ public class MainActivity extends AppCompatActivity implements SampleRender.Rend
     }
 
     private boolean stopPlayingback() {
-        // Correctness check, only stop playing back when the app is playing back.
         if (appState != AppState.Playingback)
             return false;
 
@@ -495,6 +494,7 @@ public class MainActivity extends AppCompatActivity implements SampleRender.Rend
         session.close();
         try {
             session = new Session(this);
+            arRecorder.setSession(session);
         } catch (UnavailableArcoreNotInstalledException
                 |UnavailableApkTooOldException
                 |UnavailableSdkTooOldException
