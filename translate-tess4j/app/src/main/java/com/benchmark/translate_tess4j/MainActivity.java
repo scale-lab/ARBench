@@ -16,7 +16,9 @@
 
 package com.benchmark.translate_tess4j;
 
+import android.app.Activity;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.res.AssetManager;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
@@ -25,10 +27,14 @@ import android.graphics.ImageFormat;
 import android.graphics.Rect;
 import android.graphics.YuvImage;
 import android.media.Image;
+import android.net.Uri;
 import android.opengl.GLES30;
 import android.opengl.GLSurfaceView;
 import android.opengl.Matrix;
+import android.os.Build;
 import android.os.Bundle;
+import android.provider.DocumentsContract;
+import android.provider.MediaStore;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.MenuItem;
@@ -62,6 +68,7 @@ import com.google.ar.core.HitResult;
 import com.google.ar.core.InstantPlacementPoint;
 import com.google.ar.core.LightEstimate;
 import com.google.ar.core.Plane;
+import com.google.ar.core.PlaybackStatus;
 import com.google.ar.core.Point;
 import com.google.ar.core.Point.OrientationMode;
 import com.google.ar.core.PointCloud;
@@ -89,6 +96,7 @@ import com.benchmark.translate_tess4j.common.samplerender.arcore.PlaneRenderer;
 import com.benchmark.translate_tess4j.common.samplerender.arcore.SpecularCubemapFilter;
 import com.google.ar.core.exceptions.CameraNotAvailableException;
 import com.google.ar.core.exceptions.NotYetAvailableException;
+import com.google.ar.core.exceptions.PlaybackFailedException;
 import com.google.ar.core.exceptions.UnavailableApkTooOldException;
 import com.google.ar.core.exceptions.UnavailableArcoreNotInstalledException;
 import com.google.ar.core.exceptions.UnavailableDeviceNotCompatibleException;
@@ -110,6 +118,7 @@ import com.google.mlkit.nl.translate.Translation;
 import com.google.mlkit.nl.translate.Translator;
 import com.google.mlkit.nl.translate.TranslatorOptions;
 import com.googlecode.leptonica.android.Pixa;
+import com.googlecode.tesseract.android.ResultIterator;
 import com.googlecode.tesseract.android.TessBaseAPI;
 
 import org.w3c.dom.Text;
@@ -222,10 +231,13 @@ public class MainActivity extends AppCompatActivity implements SampleRender.Rend
     private Translator englishSpanishTranslator;
 
     private ArRecorder arRecorder;
+    private final String MP4_VIDEO_MIME_TYPE = "video/mp4";
+    private int REQUEST_MP4_SELECTOR = 1;
 
     public enum AppState {
         Idle,
-        Recording
+        Recording,
+        Playingback
     }
 
     private AppState appState = AppState.Idle;
@@ -280,14 +292,43 @@ public class MainActivity extends AppCompatActivity implements SampleRender.Rend
 
     private void updateRecordButton() {
         View buttonView = findViewById(R.id.record_button);
-        Button button = (Button) buttonView;
+        Button button = (Button)buttonView;
 
         switch (appState) {
             case Idle:
                 button.setText("Record");
+                button.setVisibility(View.VISIBLE);
                 break;
+
             case Recording:
                 button.setText("Stop");
+                button.setVisibility(View.VISIBLE);
+                break;
+
+            case Playingback:
+                button.setVisibility(View.INVISIBLE);
+                break;
+        }
+    }
+
+    private void updatePlaybackButton() {
+        View buttonView = findViewById(R.id.playback_button);
+        Button button = (Button)buttonView;
+
+        switch (appState) {
+
+            case Idle:
+                button.setText("Playback");
+                button.setVisibility(View.VISIBLE);
+                break;
+
+            case Playingback:
+                button.setText("Stop");
+                button.setVisibility(View.VISIBLE);
+                break;
+
+            case Recording:
+                button.setVisibility(View.INVISIBLE);
                 break;
         }
     }
@@ -317,6 +358,182 @@ public class MainActivity extends AppCompatActivity implements SampleRender.Rend
         }
 
         updateRecordButton();
+        updatePlaybackButton();
+    }
+
+    public void onClickPlayback(View view) {
+        Log.d(TAG, "onClickPlayback");
+
+        switch (appState) {
+
+            // If the app is not playing back, open the file picker.
+            case Idle: {
+                boolean hasStarted = selectFileToPlayback();
+                Log.d(TAG, String.format("onClickPlayback start: selectFileToPlayback %b", hasStarted));
+                break;
+            }
+
+            // If the app is playing back, stop playing back.
+            case Playingback: {
+                boolean hasStopped = stopPlayingback();
+                Log.d(TAG, String.format("onClickPlayback stop: hasStopped %b", hasStopped));
+                break;
+            }
+
+            default:
+                // Recording - do nothing.
+                break;
+        }
+
+        // Update the UI for the "Record" and "Playback" buttons.
+        updateRecordButton();
+        updatePlaybackButton();
+    }
+
+    private boolean selectFileToPlayback() {
+        // Start file selection from Movies directory.
+        // Android 10 and above requires VOLUME_EXTERNAL_PRIMARY to write to MediaStore.
+        Uri videoCollection;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            videoCollection = MediaStore.Video.Media.getContentUri(
+                    MediaStore.VOLUME_EXTERNAL_PRIMARY);
+        } else {
+            videoCollection = MediaStore.Video.Media.EXTERNAL_CONTENT_URI;
+        }
+
+        // Create an Intent to select a file.
+        Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+
+        // Add file filters such as the MIME type, the default directory and the file category.
+        intent.setType(MP4_VIDEO_MIME_TYPE); // Only select *.mp4 files
+        intent.putExtra(DocumentsContract.EXTRA_INITIAL_URI, videoCollection); // Set default directory
+        intent.addCategory(Intent.CATEGORY_OPENABLE); // Must be files that can be opened
+
+        this.startActivityForResult(intent, REQUEST_MP4_SELECTOR);
+
+        return true;
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        // Check request status. Log an error if the selection fails.
+        super.onActivityResult(requestCode, resultCode, data);
+        super.onActivityResult(requestCode, resultCode, data);
+        if (resultCode != Activity.RESULT_OK || requestCode != REQUEST_MP4_SELECTOR) {
+            Log.e(TAG, "onActivityResult select file failed");
+            return;
+        }
+
+        Uri mp4Uri = data.getData();
+        Log.d(TAG, String.format("onActivityResult result is %s", mp4Uri));
+
+        // Copy to app internal storage to get a file path.
+        String localFilePath = copyToInternalFilePath(mp4Uri);
+
+        // Begin playback.
+        startPlayingback(localFilePath);
+    }
+
+    private String copyToInternalFilePath(Uri contentUri) {
+        // Create a file path in the app's internal storage.
+        String tempPlaybackFilePath = new File(this.getExternalFilesDir(null), "temp-playback.mp4").getAbsolutePath();
+
+        // Copy the binary content from contentUri to tempPlaybackFilePath.
+        try (InputStream inputStream = this.getContentResolver().openInputStream(contentUri);
+             java.io.OutputStream tempOutputFileStream = new java.io.FileOutputStream(tempPlaybackFilePath)) {
+
+            byte[] buffer = new byte[1024 * 1024]; // 1MB
+            int bytesRead = inputStream.read(buffer);
+            while (bytesRead != -1) {
+                tempOutputFileStream.write(buffer, 0, bytesRead);
+                bytesRead = inputStream.read(buffer);
+            }
+
+        } catch (java.io.FileNotFoundException e) {
+            Log.e(TAG, "copyToInternalFilePath FileNotFoundException", e);
+            return null;
+        } catch (IOException e) {
+            Log.e(TAG, "copyToInternalFilePath IOException", e);
+            return null;
+        }
+
+        // Return the absolute file path of the copied file.
+        return tempPlaybackFilePath;
+    }
+
+    private boolean startPlayingback(String mp4FilePath) {
+        if (mp4FilePath == null)
+            return false;
+
+        Log.d(TAG, "startPlayingback at:" + mp4FilePath);
+
+        arRecorder.pauseARCoreSession();
+
+        try {
+            session.setPlaybackDataset(mp4FilePath);
+        } catch (PlaybackFailedException e) {
+            Log.e(TAG, "startPlayingback - setPlaybackDataset failed", e);
+        }
+
+        // The session's camera texture name becomes invalid when the
+        // ARCore session is set to play back.
+        // Workaround: Reset the Texture to start Playback
+        // so it doesn't crashes with AR_ERROR_TEXTURE_NOT_SET.
+        hasSetTextureNames = false;
+
+        boolean canResume = arRecorder.resumeARCoreSession();
+        if (!canResume)
+            return false;
+
+        PlaybackStatus playbackStatus = session.getPlaybackStatus();
+        Log.d(TAG, String.format("startPlayingback - playbackStatus %s", playbackStatus));
+
+
+        if (playbackStatus != PlaybackStatus.OK) { // Correctness check
+            return false;
+        }
+
+        appState = AppState.Playingback;
+        updateRecordButton();
+        updatePlaybackButton();
+
+        return true;
+    }
+
+    private boolean stopPlayingback() {
+        // Correctness check, only stop playing back when the app is playing back.
+        if (appState != AppState.Playingback)
+            return false;
+
+        arRecorder.pauseARCoreSession();
+
+        // Close the current session and create a new session.
+        session.close();
+        try {
+            session = new Session(this);
+        } catch (UnavailableArcoreNotInstalledException
+                |UnavailableApkTooOldException
+                |UnavailableSdkTooOldException
+                |UnavailableDeviceNotCompatibleException e) {
+            Log.e(TAG, "Error in return to Idle state. Cannot create new ARCore session", e);
+            return false;
+        }
+        configureSession();
+
+        boolean canResume = arRecorder.resumeARCoreSession();
+        if (!canResume)
+            return false;
+
+        // A new session will not have a camera texture name.
+        // Manually set hasSetTextureNames to false to trigger a reset.
+        hasSetTextureNames = false;
+
+        // Reset appState to Idle, and update the "Record" and "Playback" buttons.
+        appState = AppState.Idle;
+        updateRecordButton();
+        updatePlaybackButton();
+
+        return true;
     }
 
     private void initializeTranslator() {
@@ -596,6 +813,12 @@ public class MainActivity extends AppCompatActivity implements SampleRender.Rend
         // camera framerate.
         Frame frame;
         try {
+            if (appState == AppState.Playingback
+                    && session.getPlaybackStatus() == PlaybackStatus.FINISHED) {
+                this.runOnUiThread(this::stopPlayingback);
+                return;
+            }
+
             frame = session.update();
         } catch (CameraNotAvailableException e) {
             Log.e(TAG, "Camera not available during onDrawFrame", e);
@@ -750,8 +973,8 @@ public class MainActivity extends AppCompatActivity implements SampleRender.Rend
             Vector3 position = null;
 
             if (words.size() > 0) {
-                int x = words.getBoxRect(0).centerX();
-                int y = words.getBoxRect(0).centerY();
+                int x = words.getBoxRect(0).left;
+                int y = words.getBoxRect(0).top;
                 Log.i("TESSERACT", "TEXT POSITION: (" + x + ", " + y + ")");
                 position = new Vector3((float) x / image.getWidth(), (float) y / image.getHeight(), 0);
             }

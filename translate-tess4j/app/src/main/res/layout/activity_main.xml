@@ -54,4 +54,15 @@
         android:text="Record"
         android:textColor="@android:color/holo_red_light" />
 
+    <Button
+        android:id="@+id/playback_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignEnd="@id/surfaceview"
+        android:layout_alignBottom="@id/surfaceview"
+        android:layout_marginBottom="100dp"
+        android:onClick="onClickPlayback"
+        android:text="Playback"
+        android:textColor="@android:color/holo_green_light" />
+
 </RelativeLayout>

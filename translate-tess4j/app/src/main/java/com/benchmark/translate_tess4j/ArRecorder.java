@@ -90,7 +90,7 @@ public class ArRecorder {
         session.pause();
     }
 
-    private boolean resumeARCoreSession() {
+    public boolean resumeARCoreSession() {
         try {
             session.resume();
         } catch (CameraNotAvailableException e) {
