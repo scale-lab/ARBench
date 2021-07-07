@@ -69,7 +69,6 @@ import com.google.ar.core.InstantPlacementPoint;
 import com.google.ar.core.LightEstimate;
 import com.google.ar.core.Plane;
 import com.google.ar.core.PlaybackStatus;
-import com.google.ar.core.Point;
 import com.google.ar.core.Point.OrientationMode;
 import com.google.ar.core.PointCloud;
 import com.google.ar.core.Session;
@@ -102,26 +101,13 @@ import com.google.ar.core.exceptions.UnavailableArcoreNotInstalledException;
 import com.google.ar.core.exceptions.UnavailableDeviceNotCompatibleException;
 import com.google.ar.core.exceptions.UnavailableSdkTooOldException;
 import com.google.ar.core.exceptions.UnavailableUserDeclinedInstallationException;
-import com.google.ar.sceneform.AnchorNode;
-import com.google.ar.sceneform.ArSceneView;
-import com.google.ar.sceneform.Sceneform;
-import com.google.ar.sceneform.math.Vector3;
-import com.google.ar.sceneform.rendering.ModelRenderable;
-import com.google.ar.sceneform.rendering.Renderable;
-import com.google.ar.sceneform.rendering.RenderableInstance;
-import com.google.ar.sceneform.rendering.ViewRenderable;
-import com.google.ar.sceneform.ux.ArFragment;
-import com.google.ar.sceneform.ux.TransformableNode;
 import com.google.mlkit.common.model.DownloadConditions;
 import com.google.mlkit.nl.translate.TranslateLanguage;
 import com.google.mlkit.nl.translate.Translation;
 import com.google.mlkit.nl.translate.Translator;
 import com.google.mlkit.nl.translate.TranslatorOptions;
 import com.googlecode.leptonica.android.Pixa;
-import com.googlecode.tesseract.android.ResultIterator;
 import com.googlecode.tesseract.android.TessBaseAPI;
-
-import org.w3c.dom.Text;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -132,9 +118,7 @@ import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.Vector;
 
 /**
  * This is a simple example that shows how to create an augmented reality (AR) application using the
@@ -970,16 +954,20 @@ public class MainActivity extends AppCompatActivity implements SampleRender.Rend
             Pixa words = tessBaseAPI.getTextlines();
 //        float r1 = image.getWidth()/bitmapImage.getWidth();
 //        float r2 = image.getHeight()/bitmapImage.getHeight();
-            Vector3 position = null;
+            float xPos = 0;
+            float yPos = 0;
 
             if (words.size() > 0) {
                 int x = words.getBoxRect(0).left;
                 int y = words.getBoxRect(0).top;
                 Log.i("TESSERACT", "TEXT POSITION: (" + x + ", " + y + ")");
-                position = new Vector3((float) x / image.getWidth(), (float) y / image.getHeight(), 0);
+
+                xPos = (float) x / image.getWidth();
+                yPos = (float) y / image.getHeight();
             }
 
-            Vector3 finalPosition = position;
+            float finalXPos = xPos;
+            float finalYPos = yPos;
             englishSpanishTranslator.translate(ocrText)
                     .addOnSuccessListener(
                             new OnSuccessListener() {
@@ -987,7 +975,7 @@ public class MainActivity extends AppCompatActivity implements SampleRender.Rend
                                 public void onSuccess(Object o) {
                                     Log.i("TRANSLATED TEXT", o.toString());
 //                                runOnUiThread(() -> showFrameAlertDialog(frameImage, ocrText, o.toString()));
-                                    addTextToScene(o.toString(), finalPosition);
+                                    addTextToScene(o.toString(), finalXPos, finalYPos);
                                 }
                             })
                     .addOnFailureListener(
@@ -1006,10 +994,10 @@ public class MainActivity extends AppCompatActivity implements SampleRender.Rend
         }
     }
 
-    private void addTextToScene(String translatedText, Vector3 position) {
+    private void addTextToScene(String translatedText, float x, float y) {
         TextView textView = findViewById(R.id.translated_text);
-        textView.setTranslationX(position.x * textView.getWidth());
-        textView.setTranslationY(position.y * textView.getHeight());
+        textView.setTranslationX(x * textView.getWidth());
+        textView.setTranslationY(y * textView.getHeight());
         textView.setText(translatedText);
         textView.requestLayout();
     }
