@@ -14,30 +14,55 @@
    limitations under the License.
 -->
 
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".MainActivity">
+    tools:context="com.benchmark.translate_tess4j.MainActivity">
 
-    <fragment
-        android:id="@+id/ux_fragment"
-        android:name="com.google.ar.sceneform.ux.ArFragment"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent" />
 
-<!--    <Button-->
-<!--        android:layout_width="wrap_content"-->
-<!--        android:layout_height="wrap_content"-->
-<!--        android:text="Start recording"-->
-<!--        android:onClick="onRecordingClick"-->
-<!--        />-->
+    <android.opengl.GLSurfaceView
+        android:id="@+id/surfaceview"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:layout_gravity="top" />
 
     <TextView
         android:id="@+id/translated_text"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:text="Hello"
-        />
-</FrameLayout>
+        android:text="" />
 
+    <ImageButton
+        android:id="@+id/settings_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentEnd="true"
+        android:layout_margin="25dp"
+        android:background="@android:color/transparent"
+        android:src="@drawable/ic_settings" />
+
+    <Button
+        android:id="@+id/record_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignLeft="@id/surfaceview"
+        android:layout_alignBottom="@id/surfaceview"
+        android:layout_marginBottom="100dp"
+        android:onClick="onClickRecord"
+        android:text="Record"
+        android:textColor="@android:color/holo_red_light" />
+
+    <Button
+        android:id="@+id/playback_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignEnd="@id/surfaceview"
+        android:layout_alignBottom="@id/surfaceview"
+        android:layout_marginBottom="100dp"
+        android:onClick="onClickPlayback"
+        android:text="Playback"
+        android:textColor="@android:color/holo_green_light" />
+
+</RelativeLayout>
