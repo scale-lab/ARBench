@@ -13,7 +13,7 @@
    See the License for the specific language governing permissions and
    limitations under the License.
 -->
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -33,4 +33,26 @@
       android:scaleType="fitCenter"
       />
 
-</FrameLayout>
+  <Button
+      android:id="@+id/record_button"
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:layout_alignLeft="@id/surfaceview"
+      android:layout_alignBottom="@id/surfaceview"
+      android:layout_marginBottom="100dp"
+      android:onClick="onClickRecord"
+      android:text="Record"
+      android:textColor="@android:color/holo_red_light" />
+
+  <Button
+      android:id="@+id/playback_button"
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:layout_alignEnd="@id/surfaceview"
+      android:layout_alignBottom="@id/surfaceview"
+      android:layout_marginBottom="100dp"
+      android:onClick="onClickPlayback"
+      android:text="Playback"
+      android:textColor="@android:color/holo_green_light" />
+
+</RelativeLayout>
