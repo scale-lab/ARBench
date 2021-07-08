@@ -32,7 +32,7 @@ import kotlinx.coroutines.tasks.asDeferred
  */
 class MLKitObjectDetector(context: Activity) : ObjectDetector(context) {
   // To use a custom model, follow steps on https://developers.google.com/ml-kit/vision/object-detection/custom-models/android.
-   val model = LocalModel.Builder().setAssetFilePath("inception_v4_1_metadata_1.tflite").build()
+   val model = LocalModel.Builder().setAssetFilePath("mnasnet_0.50_224_1_metadata_1.tflite").build()
    val builder = CustomObjectDetectorOptions.Builder(model)
 
   // For the ML Kit default model, use the following:
