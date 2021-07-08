@@ -18,43 +18,74 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/coordinatorLayout"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:layout_gravity="bottom">
 
-  <android.opengl.GLSurfaceView
-      android:id="@+id/surfaceview"
-      android:layout_width="fill_parent"
-      android:layout_height="fill_parent" />
+    <android.opengl.GLSurfaceView
+        android:id="@+id/surfaceview"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent" />
 
-  <LinearLayout
-      android:layout_width="wrap_content"
-      android:layout_height="wrap_content"
-      android:layout_marginBottom="80dp"
-      android:layout_gravity="bottom|center_horizontal"
-      app:layout_dodgeInsetEdges="bottom">
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="179dp"
+        android:layout_gravity="bottom"
+        android:orientation="vertical">
 
-    <androidx.appcompat.widget.AppCompatButton
-        android:id="@+id/scanButton"
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="73dp"
+            android:layout_gravity="center"
+            android:orientation="horizontal"
+            android:padding="10dp">
+
+            <Button
+                android:id="@+id/record_button"
+                android:layout_width="194dp"
+                android:layout_height="match_parent"
+                android:onClick="onClickRecord"
+                android:text="Record"
+                android:textColor="@android:color/holo_red_dark" />
+
+            <Button
+                android:id="@+id/playback_button"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:onClick="onClickPlayback"
+                android:text="Playback"
+                android:textColor="@android:color/holo_green_dark" />
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="73dp"
+            android:orientation="horizontal"
+            android:padding="10">
+
+            <androidx.appcompat.widget.AppCompatButton
+                android:id="@+id/scanButton"
+                android:layout_width="194dp"
+                android:layout_height="match_parent"
+                android:text="@string/scan_available" />
+
+            <androidx.appcompat.widget.AppCompatButton
+                android:id="@+id/clearButton"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:text="@string/clear" />
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+    <androidx.appcompat.widget.SwitchCompat
+        android:id="@+id/useCloudMlSwitch"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:paddingHorizontal="60dp"
-        android:text="@string/scan_available" />
-
-    <androidx.appcompat.widget.AppCompatButton
-        android:id="@+id/clearButton"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:paddingHorizontal="60dp"
-        android:text="@string/clear" />
-
-  </LinearLayout>
-
-  <androidx.appcompat.widget.SwitchCompat
-      android:id="@+id/useCloudMlSwitch"
-      android:layout_width="wrap_content"
-      android:layout_height="wrap_content"
-      android:layout_gravity="top|end"
-      android:padding="16dp"
-      android:background="#55FFFFFF"
-      android:text="@string/use_cloud_ml" />
+        android:layout_gravity="top|end"
+        android:background="#55FFFFFF"
+        android:padding="16dp"
+        android:text="@string/use_cloud_ml" />
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>
