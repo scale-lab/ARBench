@@ -1,4 +1,0 @@
-include ':ocr'
-include ':mylibrary'
-include ':app'
-rootProject.name = "Translate"
