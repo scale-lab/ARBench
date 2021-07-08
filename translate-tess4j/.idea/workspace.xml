@@ -1,0 +1,444 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AndroidConfiguredLogFilters">
+    <filters>
+      <filter>
+        <option name="logLevel" value="verbose" />
+        <option name="logMessagePattern" value="" />
+        <option name="logTagPattern" value="TESSERACT" />
+        <option name="name" value="Unnamed-0" />
+        <option name="packageNamePattern" value="" />
+      </filter>
+    </filters>
+  </component>
+  <component name="AndroidLayouts">
+    <shared>
+      <config />
+    </shared>
+  </component>
+  <component name="AndroidLogFilters">
+    <option name="TOOL_WINDOW_LOG_LEVEL" value="info" />
+    <option name="TOOL_WINDOW_CONFIGURED_FILTER" value="No Filters" />
+  </component>
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="NONE" />
+  </component>
+  <component name="BranchesTreeState">
+    <expand>
+      <path>
+        <item name="ROOT" type="e8cecc67:BranchNodeDescriptor" />
+        <item name="LOCAL_ROOT" type="e8cecc67:BranchNodeDescriptor" />
+      </path>
+      <path>
+        <item name="ROOT" type="e8cecc67:BranchNodeDescriptor" />
+        <item name="REMOTE_ROOT" type="e8cecc67:BranchNodeDescriptor" />
+      </path>
+      <path>
+        <item name="ROOT" type="e8cecc67:BranchNodeDescriptor" />
+        <item name="REMOTE_ROOT" type="e8cecc67:BranchNodeDescriptor" />
+        <item name="GROUP_NODE:origin" type="e8cecc67:BranchNodeDescriptor" />
+      </path>
+    </expand>
+    <select />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="8318bda1-6d7f-4e77-8435-62531468d931" name="Default Changelist" comment="">
+      <change afterPath="$PROJECT_DIR$/../translate_tess4j/.gitignore" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../translate_tess4j/app/.gitignore" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../translate_tess4j/app/build.gradle" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../translate_tess4j/app/proguard-rules.pro" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../translate_tess4j/app/src/main/AndroidManifest.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../translate_tess4j/app/src/main/assets/models/README.txt" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../translate_tess4j/app/src/main/assets/models/dfg.raw" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../translate_tess4j/app/src/main/assets/models/pawn.obj" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../translate_tess4j/app/src/main/assets/models/pawn_albedo.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../translate_tess4j/app/src/main/assets/models/pawn_roughness_metallic_ao.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../translate_tess4j/app/src/main/assets/models/trigrid.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../translate_tess4j/app/src/main/assets/shaders/ambient_intensity.frag" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../translate_tess4j/app/src/main/assets/shaders/ambient_intensity.vert" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../translate_tess4j/app/src/main/assets/shaders/background_show_camera.frag" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../translate_tess4j/app/src/main/assets/shaders/background_show_camera.vert" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../translate_tess4j/app/src/main/assets/shaders/background_show_depth_color_visualization.frag" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../translate_tess4j/app/src/main/assets/shaders/background_show_depth_color_visualization.vert" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../translate_tess4j/app/src/main/assets/shaders/cubemap_filter.frag" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../translate_tess4j/app/src/main/assets/shaders/cubemap_filter.vert" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../translate_tess4j/app/src/main/assets/shaders/environmental_hdr.frag" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../translate_tess4j/app/src/main/assets/shaders/environmental_hdr.vert" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../translate_tess4j/app/src/main/assets/shaders/occlusion.frag" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../translate_tess4j/app/src/main/assets/shaders/occlusion.vert" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../translate_tess4j/app/src/main/assets/shaders/plane.frag" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../translate_tess4j/app/src/main/assets/shaders/plane.vert" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../translate_tess4j/app/src/main/assets/shaders/point_cloud.frag" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../translate_tess4j/app/src/main/assets/shaders/point_cloud.vert" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../translate_tess4j/app/src/main/assets/tessdata/configs/api_config" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../translate_tess4j/app/src/main/assets/tessdata/configs/digits" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../translate_tess4j/app/src/main/assets/tessdata/configs/hocr" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../translate_tess4j/app/src/main/assets/tessdata/eng.traineddata" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../translate_tess4j/app/src/main/assets/tessdata/osd.traineddata" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../translate_tess4j/app/src/main/assets/tessdata/pdf.ttf" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../translate_tess4j/app/src/main/assets/tessdata/pdf.ttx" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../translate_tess4j/app/src/main/java/com/benchmark/translate_tess4j/ArRecorder.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../translate_tess4j/app/src/main/java/com/benchmark/translate_tess4j/MainActivity.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../translate_tess4j/app/src/main/java/com/benchmark/translate_tess4j/common/helpers/CameraPermissionHelper.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../translate_tess4j/app/src/main/java/com/benchmark/translate_tess4j/common/helpers/DepthSettings.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../translate_tess4j/app/src/main/java/com/benchmark/translate_tess4j/common/helpers/DisplayRotationHelper.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../translate_tess4j/app/src/main/java/com/benchmark/translate_tess4j/common/helpers/FullScreenHelper.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../translate_tess4j/app/src/main/java/com/benchmark/translate_tess4j/common/helpers/InstantPlacementSettings.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../translate_tess4j/app/src/main/java/com/benchmark/translate_tess4j/common/helpers/SnackbarHelper.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../translate_tess4j/app/src/main/java/com/benchmark/translate_tess4j/common/helpers/TapHelper.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../translate_tess4j/app/src/main/java/com/benchmark/translate_tess4j/common/helpers/TrackingStateHelper.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../translate_tess4j/app/src/main/java/com/benchmark/translate_tess4j/common/samplerender/Framebuffer.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../translate_tess4j/app/src/main/java/com/benchmark/translate_tess4j/common/samplerender/GLError.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../translate_tess4j/app/src/main/java/com/benchmark/translate_tess4j/common/samplerender/GpuBuffer.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../translate_tess4j/app/src/main/java/com/benchmark/translate_tess4j/common/samplerender/IndexBuffer.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../translate_tess4j/app/src/main/java/com/benchmark/translate_tess4j/common/samplerender/Mesh.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../translate_tess4j/app/src/main/java/com/benchmark/translate_tess4j/common/samplerender/SampleRender.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../translate_tess4j/app/src/main/java/com/benchmark/translate_tess4j/common/samplerender/Shader.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../translate_tess4j/app/src/main/java/com/benchmark/translate_tess4j/common/samplerender/Texture.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../translate_tess4j/app/src/main/java/com/benchmark/translate_tess4j/common/samplerender/VertexBuffer.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../translate_tess4j/app/src/main/java/com/benchmark/translate_tess4j/common/samplerender/arcore/BackgroundRenderer.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../translate_tess4j/app/src/main/java/com/benchmark/translate_tess4j/common/samplerender/arcore/PlaneRenderer.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../translate_tess4j/app/src/main/java/com/benchmark/translate_tess4j/common/samplerender/arcore/SpecularCubemapFilter.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../translate_tess4j/app/src/main/res/drawable-xxhdpi/ic_launcher.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../translate_tess4j/app/src/main/res/drawable-xxhdpi/ic_settings.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../translate_tess4j/app/src/main/res/drawable-xxhdpi/rounded_bg.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../translate_tess4j/app/src/main/res/layout/activity_main.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../translate_tess4j/app/src/main/res/layout/ar_text.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../translate_tess4j/app/src/main/res/menu/settings_menu.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../translate_tess4j/app/src/main/res/values/colors.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../translate_tess4j/app/src/main/res/values/strings.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../translate_tess4j/app/src/main/res/values/styles.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../translate_tess4j/build.gradle" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../translate_tess4j/gradle.properties" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../translate_tess4j/gradle/wrapper/gradle-wrapper.jar" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../translate_tess4j/gradle/wrapper/gradle-wrapper.properties" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../translate_tess4j/gradlew" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../translate_tess4j/gradlew.bat" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/../translate_tess4j/settings.gradle" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/.gitignore" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/compiler.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/discord.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/gradle.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/jarRepositories.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/vcs.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/.gitignore" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/build.gradle" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/proguard-rules.pro" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/AndroidManifest.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/assets/models/README.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/assets/models/dfg.raw" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/assets/models/pawn.obj" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/assets/models/pawn_albedo.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/assets/models/pawn_roughness_metallic_ao.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/assets/models/trigrid.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/assets/shaders/ambient_intensity.frag" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/assets/shaders/ambient_intensity.vert" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/assets/shaders/background_show_camera.frag" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/assets/shaders/background_show_camera.vert" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/assets/shaders/background_show_depth_color_visualization.frag" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/assets/shaders/background_show_depth_color_visualization.vert" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/assets/shaders/cubemap_filter.frag" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/assets/shaders/cubemap_filter.vert" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/assets/shaders/environmental_hdr.frag" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/assets/shaders/environmental_hdr.vert" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/assets/shaders/occlusion.frag" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/assets/shaders/occlusion.vert" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/assets/shaders/plane.frag" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/assets/shaders/plane.vert" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/assets/shaders/point_cloud.frag" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/assets/shaders/point_cloud.vert" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/assets/tessdata/configs/api_config" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/assets/tessdata/configs/digits" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/assets/tessdata/configs/hocr" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/assets/tessdata/eng.traineddata" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/assets/tessdata/osd.traineddata" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/assets/tessdata/pdf.ttf" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/assets/tessdata/pdf.ttx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/benchmark/translate_tess4j/ArRecorder.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/benchmark/translate_tess4j/MainActivity.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/benchmark/translate_tess4j/common/helpers/CameraPermissionHelper.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/benchmark/translate_tess4j/common/helpers/DepthSettings.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/benchmark/translate_tess4j/common/helpers/DisplayRotationHelper.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/benchmark/translate_tess4j/common/helpers/FullScreenHelper.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/benchmark/translate_tess4j/common/helpers/InstantPlacementSettings.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/benchmark/translate_tess4j/common/helpers/SnackbarHelper.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/benchmark/translate_tess4j/common/helpers/TapHelper.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/benchmark/translate_tess4j/common/helpers/TrackingStateHelper.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/benchmark/translate_tess4j/common/samplerender/Framebuffer.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/benchmark/translate_tess4j/common/samplerender/GLError.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/benchmark/translate_tess4j/common/samplerender/GpuBuffer.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/benchmark/translate_tess4j/common/samplerender/IndexBuffer.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/benchmark/translate_tess4j/common/samplerender/Mesh.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/benchmark/translate_tess4j/common/samplerender/SampleRender.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/benchmark/translate_tess4j/common/samplerender/Shader.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/benchmark/translate_tess4j/common/samplerender/Texture.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/benchmark/translate_tess4j/common/samplerender/VertexBuffer.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/benchmark/translate_tess4j/common/samplerender/arcore/BackgroundRenderer.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/benchmark/translate_tess4j/common/samplerender/arcore/PlaneRenderer.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/benchmark/translate_tess4j/common/samplerender/arcore/SpecularCubemapFilter.java" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/res/drawable-xxhdpi/ic_launcher.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/res/drawable-xxhdpi/ic_settings.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/res/drawable-xxhdpi/rounded_bg.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/res/layout/activity_main.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/res/layout/ar_text.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/res/menu/settings_menu.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/res/values/colors.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/res/values/strings.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/res/values/styles.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/build.gradle" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/gradle.properties" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/gradle/wrapper/gradle-wrapper.jar" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/gradle/wrapper/gradle-wrapper.properties" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/gradlew" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/gradlew.bat" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/settings.gradle" beforeDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="ExecutionTargetManager" SELECTED_TARGET="device_and_snapshot_combo_box_target[VirtualDevicePath@C:\Users\seif\.android\avd\Galaxy_S20_API_30.avd]" />
+  <component name="ExternalProjectsData">
+    <projectState path="$PROJECT_DIR$">
+      <ProjectState />
+    </projectState>
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="layoutResourceFile_vertical" />
+        <option value="resourceFile" />
+        <option value="layoutResourceFile" />
+        <option value="Class" />
+        <option value="valueResourceFile" />
+      </list>
+    </option>
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/.." />
+  </component>
+  <component name="ProjectId" id="1ugPvo5p8xzPEB4CDknzJ6Le6bx" />
+  <component name="ProjectLevelVcsManager" settingsEditedManually="true">
+    <ConfirmationsSetting value="2" id="Add" />
+  </component>
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent">
+    <property name="ASKED_ADD_EXTERNAL_FILES" value="true" />
+    <property name="DeviceAndSnapshotComboBoxAction.selectedDevice" value="9888e3334e584d5335" />
+    <property name="DeviceAndSnapshotComboBoxAction.selectionTime" value="2021-07-06T17:37:31.220Z" />
+    <property name="RunOnceActivity.OpenProjectViewOnStart" value="true" />
+    <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
+    <property name="android-custom-viewC:/Users/seif/AppData/Local/Android/Sdk/sources/android-30/android/widget/ImageView.java_SELECTED" value="ImageView" />
+    <property name="dart.analysis.tool.window.visible" value="false" />
+    <property name="ignore.virus.scanning.warn.message" value="true" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/../translate_tess4j" />
+    <property name="multi-representation-previewC:/Users/seif/AppData/Local/Android/Sdk/sources/android-30/android/widget/ImageView.java_selected" value="Custom views" />
+    <property name="project.structure.last.edited" value="Modules" />
+    <property name="project.structure.proportion" value="0.17" />
+    <property name="project.structure.side.proportion" value="0.2" />
+    <property name="settings.editor.selected.configurable" value="AndroidSdkUpdater" />
+    <property name="show.migrate.to.gradle.popup" value="false" />
+  </component>
+  <component name="RecentsManager">
+    <key name="MoveClassesOrPackagesDialog.RECENTS_KEY">
+      <recent name="com.benchmark.translate_tess4j" />
+    </key>
+    <key name="CopyClassDialog.RECENTS_KEY">
+      <recent name="com.benchmark.translate_tess4j" />
+    </key>
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="C:\Users\seif\Development\Brown\MARAbenchmark\translate-tess4j\app\src\main\res\drawable-xxhdpi" />
+      <recent name="C:\Users\seif\Development\Brown\MARAbenchmark\translate-tess4j\app" />
+      <recent name="C:\Users\seif\Development\Brown\MARAbenchmark\translate-tess4j\app\src\main\assets\tessdata" />
+    </key>
+  </component>
+  <component name="RunManager">
+    <configuration default="true" type="AndroidJUnit" factoryName="Android JUnit">
+      <option name="TEST_OBJECT" value="class" />
+      <option name="WORKING_DIRECTORY" value="$MODULE_DIR$" />
+      <method v="2">
+        <option name="Android.Gradle.BeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="app" type="AndroidRunConfigurationType" factoryName="Android App" activateToolWindowBeforeRun="false">
+      <module name="translate-tess4j.app" />
+      <option name="DEPLOY" value="true" />
+      <option name="DEPLOY_APK_FROM_BUNDLE" value="false" />
+      <option name="DEPLOY_AS_INSTANT" value="false" />
+      <option name="ARTIFACT_NAME" value="" />
+      <option name="PM_INSTALL_OPTIONS" value="" />
+      <option name="ALL_USERS" value="false" />
+      <option name="ALWAYS_INSTALL_WITH_PM" value="false" />
+      <option name="DYNAMIC_FEATURES_DISABLED_LIST" value="" />
+      <option name="ACTIVITY_EXTRA_FLAGS" value="" />
+      <option name="MODE" value="default_activity" />
+      <option name="CLEAR_LOGCAT" value="false" />
+      <option name="SHOW_LOGCAT_AUTOMATICALLY" value="false" />
+      <option name="SKIP_NOOP_APK_INSTALLATIONS" value="true" />
+      <option name="FORCE_STOP_RUNNING_APP" value="true" />
+      <option name="TARGET_SELECTION_MODE" value="DEVICE_AND_SNAPSHOT_COMBO_BOX" />
+      <option name="SELECTED_CLOUD_MATRIX_CONFIGURATION_ID" value="-1" />
+      <option name="SELECTED_CLOUD_MATRIX_PROJECT_ID" value="" />
+      <option name="DEBUGGER_TYPE" value="Auto" />
+      <Auto>
+        <option name="USE_JAVA_AWARE_DEBUGGER" value="false" />
+        <option name="SHOW_STATIC_VARS" value="true" />
+        <option name="WORKING_DIR" value="" />
+        <option name="TARGET_LOGGING_CHANNELS" value="lldb process:gdb-remote packets" />
+        <option name="SHOW_OPTIMIZED_WARNING" value="true" />
+      </Auto>
+      <Hybrid>
+        <option name="USE_JAVA_AWARE_DEBUGGER" value="false" />
+        <option name="SHOW_STATIC_VARS" value="true" />
+        <option name="WORKING_DIR" value="" />
+        <option name="TARGET_LOGGING_CHANNELS" value="lldb process:gdb-remote packets" />
+        <option name="SHOW_OPTIMIZED_WARNING" value="true" />
+      </Hybrid>
+      <Java />
+      <Native>
+        <option name="USE_JAVA_AWARE_DEBUGGER" value="false" />
+        <option name="SHOW_STATIC_VARS" value="true" />
+        <option name="WORKING_DIR" value="" />
+        <option name="TARGET_LOGGING_CHANNELS" value="lldb process:gdb-remote packets" />
+        <option name="SHOW_OPTIMIZED_WARNING" value="true" />
+      </Native>
+      <Profilers>
+        <option name="ADVANCED_PROFILING_ENABLED" value="false" />
+        <option name="STARTUP_PROFILING_ENABLED" value="false" />
+        <option name="STARTUP_CPU_PROFILING_ENABLED" value="false" />
+        <option name="STARTUP_CPU_PROFILING_CONFIGURATION_NAME" value="Sample Java Methods" />
+        <option name="STARTUP_NATIVE_MEMORY_PROFILING_ENABLED" value="false" />
+        <option name="NATIVE_MEMORY_SAMPLE_RATE_BYTES" value="2048" />
+      </Profilers>
+      <option name="DEEP_LINK" value="" />
+      <option name="ACTIVITY_CLASS" value="" />
+      <option name="SEARCH_ACTIVITY_IN_GLOBAL_SCOPE" value="false" />
+      <option name="SKIP_ACTIVITY_VALIDATION" value="false" />
+      <method v="2">
+        <option name="Android.Gradle.BeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
+  </component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
+  <component name="SvnConfiguration">
+    <configuration />
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="8318bda1-6d7f-4e77-8435-62531468d931" name="Default Changelist" comment="" />
+      <created>1625084491311</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1625084491311</updated>
+    </task>
+    <servers />
+  </component>
+  <component name="UnknownFeatures">
+    <option featureType="com.intellij.fileTypeFactory" implementationName="*.frag" />
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State />
+          </value>
+        </entry>
+      </map>
+    </option>
+    <option name="oldMeFiltersMigrated" value="true" />
+  </component>
+  <component name="VcsManagerConfiguration">
+    <option name="ADD_EXTERNAL_FILES_SILENTLY" value="true" />
+  </component>
+  <component name="WindowStateProjectService">
+    <state x="477" y="266" key="#PSD" timestamp="1625158961972">
+      <screen x="0" y="0" width="1920" height="1040" />
+    </state>
+    <state x="477" y="266" key="#PSD/0.0.1920.1040/-1920.0.1920.1040@0.0.1920.1040" timestamp="1625158961972" />
+    <state x="552" y="161" key="#Plugins" timestamp="1625513817447">
+      <screen x="0" y="0" width="1920" height="1040" />
+    </state>
+    <state x="552" y="161" key="#Plugins/0.0.1920.1040/-1920.0.1920.1040@0.0.1920.1040" timestamp="1625513817447" />
+    <state x="703" y="310" key="#com.intellij.fileTypes.FileTypeChooser" timestamp="1625101781218">
+      <screen x="0" y="0" width="1920" height="1040" />
+    </state>
+    <state x="703" y="310" key="#com.intellij.fileTypes.FileTypeChooser/0.0.1920.1040/-1920.0.1920.1040@0.0.1920.1040" timestamp="1625101781218" />
+    <state x="765" y="223" key="#com.intellij.ide.util.MemberChooser" timestamp="1625163410345">
+      <screen x="0" y="0" width="1920" height="1040" />
+    </state>
+    <state x="765" y="223" key="#com.intellij.ide.util.MemberChooser/0.0.1920.1040/-1920.0.1920.1040@0.0.1920.1040" timestamp="1625163410345" />
+    <state x="640" y="256" key="#com.intellij.openapi.updateSettings.impl.PluginUpdateInfoDialog" timestamp="1625689366787">
+      <screen x="0" y="0" width="1920" height="1040" />
+    </state>
+    <state x="640" y="256" key="#com.intellij.openapi.updateSettings.impl.PluginUpdateInfoDialog/0.0.1920.1040/-1920.0.1920.1040@0.0.1920.1040" timestamp="1625689366786" />
+    <state x="725" y="405" key="#com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesDialog.classes" timestamp="1625085389615">
+      <screen x="0" y="0" width="1920" height="1040" />
+    </state>
+    <state x="725" y="405" key="#com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesDialog.classes/0.0.1920.1040/-1920.0.1920.1040@0.0.1920.1040" timestamp="1625085389615" />
+    <state x="690" y="267" key="#com.intellij.refactoring.safeDelete.UnsafeUsagesDialog" timestamp="1625163684429">
+      <screen x="0" y="0" width="1920" height="1040" />
+    </state>
+    <state x="690" y="267" key="#com.intellij.refactoring.safeDelete.UnsafeUsagesDialog/0.0.1920.1040/-1920.0.1920.1040@0.0.1920.1040" timestamp="1625163684429" />
+    <state x="-1380" y="275" key="AndroidCreateResourceDirectoryDialog" timestamp="1625271860426">
+      <screen x="-1920" y="0" width="1920" height="1040" />
+    </state>
+    <state x="-1380" y="275" key="AndroidCreateResourceDirectoryDialog/0.0.1920.1040/-1920.0.1920.1040@-1920.0.1920.1040" timestamp="1625271860426" />
+    <state x="540" y="275" key="AndroidCreateResourceFileDialog" timestamp="1625690059405">
+      <screen x="0" y="0" width="1920" height="1040" />
+    </state>
+    <state x="-1380" y="275" key="AndroidCreateResourceFileDialog/0.0.1920.1040/-1920.0.1920.1040@-1920.0.1920.1040" timestamp="1625232709440" />
+    <state x="540" y="275" key="AndroidCreateResourceFileDialog/0.0.1920.1040/-1920.0.1920.1040@0.0.1920.1040" timestamp="1625690059405" />
+    <state x="807" y="298" key="AndroidCreateXmlResourceDialog" timestamp="1625679947233">
+      <screen x="0" y="0" width="1920" height="1040" />
+    </state>
+    <state x="807" y="298" key="AndroidCreateXmlResourceDialog/0.0.1920.1040/-1920.0.1920.1040@0.0.1920.1040" timestamp="1625679947233" />
+    <state x="740" y="262" key="FileChooserDialogImpl" timestamp="1625760899363">
+      <screen x="0" y="0" width="1920" height="1040" />
+    </state>
+    <state x="740" y="262" key="FileChooserDialogImpl/0.0.1920.1040/-1920.0.1920.1040@0.0.1920.1040" timestamp="1625760899363" />
+    <state width="1877" height="258" key="GridCell.Tab.0.bottom" timestamp="1625690756117">
+      <screen x="0" y="0" width="1920" height="1040" />
+    </state>
+    <state width="1876" height="132" key="GridCell.Tab.0.bottom/0.0.1920.1040/-1920.0.1920.1040@-1920.0.1920.1040" timestamp="1625621350105" />
+    <state width="1877" height="258" key="GridCell.Tab.0.bottom/0.0.1920.1040/-1920.0.1920.1040@0.0.1920.1040" timestamp="1625690756117" />
+    <state width="1877" height="258" key="GridCell.Tab.0.center" timestamp="1625690756117">
+      <screen x="0" y="0" width="1920" height="1040" />
+    </state>
+    <state width="1876" height="132" key="GridCell.Tab.0.center/0.0.1920.1040/-1920.0.1920.1040@-1920.0.1920.1040" timestamp="1625621350104" />
+    <state width="1877" height="258" key="GridCell.Tab.0.center/0.0.1920.1040/-1920.0.1920.1040@0.0.1920.1040" timestamp="1625690756117" />
+    <state width="1877" height="258" key="GridCell.Tab.0.left" timestamp="1625690756117">
+      <screen x="0" y="0" width="1920" height="1040" />
+    </state>
+    <state width="1876" height="132" key="GridCell.Tab.0.left/0.0.1920.1040/-1920.0.1920.1040@-1920.0.1920.1040" timestamp="1625621350104" />
+    <state width="1877" height="258" key="GridCell.Tab.0.left/0.0.1920.1040/-1920.0.1920.1040@0.0.1920.1040" timestamp="1625690756117" />
+    <state width="1877" height="258" key="GridCell.Tab.0.right" timestamp="1625690756117">
+      <screen x="0" y="0" width="1920" height="1040" />
+    </state>
+    <state width="1876" height="132" key="GridCell.Tab.0.right/0.0.1920.1040/-1920.0.1920.1040@-1920.0.1920.1040" timestamp="1625621350104" />
+    <state width="1877" height="258" key="GridCell.Tab.0.right/0.0.1920.1040/-1920.0.1920.1040@0.0.1920.1040" timestamp="1625690756117" />
+    <state x="667" y="366" key="edit.logcat.filter.dialog.dimensions" timestamp="1625515514588">
+      <screen x="0" y="0" width="1920" height="1040" />
+    </state>
+    <state x="667" y="366" key="edit.logcat.filter.dialog.dimensions/0.0.1920.1040/-1920.0.1920.1040@0.0.1920.1040" timestamp="1625515514588" />
+    <state x="668" y="237" width="648" height="624" key="find.popup" timestamp="1625678257821">
+      <screen x="0" y="0" width="1920" height="1040" />
+    </state>
+    <state x="-1252" y="237" width="648" height="624" key="find.popup/0.0.1920.1040/-1920.0.1920.1040@-1920.0.1920.1040" timestamp="1625235252989" />
+    <state x="668" y="237" width="648" height="624" key="find.popup/0.0.1920.1040/-1920.0.1920.1040@0.0.1920.1040" timestamp="1625678257821" />
+    <state x="-1304" y="240" key="run.anything.popup" timestamp="1625244666411">
+      <screen x="-1920" y="0" width="1920" height="1040" />
+    </state>
+    <state x="-1304" y="240" key="run.anything.popup/0.0.1920.1040/-1920.0.1920.1040@-1920.0.1920.1040" timestamp="1625244666411" />
+    <state x="623" y="225" width="672" height="678" key="search.everywhere.popup" timestamp="1625601972971">
+      <screen x="0" y="0" width="1920" height="1040" />
+    </state>
+    <state x="623" y="225" width="672" height="678" key="search.everywhere.popup/0.0.1920.1040/-1920.0.1920.1040@0.0.1920.1040" timestamp="1625601972971" />
+  </component>
+</project>
