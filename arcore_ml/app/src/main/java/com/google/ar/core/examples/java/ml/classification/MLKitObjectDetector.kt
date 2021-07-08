@@ -20,6 +20,7 @@ import android.app.Activity
 import android.media.Image
 import com.google.ar.core.examples.java.ml.classification.utils.ImageUtils
 import com.google.ar.core.examples.java.ml.classification.utils.VertexUtils.rotateCoordinates
+import com.google.mlkit.common.model.LocalModel
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.objects.ObjectDetection
 import com.google.mlkit.vision.objects.custom.CustomObjectDetectorOptions
@@ -31,11 +32,11 @@ import kotlinx.coroutines.tasks.asDeferred
  */
 class MLKitObjectDetector(context: Activity) : ObjectDetector(context) {
   // To use a custom model, follow steps on https://developers.google.com/ml-kit/vision/object-detection/custom-models/android.
-  // val model = LocalModel.Builder().setAssetFilePath("inception_v4_1_metadata_1.tflite").build()
-  // val builder = CustomObjectDetectorOptions.Builder(model)
+   val model = LocalModel.Builder().setAssetFilePath("inception_v4_1_metadata_1.tflite").build()
+   val builder = CustomObjectDetectorOptions.Builder(model)
 
   // For the ML Kit default model, use the following:
-  val builder = ObjectDetectorOptions.Builder()
+//  val builder = ObjectDetectorOptions.Builder()
 
   private val options = builder
     .setDetectorMode(CustomObjectDetectorOptions.SINGLE_IMAGE_MODE)
