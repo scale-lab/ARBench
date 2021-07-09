@@ -36,13 +36,10 @@ import android.os.Bundle;
 import android.provider.DocumentsContract;
 import android.provider.MediaStore;
 import android.util.Log;
-import android.view.Gravity;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.Button;
-import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.PopupMenu;
@@ -52,29 +49,7 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.viewpager.widget.PagerAdapter;
-import androidx.viewpager.widget.ViewPager;
 
-import com.google.android.gms.tasks.OnFailureListener;
-import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.ar.core.Anchor;
-import com.google.ar.core.ArCoreApk;
-import com.google.ar.core.Camera;
-import com.google.ar.core.Config;
-import com.google.ar.core.Config.InstantPlacementMode;
-import com.google.ar.core.DepthPoint;
-import com.google.ar.core.Frame;
-import com.google.ar.core.HitResult;
-import com.google.ar.core.InstantPlacementPoint;
-import com.google.ar.core.LightEstimate;
-import com.google.ar.core.Plane;
-import com.google.ar.core.PlaybackStatus;
-import com.google.ar.core.Point.OrientationMode;
-import com.google.ar.core.PointCloud;
-import com.google.ar.core.Session;
-import com.google.ar.core.Trackable;
-import com.google.ar.core.TrackingFailureReason;
-import com.google.ar.core.TrackingState;
 import com.benchmark.translate_tess4j.common.helpers.CameraPermissionHelper;
 import com.benchmark.translate_tess4j.common.helpers.DepthSettings;
 import com.benchmark.translate_tess4j.common.helpers.DisplayRotationHelper;
@@ -93,6 +68,21 @@ import com.benchmark.translate_tess4j.common.samplerender.VertexBuffer;
 import com.benchmark.translate_tess4j.common.samplerender.arcore.BackgroundRenderer;
 import com.benchmark.translate_tess4j.common.samplerender.arcore.PlaneRenderer;
 import com.benchmark.translate_tess4j.common.samplerender.arcore.SpecularCubemapFilter;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.ar.core.Anchor;
+import com.google.ar.core.ArCoreApk;
+import com.google.ar.core.Camera;
+import com.google.ar.core.Config;
+import com.google.ar.core.Config.InstantPlacementMode;
+import com.google.ar.core.Frame;
+import com.google.ar.core.LightEstimate;
+import com.google.ar.core.Plane;
+import com.google.ar.core.PlaybackStatus;
+import com.google.ar.core.PointCloud;
+import com.google.ar.core.Session;
+import com.google.ar.core.TrackingFailureReason;
+import com.google.ar.core.TrackingState;
 import com.google.ar.core.exceptions.CameraNotAvailableException;
 import com.google.ar.core.exceptions.NotYetAvailableException;
 import com.google.ar.core.exceptions.PlaybackFailedException;
@@ -118,7 +108,6 @@ import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Vector;
 
 /**
  * This is a simple example that shows how to create an augmented reality (AR) application using the
@@ -330,7 +319,7 @@ public class MainActivity extends AppCompatActivity implements SampleRender.Rend
             }
 
             case Recording: {
-                boolean hasStopped = arRecorder.stopRecording();
+                boolean hasStopped = arRecorder.stopRecording(this);
                 Log.d(TAG, String.format("onClickRecord stop: hasStopped %b", hasStopped));
                 if (hasStopped)
                     appState = AppState.Idle;
