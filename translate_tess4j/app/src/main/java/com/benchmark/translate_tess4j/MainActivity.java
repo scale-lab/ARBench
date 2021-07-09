@@ -23,6 +23,7 @@ import android.content.res.AssetManager;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Color;
 import android.graphics.ImageFormat;
 import android.graphics.Rect;
 import android.graphics.YuvImage;
@@ -989,6 +990,7 @@ public class MainActivity extends AppCompatActivity implements SampleRender.Rend
 
     private void addTextToScene(String translatedText, float x, float y, int width) {
         TextView textView = findViewById(R.id.translated_text);
+        textView.setTextColor(Color.RED);
         textView.setWidth(width);
         textView.setTranslationX(x * textView.getWidth());
         textView.setTranslationY(y * textView.getHeight());
