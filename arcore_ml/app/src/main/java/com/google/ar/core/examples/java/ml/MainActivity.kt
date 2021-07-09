@@ -18,18 +18,15 @@ package com.google.ar.core.examples.java.ml
 
 import android.os.Bundle
 import android.util.Log
+import android.view.View
+import android.widget.Button
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.google.ar.core.CameraConfig
 import com.google.ar.core.CameraConfigFilter
 import com.google.ar.core.Config
 import com.google.ar.core.examples.java.common.helpers.FullScreenHelper
-import com.google.ar.core.exceptions.CameraNotAvailableException
-import com.google.ar.core.exceptions.UnavailableApkTooOldException
-import com.google.ar.core.exceptions.UnavailableArcoreNotInstalledException
-import com.google.ar.core.exceptions.UnavailableDeviceNotCompatibleException
-import com.google.ar.core.exceptions.UnavailableSdkTooOldException
-import com.google.ar.core.exceptions.UnavailableUserDeclinedInstallationException
+import com.google.ar.core.exceptions.*
 
 
 class MainActivity : AppCompatActivity() {
@@ -84,6 +81,37 @@ class MainActivity : AppCompatActivity() {
     setContentView(view.root)
     renderer.bindView(view)
     lifecycle.addObserver(view)
+  }
+
+  enum class AppState {
+    Idle, Recording
+  }
+
+  // Tracks app's specific state changes.
+  private var appState = AppState.Idle
+
+  private fun updateRecordButton() {
+    val buttonView: View = findViewById(R.id.record_button)
+    val button: Button = buttonView as Button
+    when (appState) {
+      AppState.Idle -> button.text = "Record"
+      AppState.Recording -> button.text = "Stop"
+    }
+  }
+
+  fun onClickRecord(view: View?) {
+    Log.d(TAG, "onClickRecord")
+    when (appState) {
+      AppState.Idle -> {
+        val hasStarted: Boolean = MainActivityView(this, renderer).startRecording()
+        if (hasStarted) appState = AppState.Recording
+      }
+      AppState.Recording -> {
+        val hasStopped: Boolean = MainActivityView(this, renderer).stopRecording()
+        if (hasStopped) appState = AppState.Idle
+      }
+    }
+    updateRecordButton()
   }
 
   override fun onRequestPermissionsResult(

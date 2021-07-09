@@ -34,11 +34,11 @@ import com.google.ar.core.examples.java.ml.render.LabelRender
 import com.google.ar.core.examples.java.ml.render.PointCloudRender
 import com.google.ar.core.exceptions.CameraNotAvailableException
 import com.google.ar.core.exceptions.NotYetAvailableException
-import java.util.Collections
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.launch
+import java.util.*
 
 /**
  * Renders the HelloAR application into using our example Renderer.
@@ -127,9 +127,8 @@ class AppRenderer(val activity: MainActivity) : DefaultLifecycleObserver, Sample
     // Notify ARCore session that the view size changed so that the perspective matrix and
     // the video background can be properly adjusted.
     displayRotationHelper.updateSessionIfNeeded(session)
-
     val frame = try {
-      session.update()
+     session.update()
     } catch (e: CameraNotAvailableException) {
       Log.e(TAG, "Camera not available during onDrawFrame", e)
       showSnackbar("Camera not available. Try restarting the app.")
