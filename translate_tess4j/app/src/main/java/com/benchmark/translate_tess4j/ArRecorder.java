@@ -15,6 +15,7 @@ import android.os.Environment;
 import android.provider.MediaStore;
 import android.util.Log;
 import android.view.SurfaceView;
+import android.widget.TextView;
 
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
@@ -97,7 +98,10 @@ public class ArRecorder {
         return true;
     }
 
-    public boolean stopRecording() {
+    public boolean stopRecording(Activity context) {
+        TextView textView = context.findViewById(R.id.translated_text);
+        textView.setText("");
+
         try {
             session.stopRecording();
         } catch (RecordingFailedException e) {
