@@ -41,7 +41,7 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="benchmark.benchmark.BenchmarkActivity">
+    tools:context="com.google.ar.core.apps.augmentedimage.AugmentedImageActivity">
 
     <android.opengl.GLSurfaceView
         android:id="@+id/surfaceview"
@@ -49,33 +49,33 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
         android:layout_height="fill_parent"
         android:layout_gravity="top" />
 
-    <ImageButton
-        android:id="@+id/settings_button"
+    <ImageView
+        android:id="@+id/image_view_fit_to_scan"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_gravity="center"
+        android:scaleType="fitCenter" />
+
+    <Button
+        android:id="@+id/record_button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignParentTop="true"
-        android:layout_alignParentEnd="true"
-        android:layout_margin="25dp"
-        android:background="@android:color/transparent"
-        android:src="@drawable/ic_settings" />
+        android:layout_alignLeft="@id/surfaceview"
+        android:layout_alignBottom="@id/surfaceview"
+        android:layout_marginBottom="100dp"
+        android:onClick="onClickRecord"
+        android:text="Record"
+        android:textColor="@android:color/holo_red_light" />
 
-    <ScrollView
-        android:layout_width="match_parent"
-        android:layout_height="match_parent">
-
-        <LinearLayout
-            android:id="@+id/results_display"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:orientation="vertical">
-
-            <Button
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:onClick="onStartBenchmark"
-                android:text="Start benchmark" />
-
-        </LinearLayout>
-    </ScrollView>
+    <Button
+        android:id="@+id/playback_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignEnd="@id/surfaceview"
+        android:layout_alignBottom="@id/surfaceview"
+        android:layout_marginBottom="100dp"
+        android:onClick="onClickPlayback"
+        android:text="Playback"
+        android:textColor="@android:color/holo_green_light" />
 
 </RelativeLayout>

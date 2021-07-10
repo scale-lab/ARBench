@@ -38,10 +38,9 @@
  * limitations under the License.
  */
 
-package benchmark.helloar;
+package com.google.ar.core.examples.java.helloar;
 
 import android.content.DialogInterface;
-import android.content.Intent;
 import android.content.res.Resources;
 import android.media.Image;
 import android.opengl.GLES30;
@@ -53,6 +52,7 @@ import android.util.Log;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
+import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.PopupMenu;
 import android.widget.Toast;
@@ -75,36 +75,36 @@ import com.google.ar.core.PlaybackStatus;
 import com.google.ar.core.Point;
 import com.google.ar.core.Point.OrientationMode;
 import com.google.ar.core.PointCloud;
+import com.google.ar.core.RecordingConfig;
 import com.google.ar.core.RecordingStatus;
 import com.google.ar.core.Session;
+import com.google.ar.core.Track;
 import com.google.ar.core.TrackData;
 import com.google.ar.core.Trackable;
 import com.google.ar.core.TrackingFailureReason;
 import com.google.ar.core.TrackingState;
-
-import benchmark.benchmark.BenchmarkActivity;
-import benchmark.common.helpers.CameraPermissionHelper;
-import benchmark.common.helpers.DepthSettings;
-import benchmark.common.helpers.DisplayRotationHelper;
-import benchmark.common.helpers.FullScreenHelper;
-import benchmark.common.helpers.InstantPlacementSettings;
-import benchmark.common.helpers.SnackbarHelper;
-import benchmark.common.helpers.TapHelper;
-import benchmark.common.helpers.TrackingStateHelper;
-import benchmark.common.samplerender.Framebuffer;
-import benchmark.common.samplerender.GLError;
-import benchmark.common.samplerender.Mesh;
-import benchmark.common.samplerender.SampleRender;
-import benchmark.common.samplerender.Shader;
-import benchmark.common.samplerender.Texture;
-import benchmark.common.samplerender.VertexBuffer;
-import benchmark.common.samplerender.arcore.BackgroundRenderer;
-import benchmark.common.samplerender.arcore.PlaneRenderer;
-import benchmark.common.samplerender.arcore.SpecularCubemapFilter;
-
+import com.google.ar.core.examples.java.common.helpers.CameraPermissionHelper;
+import com.google.ar.core.examples.java.common.helpers.DepthSettings;
+import com.google.ar.core.examples.java.common.helpers.DisplayRotationHelper;
+import com.google.ar.core.examples.java.common.helpers.FullScreenHelper;
+import com.google.ar.core.examples.java.common.helpers.InstantPlacementSettings;
+import com.google.ar.core.examples.java.common.helpers.SnackbarHelper;
+import com.google.ar.core.examples.java.common.helpers.TapHelper;
+import com.google.ar.core.examples.java.common.helpers.TrackingStateHelper;
+import com.google.ar.core.examples.java.common.samplerender.Framebuffer;
+import com.google.ar.core.examples.java.common.samplerender.GLError;
+import com.google.ar.core.examples.java.common.samplerender.Mesh;
+import com.google.ar.core.examples.java.common.samplerender.SampleRender;
+import com.google.ar.core.examples.java.common.samplerender.Shader;
+import com.google.ar.core.examples.java.common.samplerender.Texture;
+import com.google.ar.core.examples.java.common.samplerender.VertexBuffer;
+import com.google.ar.core.examples.java.common.samplerender.arcore.BackgroundRenderer;
+import com.google.ar.core.examples.java.common.samplerender.arcore.PlaneRenderer;
+import com.google.ar.core.examples.java.common.samplerender.arcore.SpecularCubemapFilter;
 import com.google.ar.core.exceptions.CameraNotAvailableException;
 import com.google.ar.core.exceptions.NotYetAvailableException;
 import com.google.ar.core.exceptions.PlaybackFailedException;
+import com.google.ar.core.exceptions.RecordingFailedException;
 import com.google.ar.core.exceptions.UnavailableApkTooOldException;
 import com.google.ar.core.exceptions.UnavailableArcoreNotInstalledException;
 import com.google.ar.core.exceptions.UnavailableDeviceNotCompatibleException;
@@ -113,7 +113,6 @@ import com.google.ar.core.exceptions.UnavailableUserDeclinedInstallationExceptio
 
 import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
@@ -121,11 +120,11 @@ import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
-
-import benchmark.benchmark.R;
+import java.util.concurrent.TimeUnit;
 
 /**
  * This is a simple example that shows how to create an augmented reality (AR) application using the
@@ -165,7 +164,6 @@ public class HelloArActivity extends AppCompatActivity implements SampleRender.R
   private boolean installRequested;
 
   private Session session;
-  private Session session2;
   private final SnackbarHelper messageSnackbarHelper = new SnackbarHelper();
   private DisplayRotationHelper displayRotationHelper;
   private final TrackingStateHelper trackingStateHelper = new TrackingStateHelper(this);
@@ -224,13 +222,12 @@ public class HelloArActivity extends AppCompatActivity implements SampleRender.R
   private final float[] worldLightDirection = {0.0f, 0.0f, 0.0f, 0.0f};
   private final float[] viewLightDirection = new float[4]; // view x world light direction
 
-  public String logPath;
   private BufferedWriter fpsLog;
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
-    setContentView(R.layout.activity_helloar);
+    setContentView(R.layout.activity_main);
     surfaceView = findViewById(R.id.surfaceview);
     displayRotationHelper = new DisplayRotationHelper(/*context=*/ this);
 
@@ -256,23 +253,6 @@ public class HelloArActivity extends AppCompatActivity implements SampleRender.R
             popup.show();
           }
         });
-
-    Intent intent = getIntent();
-    int fileNumber = intent.getIntExtra(BenchmarkActivity.FILE_NUMBER, 0);
-    fileName = "recording-" + fileNumber + ".mp4";
-    File f = new File(this.getExternalFilesDir(null)+"/"+fileName);
-    if (!f.exists()) try {
-
-      InputStream is = getAssets().open("recordings/"+fileName);
-      int len;
-      byte[] buffer = new byte[1024];
-      FileOutputStream fos = new FileOutputStream(f);
-      while ((len = is.read(buffer)) > 0) {
-        fos.write(buffer, 0 , len);
-      }
-      is.close();
-      fos.close();
-    } catch (Exception e) { throw new RuntimeException(e); }
   }
 
   /** Menu button to launch feature specific settings. */
@@ -303,7 +283,6 @@ public class HelloArActivity extends AppCompatActivity implements SampleRender.R
       // https://developers.google.com/ar/reference/java/arcore/reference/com/google/ar/core/Session#close()
       session.close();
       session = null;
-      session2.close();
     }
 
     super.onDestroy();
@@ -334,7 +313,6 @@ public class HelloArActivity extends AppCompatActivity implements SampleRender.R
 
         // Create the session.
         session = new Session(/* context= */ this);
-        session2 = new Session(this);
       } catch (UnavailableArcoreNotInstalledException
           | UnavailableUserDeclinedInstallationException e) {
         message = "Please install ARCore";
@@ -361,9 +339,8 @@ public class HelloArActivity extends AppCompatActivity implements SampleRender.R
     }
 
     try {
-      logPath = this.getExternalFilesDir(null).getAbsolutePath() + "/fps.csv";
-      Log.d(TAG, "Logging FPS to " + logPath);
-      fpsLog = new BufferedWriter(new FileWriter(logPath));
+      Log.d(TAG, "Logging FPS to " + this.getExternalFilesDir(null).getAbsolutePath() + "/fps.csv");
+      fpsLog = new BufferedWriter(new FileWriter(this.getExternalFilesDir(null).getAbsolutePath() + "/fps.csv"));
     } catch (IOException e) {
       messageSnackbarHelper.showError(this, "Could not open file to log FPS");
     }
@@ -377,22 +354,11 @@ public class HelloArActivity extends AppCompatActivity implements SampleRender.R
       // `session.setPlaybackDataset(playbackDatasetPath)` before calling `session.resume()`. To
       // learn more about recording and playback, see:
       // https://developers.google.com/ar/develop/java/recording-and-playback
-      String destination = new File(this.getExternalFilesDir(null), fileName).getAbsolutePath();
-      session.setPlaybackDataset(destination);
       session.resume();
-      session2.resume();
     } catch (CameraNotAvailableException e) {
       messageSnackbarHelper.showError(this, "Camera not available. Try restarting the app.");
       session = null;
       return;
-    } catch (PlaybackFailedException e) {
-      setResult(RESULT_CANCELED);
-      try {
-        fpsLog.close();
-      } catch (IOException f) {
-
-      }
-      finish();
     }
 
     surfaceView.onResume();
@@ -409,7 +375,6 @@ public class HelloArActivity extends AppCompatActivity implements SampleRender.R
       displayRotationHelper.onPause();
       surfaceView.onPause();
       session.pause();
-      session2.pause();
     }
   }
 
@@ -527,7 +492,6 @@ public class HelloArActivity extends AppCompatActivity implements SampleRender.R
       Log.e(TAG, "Failed to read a required asset file", e);
       messageSnackbarHelper.showError(this, "Failed to read a required asset file: " + e);
     }
-
   }
 
   @Override
@@ -539,7 +503,7 @@ public class HelloArActivity extends AppCompatActivity implements SampleRender.R
   @Override
   public void onDrawFrame(SampleRender render) {
     long frameTime = System.currentTimeMillis();
-    if (session == null || session2 == null) {
+    if (session == null) {
       return;
     }
 
@@ -549,8 +513,6 @@ public class HelloArActivity extends AppCompatActivity implements SampleRender.R
     if (!hasSetTextureNames) {
       session.setCameraTextureNames(
           new int[] {backgroundRenderer.getCameraColorTexture().getTextureId()});
-//      session2.setCameraTextureNames(
-//              new int[] {backgroundRenderer.getCameraColorTexture().getTextureId()+1});
       hasSetTextureNames = true;
     }
 
@@ -563,10 +525,9 @@ public class HelloArActivity extends AppCompatActivity implements SampleRender.R
     // Obtain the current frame from ARSession. When the configuration is set to
     // UpdateMode.BLOCKING (it is by default), this will throttle the rendering to the
     // camera framerate.
-    Frame frame, frame2;
-    long updateTime = System.currentTimeMillis();
+    Frame frame;
+    long trackingTime = System.currentTimeMillis();
     try {
-//      frame2 = session2.update();
       frame = session.update();
     } catch (CameraNotAvailableException e) {
       Log.e(TAG, "Camera not available during onDrawFrame", e);
@@ -621,7 +582,7 @@ public class HelloArActivity extends AppCompatActivity implements SampleRender.R
         // spam the logcat with this.
       }
     }
-    updateTime = System.currentTimeMillis() - updateTime;
+    trackingTime = System.currentTimeMillis() - trackingTime;
 
     // Handle one tap per frame.
 
@@ -639,13 +600,6 @@ public class HelloArActivity extends AppCompatActivity implements SampleRender.R
       message = "Performing playback";
     } else if (session.getPlaybackStatus() == PlaybackStatus.FINISHED) {
       message = "Playback complete";
-      setResult(RESULT_OK);
-      try {
-        fpsLog.close();
-      } catch (IOException e) {
-
-      }
-      finish();
     } else if (camera.getTrackingState() == TrackingState.PAUSED) {
       if (camera.getTrackingFailureReason() == TrackingFailureReason.NONE) {
         message = SEARCHING_PLANE_MESSAGE;
@@ -743,7 +697,7 @@ public class HelloArActivity extends AppCompatActivity implements SampleRender.R
     renderTime = System.currentTimeMillis() - renderTime;
     try {
       if (fpsLog != null) {
-        fpsLog.write(currentPhase + "," + frameTime + "," + updateTime + "," + handleInputTime + "," + renderBackgroundTime + "," + renderTime + "," + (System.currentTimeMillis() - frameTime) + "," + session.getAllAnchors().size() + "\n");
+        fpsLog.write(currentPhase + "," + frameTime + "," + trackingTime + "," + handleInputTime + "," + renderBackgroundTime + "," + renderTime + "," + (System.currentTimeMillis() - frameTime) + "," + session.getAllAnchors().size() + "\n");
       }
     } catch (IOException e) {
       Log.e(TAG, "Failed to log frame data", e);
@@ -1010,7 +964,7 @@ public class HelloArActivity extends AppCompatActivity implements SampleRender.R
     // don't detect planes
 //    config.setPlaneFindingMode(Config.PlaneFindingMode.DISABLED);
     // don't match framerate to camera
-    config.setUpdateMode(Config.UpdateMode.LATEST_CAMERA_IMAGE);
+//    config.setUpdateMode(Config.UpdateMode.LATEST_CAMERA_IMAGE);
     // use stereo camera
     CameraConfigFilter cameraConfigFilter = new CameraConfigFilter(session);
     cameraConfigFilter.setStereoCameraUsage(java.util.EnumSet.of(CameraConfig.StereoCameraUsage.REQUIRE_AND_USE));
@@ -1023,7 +977,91 @@ public class HelloArActivity extends AppCompatActivity implements SampleRender.R
     session.configure(config);
   }
 
-  String fileName;
-  int currentPhase = 1;
+  //// Ilyes ////
 
+  Boolean isRecording = false;
+  int fileNumber = 4;
+  String fileName = "recording-" + fileNumber;
+  int currentPhase = 1;
+  boolean incrementPhase = false;
+
+
+  public void onRecordingClick(View view) throws CameraNotAvailableException {
+    if(isRecording) {
+      stopRecording();
+      isRecording = false;
+    } else {
+      startRecording();
+      isRecording = true;
+    }
+
+    if (session.getRecordingStatus() == RecordingStatus.OK) {
+      ((Button)view).setText("Stop recording");
+      Log.v("Recording", "It is recording");
+    }
+
+    if (session.getRecordingStatus() == RecordingStatus.NONE) {
+      ((Button)view).setText("Start Recording");
+      Log.v("Recording", "It is not recording");
+    }
+  }
+
+  public void startRecording()  {
+    String destination = new File(this.getExternalFilesDir(null), fileName + ".mp4").getAbsolutePath();
+    Track tapTrack = new Track(session)
+            .setId(TAP_TRACK_ID)
+            .setMimeType(TAP_TRACK_MIME_TYPE);
+    Track phaseTrack = new Track(session)
+            .setId(PHASE_TRACK_ID)
+            .setMimeType(PHASE_TRACK_MIME_TYPE);
+
+    RecordingConfig recordingConfig =
+            new RecordingConfig(session)
+                    .setMp4DatasetFilePath(destination)
+                    .setAutoStopOnPause(true)
+                    .addTrack(tapTrack)
+                    .addTrack(phaseTrack);
+    onPause();
+    try {
+      // Prepare the session for recording, but do not start recording yet.
+      session.startRecording(recordingConfig);
+    } catch (RecordingFailedException e) {
+      Log.e(TAG, "Failed to start recording", e);
+    }
+
+    // Resume the ARCore session to start recording.
+    onResume();
+  }
+
+  public void stopRecording() {
+    try {
+      session.stopRecording();  // Stop recording.
+      // Increment file number to save in different file in next recording
+      // fileNumber = fileNumber + 1;
+      // fileName = fileName.substring(0, fileName.length() - 1) + fileNumber;
+    } catch (RecordingFailedException e) {
+      Log.e(TAG, "Failed to stop recording", e);
+    }
+    currentPhase = 1;
+  }
+
+  public void onPlayPack(View view) throws CameraNotAvailableException, PlaybackFailedException, UnavailableSdkTooOldException, UnavailableDeviceNotCompatibleException, UnavailableArcoreNotInstalledException, UnavailableApkTooOldException {
+    String destination = new File(this.getExternalFilesDir(null), fileName + ".mp4").getAbsolutePath();
+    // Switch to a different dataset.
+    onPause();   // Pause the playback of the first dataset.
+    // Specify a different dataset to use.
+    session.setPlaybackDataset(destination);
+    onResume();  // Start playback from the beginning of the new dataset.
+    hasSetTextureNames = false;
+  }
+
+  public void setNewPhase(View view) {
+    if (session.getPlaybackStatus() == PlaybackStatus.OK) {
+      new AlertDialog.Builder(this).setMessage("Using phases from recording").show();
+    } else {
+      currentPhase++;
+    }
+  }
+
+  //// Ilyes ////
 }
