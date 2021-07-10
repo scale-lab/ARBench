@@ -11,6 +11,7 @@ Benchmark for Mobile Augmented Reality Applications.
 1. Open the app you would like to run with Android Studio
 2. Choose a target device to run the app on
 3. Click on Run
+
 More info: https://developer.android.com/studio/run/
 
 ## AR Apps
