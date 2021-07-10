@@ -22,7 +22,7 @@ Detects and augments 2D images in the scene using ARCore.
 ### Augmented Object Recognition
 Uses machine learning to identify objects in the scene then uses ARCore to label each object.
 
-### Camera translator
+### Camera Translator
 Detects text from the live camera feed when tapped then translates the text to Spanish and displays the translated text over the screen.
 
 ### Benchmark app
