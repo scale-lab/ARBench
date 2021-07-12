@@ -1,0 +1,227 @@
+1<?xml version="1.0" encoding="utf-8"?>
+2<!--
+3   Copyright 2016 Google LLC
+4
+5   Licensed under the Apache License, Version 2.0 (the "License");
+6   you may not use this file except in compliance with the License.
+7   You may obtain a copy of the License at
+8
+9      http://www.apache.org/licenses/LICENSE-2.0
+10
+11   Unless required by applicable law or agreed to in writing, software
+12   distributed under the License is distributed on an "AS IS" BASIS,
+13   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+14   See the License for the specific language governing permissions and
+15   limitations under the License.
+16-->
+17<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+18    package="com.benchmark.translate_tess4j"
+19    android:versionCode="1"
+20    android:versionName="1.0" >
+21
+22    <uses-sdk
+23        android:minSdkVersion="24"
+23-->/home/scale340/Desktop/rshahi/MARAbenchmark/translate-tess4j/app/src/main/AndroidManifest.xml
+24        android:targetSdkVersion="30" />
+24-->/home/scale340/Desktop/rshahi/MARAbenchmark/translate-tess4j/app/src/main/AndroidManifest.xml
+25
+26    <uses-permission android:name="android.permission.CAMERA" />
+26-->/home/scale340/Desktop/rshahi/MARAbenchmark/translate-tess4j/app/src/main/AndroidManifest.xml:21:3-62
+26-->/home/scale340/Desktop/rshahi/MARAbenchmark/translate-tess4j/app/src/main/AndroidManifest.xml:21:20-60
+27    <!--
+28       Limits app visibility in the Google Play Store to ARCore supported devices
+29       (https://developers.google.com/ar/devices).
+30    -->
+31    <uses-feature
+31-->/home/scale340/Desktop/rshahi/MARAbenchmark/translate-tess4j/app/src/main/AndroidManifest.xml:24:3-84
+32        android:name="android.hardware.camera.ar"
+32-->/home/scale340/Desktop/rshahi/MARAbenchmark/translate-tess4j/app/src/main/AndroidManifest.xml:24:17-58
+33        android:required="true" />
+33-->/home/scale340/Desktop/rshahi/MARAbenchmark/translate-tess4j/app/src/main/AndroidManifest.xml:24:59-82
+34
+35    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+35-->/home/scale340/Desktop/rshahi/MARAbenchmark/translate-tess4j/app/src/main/AndroidManifest.xml:26:3-27:38
+35-->/home/scale340/Desktop/rshahi/MARAbenchmark/translate-tess4j/app/src/main/AndroidManifest.xml:26:20-76
+36    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+36-->/home/scale340/Desktop/rshahi/MARAbenchmark/translate-tess4j/app/src/main/AndroidManifest.xml:28:3-77
+36-->/home/scale340/Desktop/rshahi/MARAbenchmark/translate-tess4j/app/src/main/AndroidManifest.xml:28:20-75
+37
+38    <uses-feature
+38-->/home/scale340/Desktop/rshahi/MARAbenchmark/translate-tess4j/app/src/main/AndroidManifest.xml:29:3-76
+39        android:glEsVersion="0x00030000"
+39-->/home/scale340/Desktop/rshahi/MARAbenchmark/translate-tess4j/app/src/main/AndroidManifest.xml:29:17-49
+40        android:required="true" />
+40-->/home/scale340/Desktop/rshahi/MARAbenchmark/translate-tess4j/app/src/main/AndroidManifest.xml:29:50-73
+41
+42    <queries>
+42-->[com.google.ar:core:1.25.0] /home/scale340/.gradle/caches/transforms-2/files-2.1/938db635b4f36de591a5b3800b8bfcb5/jetified-core-1.25.0/AndroidManifest.xml:29:5-31:15
+43        <package android:name="com.google.ar.core" />
+43-->[com.google.ar:core:1.25.0] /home/scale340/.gradle/caches/transforms-2/files-2.1/938db635b4f36de591a5b3800b8bfcb5/jetified-core-1.25.0/AndroidManifest.xml:30:9-54
+43-->[com.google.ar:core:1.25.0] /home/scale340/.gradle/caches/transforms-2/files-2.1/938db635b4f36de591a5b3800b8bfcb5/jetified-core-1.25.0/AndroidManifest.xml:30:18-51
+44    </queries>
+45
+46    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+46-->[com.google.mlkit:translate:16.1.2] /home/scale340/.gradle/caches/transforms-2/files-2.1/a6c31643b255e6e0cbdb768db5ea61f1/jetified-translate-16.1.2/AndroidManifest.xml:7:5-79
+46-->[com.google.mlkit:translate:16.1.2] /home/scale340/.gradle/caches/transforms-2/files-2.1/a6c31643b255e6e0cbdb768db5ea61f1/jetified-translate-16.1.2/AndroidManifest.xml:7:22-76
+47    <uses-permission android:name="android.permission.INTERNET" />
+47-->[com.google.mlkit:translate:16.1.2] /home/scale340/.gradle/caches/transforms-2/files-2.1/a6c31643b255e6e0cbdb768db5ea61f1/jetified-translate-16.1.2/AndroidManifest.xml:8:5-67
+47-->[com.google.mlkit:translate:16.1.2] /home/scale340/.gradle/caches/transforms-2/files-2.1/a6c31643b255e6e0cbdb768db5ea61f1/jetified-translate-16.1.2/AndroidManifest.xml:8:22-64
+48
+49    <application
+49-->/home/scale340/Desktop/rshahi/MARAbenchmark/translate-tess4j/app/src/main/AndroidManifest.xml:32:3-54:17
+50        android:allowBackup="false"
+50-->/home/scale340/Desktop/rshahi/MARAbenchmark/translate-tess4j/app/src/main/AndroidManifest.xml:33:7-34
+51        android:appComponentFactory="androidx.core.app.CoreComponentFactory"
+51-->[androidx.core:core:1.5.0] /home/scale340/.gradle/caches/transforms-2/files-2.1/9377839e26f8fcc7556c54533edff323/core-1.5.0/AndroidManifest.xml:24:18-86
+52        android:debuggable="true"
+53        android:extractNativeLibs="false"
+54        android:icon="@drawable/ic_launcher"
+54-->/home/scale340/Desktop/rshahi/MARAbenchmark/translate-tess4j/app/src/main/AndroidManifest.xml:34:7-43
+55        android:label="@string/app_name"
+55-->/home/scale340/Desktop/rshahi/MARAbenchmark/translate-tess4j/app/src/main/AndroidManifest.xml:35:7-39
+56        android:requestLegacyExternalStorage="true"
+56-->/home/scale340/Desktop/rshahi/MARAbenchmark/translate-tess4j/app/src/main/AndroidManifest.xml:39:7-50
+57        android:testOnly="true"
+58        android:theme="@style/AppTheme"
+58-->/home/scale340/Desktop/rshahi/MARAbenchmark/translate-tess4j/app/src/main/AndroidManifest.xml:36:7-38
+59        android:usesCleartextTraffic="false" >
+59-->/home/scale340/Desktop/rshahi/MARAbenchmark/translate-tess4j/app/src/main/AndroidManifest.xml:37:7-43
+60        <activity
+60-->/home/scale340/Desktop/rshahi/MARAbenchmark/translate-tess4j/app/src/main/AndroidManifest.xml:41:5-51:16
+61            android:name="com.benchmark.translate_tess4j.MainActivity"
+61-->/home/scale340/Desktop/rshahi/MARAbenchmark/translate-tess4j/app/src/main/AndroidManifest.xml:42:9-67
+62            android:configChanges="orientation|screenSize"
+62-->/home/scale340/Desktop/rshahi/MARAbenchmark/translate-tess4j/app/src/main/AndroidManifest.xml:43:9-55
+63            android:exported="true"
+63-->/home/scale340/Desktop/rshahi/MARAbenchmark/translate-tess4j/app/src/main/AndroidManifest.xml:44:9-32
+64            android:screenOrientation="locked"
+64-->/home/scale340/Desktop/rshahi/MARAbenchmark/translate-tess4j/app/src/main/AndroidManifest.xml:46:9-43
+65            android:theme="@style/Theme.AppCompat.NoActionBar" >
+65-->/home/scale340/Desktop/rshahi/MARAbenchmark/translate-tess4j/app/src/main/AndroidManifest.xml:45:9-59
+66            <intent-filter>
+66-->/home/scale340/Desktop/rshahi/MARAbenchmark/translate-tess4j/app/src/main/AndroidManifest.xml:47:7-50:23
+67                <action android:name="android.intent.action.MAIN" />
+67-->/home/scale340/Desktop/rshahi/MARAbenchmark/translate-tess4j/app/src/main/AndroidManifest.xml:48:9-60
+67-->/home/scale340/Desktop/rshahi/MARAbenchmark/translate-tess4j/app/src/main/AndroidManifest.xml:48:17-58
+68
+69                <category android:name="android.intent.category.LAUNCHER" />
+69-->/home/scale340/Desktop/rshahi/MARAbenchmark/translate-tess4j/app/src/main/AndroidManifest.xml:49:9-68
+69-->/home/scale340/Desktop/rshahi/MARAbenchmark/translate-tess4j/app/src/main/AndroidManifest.xml:49:19-66
+70            </intent-filter>
+71        </activity>
+72        <!-- Indicates whether "Google Play Services for AR" (ARCore) is "required" or "optional". -->
+73        <meta-data
+73-->/home/scale340/Desktop/rshahi/MARAbenchmark/translate-tess4j/app/src/main/AndroidManifest.xml:53:5-77
+74            android:name="com.google.ar.core"
+74-->/home/scale340/Desktop/rshahi/MARAbenchmark/translate-tess4j/app/src/main/AndroidManifest.xml:53:16-49
+75            android:value="required" />
+75-->/home/scale340/Desktop/rshahi/MARAbenchmark/translate-tess4j/app/src/main/AndroidManifest.xml:53:50-74
+76        <!-- The minimal version code of ARCore APK required for an app using this SDK. -->
+77        <meta-data
+77-->[com.google.ar:core:1.25.0] /home/scale340/.gradle/caches/transforms-2/files-2.1/938db635b4f36de591a5b3800b8bfcb5/jetified-core-1.25.0/AndroidManifest.xml:36:9-38:41
+78            android:name="com.google.ar.core.min_apk_version"
+78-->[com.google.ar:core:1.25.0] /home/scale340/.gradle/caches/transforms-2/files-2.1/938db635b4f36de591a5b3800b8bfcb5/jetified-core-1.25.0/AndroidManifest.xml:37:13-62
+79            android:value="210910000" /> <!-- This activity is critical for installing ARCore when it is not already present. -->
+79-->[com.google.ar:core:1.25.0] /home/scale340/.gradle/caches/transforms-2/files-2.1/938db635b4f36de591a5b3800b8bfcb5/jetified-core-1.25.0/AndroidManifest.xml:38:13-38
+80        <activity
+80-->[com.google.ar:core:1.25.0] /home/scale340/.gradle/caches/transforms-2/files-2.1/938db635b4f36de591a5b3800b8bfcb5/jetified-core-1.25.0/AndroidManifest.xml:40:9-46:80
+81            android:name="com.google.ar.core.InstallActivity"
+81-->[com.google.ar:core:1.25.0] /home/scale340/.gradle/caches/transforms-2/files-2.1/938db635b4f36de591a5b3800b8bfcb5/jetified-core-1.25.0/AndroidManifest.xml:41:13-62
+82            android:configChanges="keyboardHidden|orientation|screenSize"
+82-->[com.google.ar:core:1.25.0] /home/scale340/.gradle/caches/transforms-2/files-2.1/938db635b4f36de591a5b3800b8bfcb5/jetified-core-1.25.0/AndroidManifest.xml:42:13-74
+83            android:excludeFromRecents="true"
+83-->[com.google.ar:core:1.25.0] /home/scale340/.gradle/caches/transforms-2/files-2.1/938db635b4f36de591a5b3800b8bfcb5/jetified-core-1.25.0/AndroidManifest.xml:43:13-46
+84            android:exported="false"
+84-->[com.google.ar:core:1.25.0] /home/scale340/.gradle/caches/transforms-2/files-2.1/938db635b4f36de591a5b3800b8bfcb5/jetified-core-1.25.0/AndroidManifest.xml:44:13-37
+85            android:launchMode="singleTop"
+85-->[com.google.ar:core:1.25.0] /home/scale340/.gradle/caches/transforms-2/files-2.1/938db635b4f36de591a5b3800b8bfcb5/jetified-core-1.25.0/AndroidManifest.xml:45:13-43
+86            android:theme="@android:style/Theme.Material.Light.Dialog.Alert" />
+86-->[com.google.ar:core:1.25.0] /home/scale340/.gradle/caches/transforms-2/files-2.1/938db635b4f36de591a5b3800b8bfcb5/jetified-core-1.25.0/AndroidManifest.xml:46:13-77
+87
+88        <service
+88-->[com.google.mlkit:translate:16.1.2] /home/scale340/.gradle/caches/transforms-2/files-2.1/a6c31643b255e6e0cbdb768db5ea61f1/jetified-translate-16.1.2/AndroidManifest.xml:11:9-20:19
+89            android:name="com.google.mlkit.common.internal.MlKitComponentDiscoveryService"
+89-->[com.google.mlkit:translate:16.1.2] /home/scale340/.gradle/caches/transforms-2/files-2.1/a6c31643b255e6e0cbdb768db5ea61f1/jetified-translate-16.1.2/AndroidManifest.xml:12:13-91
+90            android:directBootAware="true"
+90-->[com.google.mlkit:common:17.1.0] /home/scale340/.gradle/caches/transforms-2/files-2.1/7a4e8e19f0892f60a889ffe5191352e1/jetified-common-17.1.0/AndroidManifest.xml:17:13-43
+91            android:exported="false" >
+91-->[com.google.mlkit:translate:16.1.2] /home/scale340/.gradle/caches/transforms-2/files-2.1/a6c31643b255e6e0cbdb768db5ea61f1/jetified-translate-16.1.2/AndroidManifest.xml:13:13-37
+92            <meta-data
+92-->[com.google.mlkit:translate:16.1.2] /home/scale340/.gradle/caches/transforms-2/files-2.1/a6c31643b255e6e0cbdb768db5ea61f1/jetified-translate-16.1.2/AndroidManifest.xml:14:13-16:85
+93                android:name="com.google.firebase.components:com.google.mlkit.nl.translate.NaturalLanguageTranslateRegistrar"
+93-->[com.google.mlkit:translate:16.1.2] /home/scale340/.gradle/caches/transforms-2/files-2.1/a6c31643b255e6e0cbdb768db5ea61f1/jetified-translate-16.1.2/AndroidManifest.xml:15:17-126
+94                android:value="com.google.firebase.components.ComponentRegistrar" />
+94-->[com.google.mlkit:translate:16.1.2] /home/scale340/.gradle/caches/transforms-2/files-2.1/a6c31643b255e6e0cbdb768db5ea61f1/jetified-translate-16.1.2/AndroidManifest.xml:16:17-82
+95            <meta-data
+95-->[com.google.mlkit:translate:16.1.2] /home/scale340/.gradle/caches/transforms-2/files-2.1/a6c31643b255e6e0cbdb768db5ea61f1/jetified-translate-16.1.2/AndroidManifest.xml:17:13-19:85
+96                android:name="com.google.firebase.components:com.google.mlkit.nl.translate.RemoteConfigRegistrar"
+96-->[com.google.mlkit:translate:16.1.2] /home/scale340/.gradle/caches/transforms-2/files-2.1/a6c31643b255e6e0cbdb768db5ea61f1/jetified-translate-16.1.2/AndroidManifest.xml:18:17-114
+97                android:value="com.google.firebase.components.ComponentRegistrar" />
+97-->[com.google.mlkit:translate:16.1.2] /home/scale340/.gradle/caches/transforms-2/files-2.1/a6c31643b255e6e0cbdb768db5ea61f1/jetified-translate-16.1.2/AndroidManifest.xml:19:17-82
+98            <meta-data
+98-->[com.google.mlkit:common:17.1.0] /home/scale340/.gradle/caches/transforms-2/files-2.1/7a4e8e19f0892f60a889ffe5191352e1/jetified-common-17.1.0/AndroidManifest.xml:20:13-22:85
+99                android:name="com.google.firebase.components:com.google.mlkit.common.internal.CommonComponentRegistrar"
+99-->[com.google.mlkit:common:17.1.0] /home/scale340/.gradle/caches/transforms-2/files-2.1/7a4e8e19f0892f60a889ffe5191352e1/jetified-common-17.1.0/AndroidManifest.xml:21:17-120
+100                android:value="com.google.firebase.components.ComponentRegistrar" />
+100-->[com.google.mlkit:common:17.1.0] /home/scale340/.gradle/caches/transforms-2/files-2.1/7a4e8e19f0892f60a889ffe5191352e1/jetified-common-17.1.0/AndroidManifest.xml:22:17-82
+101        </service>
+102
+103        <provider
+103-->[com.google.mlkit:common:17.1.0] /home/scale340/.gradle/caches/transforms-2/files-2.1/7a4e8e19f0892f60a889ffe5191352e1/jetified-common-17.1.0/AndroidManifest.xml:9:9-13:38
+104            android:name="com.google.mlkit.common.internal.MlKitInitProvider"
+104-->[com.google.mlkit:common:17.1.0] /home/scale340/.gradle/caches/transforms-2/files-2.1/7a4e8e19f0892f60a889ffe5191352e1/jetified-common-17.1.0/AndroidManifest.xml:10:13-78
+105            android:authorities="com.benchmark.translate_tess4j.mlkitinitprovider"
+105-->[com.google.mlkit:common:17.1.0] /home/scale340/.gradle/caches/transforms-2/files-2.1/7a4e8e19f0892f60a889ffe5191352e1/jetified-common-17.1.0/AndroidManifest.xml:11:13-69
+106            android:exported="false"
+106-->[com.google.mlkit:common:17.1.0] /home/scale340/.gradle/caches/transforms-2/files-2.1/7a4e8e19f0892f60a889ffe5191352e1/jetified-common-17.1.0/AndroidManifest.xml:12:13-37
+107            android:initOrder="99" />
+107-->[com.google.mlkit:common:17.1.0] /home/scale340/.gradle/caches/transforms-2/files-2.1/7a4e8e19f0892f60a889ffe5191352e1/jetified-common-17.1.0/AndroidManifest.xml:13:13-35
+108
+109        <activity
+109-->[com.google.android.gms:play-services-base:17.4.0] /home/scale340/.gradle/caches/transforms-2/files-2.1/5577d8b947468c223098035907848266/jetified-play-services-base-17.4.0/AndroidManifest.xml:23:9-26:75
+110            android:name="com.google.android.gms.common.api.GoogleApiActivity"
+110-->[com.google.android.gms:play-services-base:17.4.0] /home/scale340/.gradle/caches/transforms-2/files-2.1/5577d8b947468c223098035907848266/jetified-play-services-base-17.4.0/AndroidManifest.xml:24:13-79
+111            android:exported="false"
+111-->[com.google.android.gms:play-services-base:17.4.0] /home/scale340/.gradle/caches/transforms-2/files-2.1/5577d8b947468c223098035907848266/jetified-play-services-base-17.4.0/AndroidManifest.xml:25:13-37
+112            android:theme="@android:style/Theme.Translucent.NoTitleBar" />
+112-->[com.google.android.gms:play-services-base:17.4.0] /home/scale340/.gradle/caches/transforms-2/files-2.1/5577d8b947468c223098035907848266/jetified-play-services-base-17.4.0/AndroidManifest.xml:26:13-72
+113
+114        <meta-data
+114-->[com.google.android.gms:play-services-basement:17.4.0] /home/scale340/.gradle/caches/transforms-2/files-2.1/c1267ef40f9be503206d826d90770a94/jetified-play-services-basement-17.4.0/AndroidManifest.xml:23:9-25:69
+115            android:name="com.google.android.gms.version"
+115-->[com.google.android.gms:play-services-basement:17.4.0] /home/scale340/.gradle/caches/transforms-2/files-2.1/c1267ef40f9be503206d826d90770a94/jetified-play-services-basement-17.4.0/AndroidManifest.xml:24:13-58
+116            android:value="@integer/google_play_services_version" />
+116-->[com.google.android.gms:play-services-basement:17.4.0] /home/scale340/.gradle/caches/transforms-2/files-2.1/c1267ef40f9be503206d826d90770a94/jetified-play-services-basement-17.4.0/AndroidManifest.xml:25:13-66
+117
+118        <service
+118-->[com.google.android.datatransport:transport-backend-cct:2.3.2] /home/scale340/.gradle/caches/transforms-2/files-2.1/f8bc473dfb3cb60f344f90ee68e6fc19/jetified-transport-backend-cct-2.3.2/AndroidManifest.xml:29:9-35:19
+119            android:name="com.google.android.datatransport.runtime.backends.TransportBackendDiscovery"
+119-->[com.google.android.datatransport:transport-backend-cct:2.3.2] /home/scale340/.gradle/caches/transforms-2/files-2.1/f8bc473dfb3cb60f344f90ee68e6fc19/jetified-transport-backend-cct-2.3.2/AndroidManifest.xml:30:13-103
+120            android:exported="false" >
+120-->[com.google.android.datatransport:transport-backend-cct:2.3.2] /home/scale340/.gradle/caches/transforms-2/files-2.1/f8bc473dfb3cb60f344f90ee68e6fc19/jetified-transport-backend-cct-2.3.2/AndroidManifest.xml:31:13-37
+121            <meta-data
+121-->[com.google.android.datatransport:transport-backend-cct:2.3.2] /home/scale340/.gradle/caches/transforms-2/files-2.1/f8bc473dfb3cb60f344f90ee68e6fc19/jetified-transport-backend-cct-2.3.2/AndroidManifest.xml:32:13-34:39
+122                android:name="backend:com.google.android.datatransport.cct.CctBackendFactory"
+122-->[com.google.android.datatransport:transport-backend-cct:2.3.2] /home/scale340/.gradle/caches/transforms-2/files-2.1/f8bc473dfb3cb60f344f90ee68e6fc19/jetified-transport-backend-cct-2.3.2/AndroidManifest.xml:33:17-94
+123                android:value="cct" />
+123-->[com.google.android.datatransport:transport-backend-cct:2.3.2] /home/scale340/.gradle/caches/transforms-2/files-2.1/f8bc473dfb3cb60f344f90ee68e6fc19/jetified-transport-backend-cct-2.3.2/AndroidManifest.xml:34:17-36
+124        </service>
+125        <service
+125-->[com.google.android.datatransport:transport-runtime:2.2.5] /home/scale340/.gradle/caches/transforms-2/files-2.1/9b2c0f073db9450b78e64fda30ed29f4/jetified-transport-runtime-2.2.5/AndroidManifest.xml:26:9-30:19
+126            android:name="com.google.android.datatransport.runtime.scheduling.jobscheduling.JobInfoSchedulerService"
+126-->[com.google.android.datatransport:transport-runtime:2.2.5] /home/scale340/.gradle/caches/transforms-2/files-2.1/9b2c0f073db9450b78e64fda30ed29f4/jetified-transport-runtime-2.2.5/AndroidManifest.xml:27:13-117
+127            android:exported="false"
+127-->[com.google.android.datatransport:transport-runtime:2.2.5] /home/scale340/.gradle/caches/transforms-2/files-2.1/9b2c0f073db9450b78e64fda30ed29f4/jetified-transport-runtime-2.2.5/AndroidManifest.xml:28:13-37
+128            android:permission="android.permission.BIND_JOB_SERVICE" >
+128-->[com.google.android.datatransport:transport-runtime:2.2.5] /home/scale340/.gradle/caches/transforms-2/files-2.1/9b2c0f073db9450b78e64fda30ed29f4/jetified-transport-runtime-2.2.5/AndroidManifest.xml:29:13-69
+129        </service>
+130
+131        <receiver
+131-->[com.google.android.datatransport:transport-runtime:2.2.5] /home/scale340/.gradle/caches/transforms-2/files-2.1/9b2c0f073db9450b78e64fda30ed29f4/jetified-transport-runtime-2.2.5/AndroidManifest.xml:32:9-34:40
+132            android:name="com.google.android.datatransport.runtime.scheduling.jobscheduling.AlarmManagerSchedulerBroadcastReceiver"
+132-->[com.google.android.datatransport:transport-runtime:2.2.5] /home/scale340/.gradle/caches/transforms-2/files-2.1/9b2c0f073db9450b78e64fda30ed29f4/jetified-transport-runtime-2.2.5/AndroidManifest.xml:33:13-132
+133            android:exported="false" />
+133-->[com.google.android.datatransport:transport-runtime:2.2.5] /home/scale340/.gradle/caches/transforms-2/files-2.1/9b2c0f073db9450b78e64fda30ed29f4/jetified-transport-runtime-2.2.5/AndroidManifest.xml:34:13-37
+134    </application>
+135
+136</manifest>
