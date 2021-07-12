@@ -16,6 +16,9 @@ More info: https://developer.android.com/studio/run/
 
 ## AR Apps
 
+### Augmented Faces
+Overlays 3D models and textures on a face.
+
 ### Augmented Image
 Detects and augments 2D images in the scene using ARCore.
 
@@ -24,6 +27,9 @@ Uses machine learning to identify objects in the scene then uses ARCore to label
 
 ### Camera Translator
 Detects text from the live camera feed when tapped then translates the text to Spanish and displays the translated text over the screen.
+
+### HelloAr
+Allows for placement and manipulation of 3D models on detected AR plane surfaces.
 
 ### Benchmark app
 Runs a series of benchmarks on the apps above and outputs the results.
