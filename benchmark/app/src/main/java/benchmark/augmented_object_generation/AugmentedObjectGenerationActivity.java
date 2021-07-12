@@ -227,6 +227,9 @@ public class AugmentedObjectGenerationActivity extends AppCompatActivity impleme
   public String logPath;
   private BufferedWriter fpsLog;
 
+  String fileName;
+  int currentPhase = 1;
+
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
@@ -371,12 +374,6 @@ public class AugmentedObjectGenerationActivity extends AppCompatActivity impleme
     // Note that order matters - see the note in onPause(), the reverse applies here.
     try {
       configureSession();
-      // To record a live camera session for later playback, call
-      // `session.startRecording(recorderConfig)` at anytime. To playback a previously recorded AR
-      // session instead of using the live camera feed, call
-      // `session.setPlaybackDataset(playbackDatasetPath)` before calling `session.resume()`. To
-      // learn more about recording and playback, see:
-      // https://developers.google.com/ar/develop/java/recording-and-playback
       String destination = new File(this.getExternalFilesDir(null), fileName).getAbsolutePath();
       session.setPlaybackDataset(destination);
       session.resume();
@@ -387,12 +384,12 @@ public class AugmentedObjectGenerationActivity extends AppCompatActivity impleme
       return;
     } catch (PlaybackFailedException e) {
       setResult(RESULT_CANCELED);
-      try {
-        fpsLog.close();
-      } catch (IOException f) {
-
-      }
-      finish();
+        try {
+            fpsLog.close();
+        } catch (IOException ioException) {
+            ioException.printStackTrace();
+        }
+        finish();
     }
 
     surfaceView.onResume();
@@ -1023,8 +1020,4 @@ public class AugmentedObjectGenerationActivity extends AppCompatActivity impleme
     }
     session.configure(config);
   }
-
-  String fileName;
-  int currentPhase = 1;
-
 }
