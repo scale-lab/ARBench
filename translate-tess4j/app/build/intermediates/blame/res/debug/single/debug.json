@@ -1,0 +1,26 @@
+[
+    {
+        "merged": "/home/scale340/Desktop/rshahi/MARAbenchmark/translate-tess4j/app/build/intermediates/res/merged/debug/layout_activity_main.xml.flat",
+        "source": "/home/scale340/Desktop/rshahi/MARAbenchmark/translate-tess4j/app/src/main/res/layout/activity_main.xml"
+    },
+    {
+        "merged": "/home/scale340/Desktop/rshahi/MARAbenchmark/translate-tess4j/app/build/intermediates/res/merged/debug/menu_settings_menu.xml.flat",
+        "source": "/home/scale340/Desktop/rshahi/MARAbenchmark/translate-tess4j/app/src/main/res/menu/settings_menu.xml"
+    },
+    {
+        "merged": "/home/scale340/Desktop/rshahi/MARAbenchmark/translate-tess4j/app/build/intermediates/res/merged/debug/drawable-xxhdpi_ic_settings.png.flat",
+        "source": "/home/scale340/Desktop/rshahi/MARAbenchmark/translate-tess4j/app/src/main/res/drawable-xxhdpi/ic_settings.png"
+    },
+    {
+        "merged": "/home/scale340/Desktop/rshahi/MARAbenchmark/translate-tess4j/app/build/intermediates/res/merged/debug/drawable-xxhdpi_rounded_bg.xml.flat",
+        "source": "/home/scale340/Desktop/rshahi/MARAbenchmark/translate-tess4j/app/src/main/res/drawable-xxhdpi/rounded_bg.xml"
+    },
+    {
+        "merged": "/home/scale340/Desktop/rshahi/MARAbenchmark/translate-tess4j/app/build/intermediates/res/merged/debug/layout_ar_text.xml.flat",
+        "source": "/home/scale340/Desktop/rshahi/MARAbenchmark/translate-tess4j/app/src/main/res/layout/ar_text.xml"
+    },
+    {
+        "merged": "/home/scale340/Desktop/rshahi/MARAbenchmark/translate-tess4j/app/build/intermediates/res/merged/debug/drawable-xxhdpi_ic_launcher.png.flat",
+        "source": "/home/scale340/Desktop/rshahi/MARAbenchmark/translate-tess4j/app/src/main/res/drawable-xxhdpi/ic_launcher.png"
+    }
+]

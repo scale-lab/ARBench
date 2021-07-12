@@ -45,7 +45,7 @@ import benchmark.augmented_object_generation.AugmentedObjectGenerationActivity;
 
 public class BenchmarkActivity extends AppCompatActivity {
     public static final String FILE_NUMBER = "benchmark.FILE_NUMBER";
-    public static final int NUM_TESTS = 5;
+    public static final int NUM_TESTS = 4;
     private LinearLayout resultsDisplay;
     private String filesPath;
     private GLSurfaceView surfaceView;
@@ -61,8 +61,8 @@ public class BenchmarkActivity extends AppCompatActivity {
 
     public void onStartBenchmark(View view) {
         Intent intent = new Intent(this, AugmentedObjectGenerationActivity.class);
-        intent.putExtra(FILE_NUMBER, 6);
-        startActivityForResult(intent, 6);
+        intent.putExtra(FILE_NUMBER, 1);
+        startActivityForResult(intent, 1);
     }
 
     @Override
