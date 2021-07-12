@@ -24,6 +24,7 @@
 
 package benchmark.benchmark;
 
+import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.opengl.GLSurfaceView;
 import android.os.Bundle;
@@ -40,19 +41,20 @@ import java.io.FileReader;
 import java.io.IOException;
 
 import benchmark.augmented_faces.AugmentedFacesActivity;
+import benchmark.augmented_image.AugmentedImageActivity;
 import benchmark.common.samplerender.SampleRender;
 import benchmark.augmented_object_generation.AugmentedObjectGenerationActivity;
 
 public class BenchmarkActivity extends AppCompatActivity {
-    public static final String FILE_NUMBER = "benchmark.FILE_NUMBER";
+    public static final String ACTIVITY_NUMBER = "benchmark.ACTIVITY_NUMBER";
     public static final int NUM_TESTS = 4;
 
     // This is the order of activities that the app will open.
-    public static final Class[] activities = {
-            AugmentedObjectGenerationActivity.class,
-            AugmentedObjectGenerationActivity.class,
-            AugmentedObjectGenerationActivity.class,
-            AugmentedFacesActivity.class,
+    public static final ActivityRecording[] ACTIVITY_RECORDINGS = {
+            new ActivityRecording(AugmentedObjectGenerationActivity.class, "aug-obj-gen-1.mp4"),
+            new ActivityRecording(AugmentedObjectGenerationActivity.class, "aug-obj-gen-2.mp4"),
+            new ActivityRecording(AugmentedObjectGenerationActivity.class, "aug-obj-gen-3.mp4"),
+            new ActivityRecording(AugmentedFacesActivity.class, "aug-faces-1.mp4"),
     };
 
     private LinearLayout resultsDisplay;
@@ -69,11 +71,12 @@ public class BenchmarkActivity extends AppCompatActivity {
     }
 
     public void onStartBenchmark(View view) {
-        Intent intent = new Intent(this, AugmentedObjectGenerationActivity.class);
-        intent.putExtra(FILE_NUMBER, 1);
-        startActivityForResult(intent, 1);
+        Intent intent = new Intent(this, ACTIVITY_RECORDINGS[0].getActivity());
+        intent.putExtra(ACTIVITY_NUMBER, 0);
+        startActivityForResult(intent, 0);
     }
 
+    @SuppressLint("SetTextI18n")
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
@@ -144,8 +147,8 @@ public class BenchmarkActivity extends AppCompatActivity {
             }
         }
 
-        Intent intent = new Intent(this, activities[requestCode - 1]);
-        intent.putExtra(FILE_NUMBER, requestCode + 1);
+        Intent intent = new Intent(this, ACTIVITY_RECORDINGS[requestCode + 1].getActivity());
+        intent.putExtra(ACTIVITY_NUMBER, requestCode + 1);
         startActivityForResult(intent, requestCode + 1);
     }
 }

@@ -258,8 +258,8 @@ public class AugmentedObjectGenerationActivity extends AppCompatActivity impleme
         });
 
     Intent intent = getIntent();
-    int fileNumber = intent.getIntExtra(BenchmarkActivity.FILE_NUMBER, 0);
-    fileName = "recording-" + fileNumber + ".mp4";
+    int activityNumber = intent.getIntExtra(BenchmarkActivity.ACTIVITY_NUMBER, 0);
+    fileName = BenchmarkActivity.ACTIVITY_RECORDINGS[activityNumber].getRecordingFileName();
     File f = new File(this.getExternalFilesDir(null)+"/"+fileName);
     if (!f.exists()) try {
 
