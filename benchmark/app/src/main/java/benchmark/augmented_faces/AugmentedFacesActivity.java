@@ -38,16 +38,13 @@
  * limitations under the License.
  */
 
-package benchmark.augmentedfaces;
+package benchmark.augmented_faces;
 
-import android.app.AlertDialog;
 import android.content.Intent;
 import android.opengl.GLES20;
 import android.opengl.GLSurfaceView;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.View;
-import android.widget.Button;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 import com.google.ar.core.ArCoreApk;
@@ -60,8 +57,6 @@ import com.google.ar.core.Config;
 import com.google.ar.core.Config.AugmentedFaceMode;
 import com.google.ar.core.Frame;
 import com.google.ar.core.PlaybackStatus;
-import com.google.ar.core.RecordingConfig;
-import com.google.ar.core.RecordingStatus;
 import com.google.ar.core.Session;
 import com.google.ar.core.TrackingState;
 
@@ -74,8 +69,6 @@ import benchmark.common.helpers.TrackingStateHelper;
 import benchmark.common.rendering.BackgroundRenderer;
 import benchmark.common.rendering.ObjectRenderer;
 import com.google.ar.core.exceptions.CameraNotAvailableException;
-import com.google.ar.core.exceptions.PlaybackFailedException;
-import com.google.ar.core.exceptions.RecordingFailedException;
 import com.google.ar.core.exceptions.UnavailableApkTooOldException;
 import com.google.ar.core.exceptions.UnavailableArcoreNotInstalledException;
 import com.google.ar.core.exceptions.UnavailableDeviceNotCompatibleException;
@@ -131,7 +124,7 @@ public class AugmentedFacesActivity extends AppCompatActivity implements GLSurfa
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
-    setContentView(R.layout.activity_augmentedfaces);
+    setContentView(R.layout.activity_augmented_faces);
     surfaceView = findViewById(R.id.surfaceview);
     displayRotationHelper = new DisplayRotationHelper(/*context=*/ this);
 

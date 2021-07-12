@@ -15,6 +15,7 @@ Benchmark for Mobile Augmented Reality Applications.
 More info: https://developer.android.com/studio/run/
 
 ## AR Apps
+The benchmark app will playback recordings of the AR apps below and then output the results at the end.
 
 ### Augmented Faces
 Overlays 3D models and textures on a face.
@@ -25,11 +26,8 @@ Detects and augments 2D images in the scene using ARCore.
 ### Augmented Object Recognition
 Uses machine learning to identify objects in the scene then uses ARCore to label each object.
 
-### Camera Translator
-Detects text from the live camera feed when tapped then translates the text to Spanish and displays the translated text over the screen.
-
-### HelloAr
+### Augmented Object Generation
 Allows for placement and manipulation of 3D models on detected AR plane surfaces.
 
-### Benchmark app
-Runs a series of benchmarks on the apps above and outputs the results.
+### Camera Translator
+Detects text from the live camera feed when tapped then translates the text to Spanish and displays the translated text over the screen.

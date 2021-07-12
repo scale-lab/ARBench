@@ -25,24 +25,12 @@
 package benchmark.benchmark;
 
 import android.content.Intent;
-import android.hardware.camera2.CameraAccessException;
-import android.hardware.camera2.CameraCaptureSession;
-import android.hardware.camera2.CameraCharacteristics;
-import android.hardware.camera2.CameraDevice;
-import android.hardware.camera2.CameraManager;
-import android.hardware.camera2.CaptureRequest;
-import android.hardware.camera2.params.OutputConfiguration;
-import android.hardware.camera2.params.SessionConfiguration;
 import android.opengl.GLSurfaceView;
 import android.os.Bundle;
-import android.view.Surface;
-import android.view.SurfaceHolder;
-import android.view.SurfaceView;
 import android.view.View;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
-import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -50,12 +38,10 @@ import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.LinkedList;
-import java.util.List;
 
-import benchmark.augmentedfaces.AugmentedFacesActivity;
+import benchmark.augmented_faces.AugmentedFacesActivity;
 import benchmark.common.samplerender.SampleRender;
-import benchmark.helloar.HelloArActivity;
+import benchmark.augmented_object_generation.AugmentedObjectGenerationActivity;
 
 public class BenchmarkActivity extends AppCompatActivity {
     public static final String FILE_NUMBER = "benchmark.FILE_NUMBER";
@@ -74,7 +60,7 @@ public class BenchmarkActivity extends AppCompatActivity {
     }
 
     public void onStartBenchmark(View view) {
-        Intent intent = new Intent(this, HelloArActivity.class);
+        Intent intent = new Intent(this, AugmentedObjectGenerationActivity.class);
         intent.putExtra(FILE_NUMBER, 6);
         startActivityForResult(intent, 6);
     }
@@ -150,7 +136,7 @@ public class BenchmarkActivity extends AppCompatActivity {
         }
 
         if (requestCode < NUM_TESTS - 1) {
-            Intent intent = new Intent(this, HelloArActivity.class);
+            Intent intent = new Intent(this, AugmentedObjectGenerationActivity.class);
             intent.putExtra(FILE_NUMBER, requestCode + 1);
             startActivityForResult(intent, requestCode + 1);
         } else if (requestCode == NUM_TESTS - 1) {
