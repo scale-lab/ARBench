@@ -140,7 +140,7 @@ public class AugmentedObjectGenerationActivity extends AppCompatActivity impleme
   private static final String WAITING_FOR_TAP_MESSAGE = "Tap on a surface to place an object.";
 
   // See the definition of updateSphericalHarmonicsCoefficients for an explanation of these
-  // constants.
+  // constants.de
   private static final float[] sphericalHarmonicFactors = {
     0.282095f,
     -0.325735f,
@@ -997,11 +997,12 @@ public class AugmentedObjectGenerationActivity extends AppCompatActivity impleme
   private void configureSession() {
     Config config = session.getConfig();
     config.setLightEstimationMode(Config.LightEstimationMode.ENVIRONMENTAL_HDR);
-    if (session.isDepthModeSupported(Config.DepthMode.AUTOMATIC)) {
-      config.setDepthMode(Config.DepthMode.AUTOMATIC);
-    } else {
-      config.setDepthMode(Config.DepthMode.DISABLED);
-    }
+//    if (session.isDepthModeSupported(Config.DepthMode.AUTOMATIC)) {
+//      config.setDepthMode(Config.DepthMode.AUTOMATIC);
+//    } else {
+//      config.setDepthMode(Config.DepthMode.DISABLED);
+//    }
+    config.setDepthMode(Config.DepthMode.DISABLED);
     if (instantPlacementSettings.isInstantPlacementEnabled()) {
       config.setInstantPlacementMode(InstantPlacementMode.LOCAL_Y_UP);
     } else {
