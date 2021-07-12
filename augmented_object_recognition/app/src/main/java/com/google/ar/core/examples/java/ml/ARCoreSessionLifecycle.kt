@@ -36,7 +36,6 @@ class ARCoreSessionLifecycleHelper(
 ) : DefaultLifecycleObserver {
   var installRequested = false
   var sessionCache: Session? = null
-    private set
 
   // Creating a Session may fail. In this case, sessionCache will remain null, and this function will be called with an exception.
   // See https://developers.google.com/ar/reference/java/com/google/ar/core/Session#Session(android.content.Context)
