@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package benchmark.augmentedfaces;
+package benchmark.augmented_faces;
 
 import static benchmark.common.rendering.ShaderUtil.loadGLShader;
 

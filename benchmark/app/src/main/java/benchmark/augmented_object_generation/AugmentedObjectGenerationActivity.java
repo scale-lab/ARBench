@@ -38,7 +38,7 @@
  * limitations under the License.
  */
 
-package benchmark.helloar;
+package benchmark.augmented_object_generation;
 
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -132,9 +132,9 @@ import benchmark.benchmark.R;
  * ARCore API. The application will display any detected planes and will allow the user to tap on a
  * plane to place a 3D model.
  */
-public class HelloArActivity extends AppCompatActivity implements SampleRender.Renderer {
+public class AugmentedObjectGenerationActivity extends AppCompatActivity implements SampleRender.Renderer {
 
-  private static final String TAG = HelloArActivity.class.getSimpleName();
+  private static final String TAG = AugmentedObjectGenerationActivity.class.getSimpleName();
 
   private static final String SEARCHING_PLANE_MESSAGE = "Searching for surfaces...";
   private static final String WAITING_FOR_TAP_MESSAGE = "Tap on a surface to place an object.";
@@ -230,7 +230,7 @@ public class HelloArActivity extends AppCompatActivity implements SampleRender.R
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
-    setContentView(R.layout.activity_helloar);
+    setContentView(R.layout.activity_augmented_object_generation);
     surfaceView = findViewById(R.id.surfaceview);
     displayRotationHelper = new DisplayRotationHelper(/*context=*/ this);
 
@@ -250,8 +250,8 @@ public class HelloArActivity extends AppCompatActivity implements SampleRender.R
         new View.OnClickListener() {
           @Override
           public void onClick(View v) {
-            PopupMenu popup = new PopupMenu(HelloArActivity.this, v);
-            popup.setOnMenuItemClickListener(HelloArActivity.this::settingsMenuClick);
+            PopupMenu popup = new PopupMenu(AugmentedObjectGenerationActivity.this, v);
+            popup.setOnMenuItemClickListener(AugmentedObjectGenerationActivity.this::settingsMenuClick);
             popup.inflate(R.menu.settings_menu);
             popup.show();
           }

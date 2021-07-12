@@ -17,7 +17,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="benchmark.helloar.HelloArActivity">
+    tools:context="benchmark.augmented_object_generation.AugmentedObjectGenerationActivity">
 
   <android.opengl.GLSurfaceView
       android:id="@+id/surfaceview"
