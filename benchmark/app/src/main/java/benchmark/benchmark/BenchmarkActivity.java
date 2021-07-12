@@ -46,6 +46,15 @@ import benchmark.augmented_object_generation.AugmentedObjectGenerationActivity;
 public class BenchmarkActivity extends AppCompatActivity {
     public static final String FILE_NUMBER = "benchmark.FILE_NUMBER";
     public static final int NUM_TESTS = 4;
+
+    // This is the order of activities that the app will open.
+    public static final Class[] activities = {
+            AugmentedObjectGenerationActivity.class,
+            AugmentedObjectGenerationActivity.class,
+            AugmentedObjectGenerationActivity.class,
+            AugmentedFacesActivity.class,
+    };
+
     private LinearLayout resultsDisplay;
     private String filesPath;
     private GLSurfaceView surfaceView;
@@ -135,14 +144,8 @@ public class BenchmarkActivity extends AppCompatActivity {
             }
         }
 
-        if (requestCode < NUM_TESTS - 1) {
-            Intent intent = new Intent(this, AugmentedObjectGenerationActivity.class);
-            intent.putExtra(FILE_NUMBER, requestCode + 1);
-            startActivityForResult(intent, requestCode + 1);
-        } else if (requestCode == NUM_TESTS - 1) {
-            Intent intent = new Intent(this, AugmentedFacesActivity.class);
-            intent.putExtra(FILE_NUMBER, requestCode + 1);
-            startActivityForResult(intent, requestCode + 1);
-        }
+        Intent intent = new Intent(this, activities[requestCode - 1]);
+        intent.putExtra(FILE_NUMBER, requestCode + 1);
+        startActivityForResult(intent, requestCode + 1);
     }
 }
