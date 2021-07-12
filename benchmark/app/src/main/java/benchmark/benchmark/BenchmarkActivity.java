@@ -147,8 +147,10 @@ public class BenchmarkActivity extends AppCompatActivity {
             }
         }
 
-        Intent intent = new Intent(this, ACTIVITY_RECORDINGS[requestCode + 1].getActivity());
-        intent.putExtra(ACTIVITY_NUMBER, requestCode + 1);
-        startActivityForResult(intent, requestCode + 1);
+        if(requestCode + 1 < ACTIVITY_RECORDINGS.length) {
+            Intent intent = new Intent(this, ACTIVITY_RECORDINGS[requestCode + 1].getActivity());
+            intent.putExtra(ACTIVITY_NUMBER, requestCode + 1);
+            startActivityForResult(intent, requestCode + 1);
+        }
     }
 }
