@@ -279,7 +279,6 @@ class MainActivityView(val activity: MainActivity, renderer: AppRenderer) : Defa
     // ARCore session is set to play back.
     // Workaround: Reset the Texture to start Playback
     // so it doesn't crashes with AR_ERROR_TEXTURE_NOT_SET.
-    hasSetTextureNames = false
     val canResume = resumeARCoreSession()
     if (!canResume) return false
     val playbackStatus: PlaybackStatus = session.getPlaybackStatus()
@@ -304,7 +303,6 @@ class MainActivityView(val activity: MainActivity, renderer: AppRenderer) : Defa
     session.close()
     try {
       activity.arCoreSessionHelper.sessionCache = Session(MainActivity().applicationContext)
-
     } catch (e: UnavailableArcoreNotInstalledException) {
       Log.e(TAG, "Error in return to Idle state. Cannot create new ARCore session", e)
       return false
