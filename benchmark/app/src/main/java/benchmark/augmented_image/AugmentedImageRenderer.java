@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package benchmark.augmented_image.rendering;
+package benchmark.augmented_image;
 
 import android.content.Context;
 
