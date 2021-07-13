@@ -53,12 +53,13 @@ import com.google.ar.core.examples.java.ml.classification.MLKitObjectDetector
 import com.google.ar.core.examples.java.ml.classification.ObjectDetector
 import com.google.ar.core.examples.java.ml.render.LabelRender
 import com.google.ar.core.examples.java.ml.render.PointCloudRender
-import com.google.ar.core.exceptions.CameraNotAvailableException
-import com.google.ar.core.exceptions.NotYetAvailableException
+import com.google.ar.core.exceptions.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.launch
+import java.io.File
+import java.nio.ByteBuffer
 import java.util.*
 
 /**
@@ -149,9 +150,9 @@ class AppRenderer(val activity: MainActivity) : DefaultLifecycleObserver, Sample
     // the video background can be properly adjusted.
     displayRotationHelper.updateSessionIfNeeded(session)
 
-    if (MainActivity().appState == MainActivity.AppState.Playingback
+    if (activity.appState == MainActivity.AppState.Playingback
       && session.playbackStatus == PlaybackStatus.FINISHED) {
-      MainActivity().runOnUiThread(MainActivityView(MainActivity(), MainActivity().renderer)::stopPlayingback)
+      activity.runOnUiThread(activity.view::stopPlayingback)
       return
     }
 
@@ -184,6 +185,11 @@ class AppRenderer(val activity: MainActivity) : DefaultLifecycleObserver, Sample
 
     // Frame.acquireCameraImage must be used on the GL thread.
     // Check if the button was pressed last frame to start processing the camera image.
+    if (session.playbackStatus == PlaybackStatus.OK) {
+      if (!frame.getUpdatedTrackData(view.SCAN_TRACK_ID).isEmpty()) {
+        scanButtonWasPressed = true
+      }
+    }
     if (scanButtonWasPressed) {
       scanButtonWasPressed = false
       val cameraImage = frame.tryAcquireCameraImage()
@@ -194,6 +200,15 @@ class AppRenderer(val activity: MainActivity) : DefaultLifecycleObserver, Sample
           val imageRotation = displayRotationHelper.getCameraSensorToDisplayRotation(cameraId)
           objectResults = currentAnalyzer.analyze(cameraImage, imageRotation)
           cameraImage.close()
+        }
+      }
+      if (session.recordingStatus == RecordingStatus.OK) {
+        val payload = ByteBuffer.allocate(1)
+        payload.put(1)
+        try {
+          frame.recordTrackData(view.SCAN_TRACK_ID, payload)
+        } catch (e: IllegalStateException) {
+          Log.e(TAG,"Error in recording scan input into external data track.", e)
         }
       }
     }
@@ -213,16 +228,16 @@ class AppRenderer(val activity: MainActivity) : DefaultLifecycleObserver, Sample
       view.post {
         view.resetButton.isEnabled = arLabeledAnchors.isNotEmpty()
         view.setScanningActive(false)
-        when {
-          objects.isEmpty() && currentAnalyzer == mlKitAnalyzer && !mlKitAnalyzer.hasCustomModel() ->
-            showSnackbar("Default ML Kit classification model returned no results. " +
-              "For better classification performance, see the README to configure a custom model.")
-          objects.isEmpty() ->
-            showSnackbar("Classification model returned no results.")
-          anchors.size != objects.size ->
-            showSnackbar("Objects were classified, but could not be attached to an anchor. " +
-              "Try moving your device around to obtain a better understanding of the environment.")
-        }
+//        when {
+//          objects.isEmpty() && currentAnalyzer == mlKitAnalyzer && !mlKitAnalyzer.hasCustomModel() ->
+//            showSnackbar("Default ML Kit classification model returned no results. " +
+//              "For better classification performance, see the README to configure a custom model.")
+//          objects.isEmpty() ->
+//            showSnackbar("Classification model returned no results.")
+//          anchors.size != objects.size ->
+//            showSnackbar("Objects were classified, but could not be attached to an anchor. " +
+//              "Try moving your device around to obtain a better understanding of the environment.")
+//        }
       }
     }
 
@@ -278,6 +293,35 @@ class AppRenderer(val activity: MainActivity) : DefaultLifecycleObserver, Sample
     val hits = frame.hitTest(convertFloatsOut[0], convertFloatsOut[1])
     val result = hits.getOrNull(0) ?: return null
     return result.trackable.createAnchor(result.hitPose)
+  }
+
+  var fileNumber = 1
+  var fileName = "recording-$fileNumber"
+
+  @Throws(
+    CameraNotAvailableException::class,
+    PlaybackFailedException::class,
+    UnavailableSdkTooOldException::class,
+    UnavailableDeviceNotCompatibleException::class,
+    UnavailableArcoreNotInstalledException::class,
+    UnavailableApkTooOldException::class
+  )
+  fun onPlayback() {
+    activity.arCoreSessionHelper.onPause(activity)
+    activity.arCoreSessionHelper.onResume(activity)
+    val session = activity.arCoreSessionHelper.sessionCache ?: return;
+    val destination: String =
+      File(activity.getExternalFilesDir(null), fileName + ".mp4").getAbsolutePath()
+    // Switch to a different dataset.
+    displayRotationHelper.onPause()
+    view.surfaceView.onPause()
+    session.pause()// Pause the playback of the first dataset.
+    // Specify a different dataset to use.
+    session.setPlaybackDataset(destination)
+    session.resume()
+    view.surfaceView.onResume()
+    displayRotationHelper.onResume()
+  // Start playback from the beginning of the new dataset.
   }
 }
 
