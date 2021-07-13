@@ -56,6 +56,10 @@ import com.google.ar.core.CameraConfigFilter
 import com.google.ar.core.Config
 import com.google.ar.core.examples.java.common.helpers.FullScreenHelper
 import com.google.ar.core.exceptions.*
+import java.io.File
+import java.io.FileNotFoundException
+import java.io.FileOutputStream
+import java.io.IOException
 
 
 class MainActivity : AppCompatActivity() {
@@ -103,7 +107,14 @@ class MainActivity : AppCompatActivity() {
       val configs = session.getSupportedCameraConfigs(filter)
       val sort = compareByDescending<CameraConfig> { it.imageSize.width }
         .thenByDescending { it.imageSize.height }
-      session.cameraConfig = configs.sortedWith(sort)[0]
+      session.setCameraConfig(configs.sortedWith(sort)[0])
+
+      if (requestingPlayback) {
+        while (playbackFilePath == null) {
+          continue
+        }
+        session.setPlaybackDataset(playbackFilePath)
+      }
     }
     lifecycle.addObserver(arCoreSessionHelper)
 
@@ -113,6 +124,7 @@ class MainActivity : AppCompatActivity() {
     setContentView(view.root)
     renderer.bindView(view)
     lifecycle.addObserver(view)
+
   }
 
   enum class AppState {
@@ -121,6 +133,8 @@ class MainActivity : AppCompatActivity() {
 
   // Tracks app's specific state changes.
   var appState = AppState.Idle
+  var requestingPlayback : Boolean = false
+  var playbackFilePath : String?  = null
 
   fun updateRecordButton() {
     val buttonView = findViewById<View>(R.id.record_button)
@@ -154,15 +168,15 @@ class MainActivity : AppCompatActivity() {
     }
   }
 
-  fun onClickRecord(view: View?) {
+  fun onClickRecord(button: View?) {
     Log.d(TAG, "onClickRecord")
     when (appState) {
       AppState.Idle -> {
-        val hasStarted: Boolean = MainActivityView(this, renderer).startRecording()
+        val hasStarted: Boolean = view.startRecording()
         if (hasStarted) appState = AppState.Recording
       }
       AppState.Recording -> {
-        val hasStopped: Boolean = MainActivityView(this, renderer).stopRecording()
+        val hasStopped: Boolean = view.stopRecording()
         if (hasStopped) appState = AppState.Idle
       }
     }
@@ -170,7 +184,7 @@ class MainActivity : AppCompatActivity() {
     updatePlaybackButton()
   }
 
-  fun onClickPlayback(view: View?) {
+  fun onClickPlayback(button: View?) {
     Log.d(TAG, "onClickPlayback")
     when (appState) {
       AppState.Idle -> {
@@ -178,7 +192,7 @@ class MainActivity : AppCompatActivity() {
         Log.d(TAG, String.format("onClickPlayback start: selectFileToPlayback %b", hasStarted))
       }
       AppState.Playingback -> {
-        val hasStopped: Boolean = MainActivityView(this, renderer).stopPlayingback()
+        val hasStopped: Boolean = view.stopPlayingback()
         Log.d(TAG, String.format("onClickPlayback stop: hasStopped %b", hasStopped))
       }
       else -> {
@@ -193,6 +207,7 @@ class MainActivity : AppCompatActivity() {
   private fun selectFileToPlayback(): Boolean {
     // Start file selection from Movies directory.
     // Android 10 and above requires VOLUME_EXTERNAL_PRIMARY to write to MediaStore.
+    requestingPlayback = true
     val videoCollection: Uri
     videoCollection = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
       MediaStore.Video.Media.getContentUri(
@@ -212,6 +227,52 @@ class MainActivity : AppCompatActivity() {
     this.startActivityForResult(intent, REQUEST_MP4_SELECTOR)
     return true
   }
+
+  override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+    // Check request status. Log an error if the selection fails.
+    super.onActivityResult(requestCode, resultCode, data)
+    if (resultCode != RESULT_OK || requestCode != REQUEST_MP4_SELECTOR) {
+      Log.e(TAG,"onActivityResult select file failed")
+      return
+    }
+    val mp4Uri = data?.data
+    Log.d(TAG, String.format("onActivityResult result is %s", mp4Uri))
+
+    // Copy to app internal storage to get a file path.
+    val localFilePath: String = copyToInternalFilePath(mp4Uri)
+
+    // Begin playback.
+    playbackFilePath = localFilePath
+  }
+
+  private fun copyToInternalFilePath(contentUri: Uri?): String {
+    // Create a file path in the app's internal storage.
+    val tempPlaybackFilePath = File(getExternalFilesDir(null), "temp-playback.mp4").absolutePath
+
+    // Copy the binary content from contentUri to tempPlaybackFilePath.
+    try {
+      if (contentUri != null) {
+        this.contentResolver.openInputStream(contentUri).use { inputStream ->
+          FileOutputStream(tempPlaybackFilePath).use { tempOutputFileStream ->
+            val buffer = ByteArray(1024 * 1024) // 1MB
+            var bytesRead = inputStream!!.read(buffer)
+            while (bytesRead != -1) {
+              tempOutputFileStream.write(buffer, 0, bytesRead)
+              bytesRead = inputStream.read(buffer)
+            }
+          }
+        }
+      }
+    } catch (e: FileNotFoundException) {
+      Log.e(TAG,"copyToInternalFilePath FileNotFoundException", e)
+    } catch (e: IOException) {
+      Log.e(TAG,"copyToInternalFilePath IOException", e)
+    }
+
+    // Return the absolute file path of the copied file.
+    return tempPlaybackFilePath
+  }
+
 
   override fun onRequestPermissionsResult(
     requestCode: Int,

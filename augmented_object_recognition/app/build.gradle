@@ -32,6 +32,9 @@ android {
         exclude 'META-INF/DEPENDENCIES'
         exclude 'META-INF/INDEX.LIST'
     }
+    aaptOptions {
+        noCompress "tflite"
+    }
 }
 
 android.sourceSets.main.java.srcDirs += ['../third_party']

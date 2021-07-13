@@ -44,7 +44,6 @@ import android.Manifest
 import android.app.Activity
 import android.content.ContentResolver
 import android.content.ContentValues
-import android.content.Intent
 import android.content.pm.PackageManager
 import android.database.Cursor
 import android.net.Uri
@@ -61,17 +60,13 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
 import androidx.loader.content.CursorLoader
-import com.google.ar.core.PlaybackStatus
-import com.google.ar.core.RecordingConfig
-import com.google.ar.core.RecordingStatus
-import com.google.ar.core.Session
+import com.google.ar.core.*
 import com.google.ar.core.examples.java.common.helpers.SnackbarHelper
 import com.google.ar.core.examples.java.common.samplerender.SampleRender
 import com.google.ar.core.examples.java.ml.MainActivity.AppState
 import com.google.ar.core.exceptions.*
 import java.io.File
 import java.io.FileNotFoundException
-import java.io.FileOutputStream
 import java.io.IOException
 import java.text.SimpleDateFormat
 import java.util.*
@@ -91,9 +86,42 @@ class MainActivityView(val activity: MainActivity, renderer: AppRenderer) : Defa
   val useCloudMlSwitch = root.findViewById<SwitchCompat>(R.id.useCloudMlSwitch)
   val scanButton = root.findViewById<AppCompatButton>(R.id.scanButton)
   val resetButton = root.findViewById<AppCompatButton>(R.id.clearButton)
+//  val recordButton = root.findViewById<AppCompatButton>(R.id.record_button)
+//  val playbackButton = root.findViewById<AppCompatButton>(R.id.playback_button)
   val snackbarHelper = SnackbarHelper().apply {
     setParentView(root.findViewById(R.id.coordinatorLayout))
     setMaxLines(6)
+  }
+
+  public val SCAN_TRACK_ID = UUID.fromString("53069eb5-21ef-4946-b71c-6ac4979216a6")
+  private val SCAN_TRACK_MIME_TYPE = "application/recording-playback-scan"
+  public val PHASE_TRACK_ID = UUID.fromString("53069eb5-21ef-4946-b71c-6ac4979216a7")
+  private val PHASE_TRACK_MIME_TYPE = "application/recording-playback-phase"
+
+  public fun pauseARCoreSession() {
+    // Pause the GLSurfaceView so that it doesn't update the ARCore session.
+    // Pause the ARCore session so that we can update its configuration.
+    // If the GLSurfaceView is not paused,
+    //   onDrawFrame() will try to update the ARCore session
+    //   while it's paused, resulting in a crash.
+    activity.renderer.displayRotationHelper.onPause()
+    surfaceView.onPause()
+    activity.arCoreSessionHelper.sessionCache?.pause()
+  }
+
+  public fun resumeARCoreSession(): Boolean {
+    val session = activity.arCoreSessionHelper.sessionCache ?: return false
+    // We must resume the ARCore session before the GLSurfaceView.
+    // Otherwise, the GLSurfaceView will try to update the ARCore session.
+    try {
+      session.resume()
+    } catch (e: CameraNotAvailableException) {
+      Log.e(TAG, "CameraNotAvailableException in resumeARCoreSession", e)
+      return false
+    }
+    surfaceView.onResume()
+    activity.renderer.displayRotationHelper.onResume()
+    return true
   }
 
   public fun startRecording(): Boolean {
@@ -102,9 +130,17 @@ class MainActivityView(val activity: MainActivity, renderer: AppRenderer) : Defa
     pauseARCoreSession()
 
     // Configure the ARCore session to start recording.
+    val scanTrack = Track(session)
+      .setId(SCAN_TRACK_ID)
+      .setMimeType(SCAN_TRACK_MIME_TYPE)
+    val phaseTrack = Track(session)
+      .setId(PHASE_TRACK_ID)
+      .setMimeType(PHASE_TRACK_MIME_TYPE)
     val recordingConfig = RecordingConfig(session)
       .setMp4DatasetFilePath(mp4FilePath)
       .setAutoStopOnPause(true)
+      .addTrack(scanTrack)
+      .addTrack(phaseTrack)
     try {
       // Prepare the session for recording, but do not start recording yet.
       session.startRecording(recordingConfig)
@@ -118,30 +154,6 @@ class MainActivityView(val activity: MainActivity, renderer: AppRenderer) : Defa
     // Correctness checking: check the ARCore session's RecordingState.
     val recordingStatus: RecordingStatus = session.getRecordingStatus()
     return recordingStatus == RecordingStatus.OK
-  }
-
-  private fun pauseARCoreSession() {
-    // Pause the GLSurfaceView so that it doesn't update the ARCore session.
-    // Pause the ARCore session so that we can update its configuration.
-    // If the GLSurfaceView is not paused,
-    //   onDrawFrame() will try to update the ARCore session
-    //   while it's paused, resulting in a crash.
-    surfaceView.onPause()
-    activity.arCoreSessionHelper.sessionCache?.pause()
-  }
-
-  private fun resumeARCoreSession(): Boolean {
-    val session = activity.arCoreSessionHelper.sessionCache ?: return false
-    // We must resume the ARCore session before the GLSurfaceView.
-    // Otherwise, the GLSurfaceView will try to update the ARCore session.
-    try {
-      session.resume()
-    } catch (e: CameraNotAvailableException) {
-      Log.e(TAG, "CameraNotAvailableException in resumeARCoreSession", e)
-      return false
-    }
-    surfaceView.onResume()
-    return true
   }
 
   public fun stopRecording(): Boolean {
@@ -158,22 +170,6 @@ class MainActivityView(val activity: MainActivity, renderer: AppRenderer) : Defa
   }
 
   private val REQUEST_MP4_SELECTOR = 1
-
-  protected fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent) {
-    // Check request status. Log an error if the selection fails.
-    if (resultCode != Activity.RESULT_OK || requestCode != REQUEST_MP4_SELECTOR) {
-      Log.e(TAG, "onActivityResult select file failed")
-      return
-    }
-    val mp4Uri = data.data
-    Log.d(TAG, String.format("onActivityResult result is %s", mp4Uri))
-
-    // Copy to app internal storage to get a file path.
-    val localFilePath: String? = mp4Uri?.let { copyToInternalFilePath(it) }
-
-    // Begin playback.
-    startPlayingback(localFilePath)
-  }
 
   private fun createMp4File(): String? {
     if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.Q) {
@@ -234,64 +230,6 @@ class MainActivityView(val activity: MainActivity, renderer: AppRenderer) : Defa
     return filePath
   }
 
-  private fun copyToInternalFilePath(contentUri: Uri): String? {
-    // Create a file path in the app's internal storage.
-    val tempPlaybackFilePath: String =
-      File(root.context.getExternalFilesDir(null), "temp-playback.mp4").getAbsolutePath()
-
-    // Copy the binary content from contentUri to tempPlaybackFilePath.
-    try {
-      root.context.getContentResolver().openInputStream(contentUri).use { inputStream ->
-        FileOutputStream(tempPlaybackFilePath).use { tempOutputFileStream ->
-          val buffer = ByteArray(1024 * 1024) // 1MB
-          var bytesRead: Int? = inputStream?.read(buffer)
-          while (bytesRead != -1 && bytesRead != null) {
-            tempOutputFileStream.write(buffer, 0, bytesRead)
-            bytesRead = inputStream?.read(buffer)
-          }
-        }
-      }
-    } catch (e: FileNotFoundException) {
-      Log.e(TAG, "copyToInternalFilePath FileNotFoundException", e)
-      return null
-    } catch (e: IOException) {
-      Log.e(TAG, "copyToInternalFilePath IOException", e)
-      return null
-    }
-
-    // Return the absolute file path of the copied file.
-    return tempPlaybackFilePath
-  }
-
-  private fun startPlayingback(mp4FilePath: String?): Boolean {
-    val session = activity.arCoreSessionHelper.sessionCache ?: return false
-
-    if (mp4FilePath == null) return false
-    Log.d(TAG, "startPlayingback at:$mp4FilePath")
-    pauseARCoreSession()
-    try {
-      session.setPlaybackDataset(mp4FilePath)
-    } catch (e: PlaybackFailedException) {
-      Log.e(TAG, "startPlayingback - setPlaybackDataset failed", e)
-    }
-
-    // The session's camera texture name becomes invalid when the
-    // ARCore session is set to play back.
-    // Workaround: Reset the Texture to start Playback
-    // so it doesn't crashes with AR_ERROR_TEXTURE_NOT_SET.
-    val canResume = resumeARCoreSession()
-    if (!canResume) return false
-    val playbackStatus: PlaybackStatus = session.getPlaybackStatus()
-    Log.d(TAG, String.format("startPlayingback - playbackStatus %s", playbackStatus))
-    if (playbackStatus != PlaybackStatus.OK) { // Correctness check
-      return false
-    }
-    MainActivity().appState = AppState.Playingback
-    MainActivity().updateRecordButton()
-    MainActivity().updatePlaybackButton()
-    return true
-  }
-
   public fun stopPlayingback(): Boolean {
     var session = activity.arCoreSessionHelper.sessionCache ?: return false
 
@@ -325,11 +263,12 @@ class MainActivityView(val activity: MainActivity, renderer: AppRenderer) : Defa
 //    hasSetTextureNames = false
 
     // Reset appState to Idle, and update the "Record" and "Playback" buttons.
-    MainActivity().appState = AppState.Idle
-    MainActivity().updateRecordButton()
-    MainActivity().updatePlaybackButton()
+    activity.appState = AppState.Idle
+    activity.updateRecordButton()
+    activity.updatePlaybackButton()
     return true
   }
+
 
   // Test if the file represented by the content Uri can be open with write access.
   private fun testFileWriteAccess(contentUri: Uri): Boolean {
