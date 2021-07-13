@@ -824,33 +824,6 @@ public class CameraActivity extends AppCompatActivity implements SampleRender.Re
         return nv21;
     }
 
-    /**
-     * Shows a pop-up dialog on the first call, determining whether the user wants to enable
-     * depth-based occlusion. The result of this dialog can be retrieved with useDepthForOcclusion().
-     */
-    private void showOcclusionDialogIfNeeded() {
-        boolean isDepthSupported = session.isDepthModeSupported(Config.DepthMode.AUTOMATIC);
-        if (!depthSettings.shouldShowDepthEnableDialog() || !isDepthSupported) {
-            return; // Don't need to show dialog.
-        }
-
-        // Asks the user whether they want to use depth-based occlusion.
-        new AlertDialog.Builder(this)
-                .setTitle(R.string.options_title_with_depth)
-                .setMessage(R.string.depth_use_explanation)
-                .setPositiveButton(
-                        R.string.button_text_enable_depth,
-                        (DialogInterface dialog, int which) -> {
-                            depthSettings.setUseDepthForOcclusion(true);
-                        })
-                .setNegativeButton(
-                        R.string.button_text_disable_depth,
-                        (DialogInterface dialog, int which) -> {
-                            depthSettings.setUseDepthForOcclusion(false);
-                        })
-                .show();
-    }
-
     private void launchInstantPlacementSettingsMenuDialog() {
         resetSettingsMenuDialogCheckboxes();
         Resources resources = getResources();
@@ -1000,11 +973,7 @@ public class CameraActivity extends AppCompatActivity implements SampleRender.Re
         Config config = session.getConfig();
         config.setLightEstimationMode(Config.LightEstimationMode.ENVIRONMENTAL_HDR);
         config.setFocusMode(Config.FocusMode.AUTO);
-        if (session.isDepthModeSupported(Config.DepthMode.AUTOMATIC)) {
-            config.setDepthMode(Config.DepthMode.AUTOMATIC);
-        } else {
-            config.setDepthMode(Config.DepthMode.DISABLED);
-        }
+        config.setDepthMode(Config.DepthMode.DISABLED);
         if (instantPlacementSettings.isInstantPlacementEnabled()) {
             config.setInstantPlacementMode(InstantPlacementMode.LOCAL_Y_UP);
         } else {
