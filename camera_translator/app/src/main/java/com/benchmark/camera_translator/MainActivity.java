@@ -978,8 +978,8 @@ public class MainActivity extends AppCompatActivity implements SampleRender.Rend
                 int y = words.getBoxRect(0).top;
                 Log.i("TESSERACT", "TEXT POSITION: (" + x + ", " + y + ")");
 
-                xPos = (float) ((float) x / (image.getWidth() * 1.1));
-                yPos = (float) ((float) y / (image.getHeight() * 1.2));
+                xPos = (float) x / (image.getWidth());
+                yPos = (float) y / (image.getHeight());
                 width = words.getWidth();
             }
 
