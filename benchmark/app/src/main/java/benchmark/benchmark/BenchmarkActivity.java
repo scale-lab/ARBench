@@ -24,16 +24,21 @@
 
 package benchmark.benchmark;
 
+import android.Manifest;
 import android.annotation.SuppressLint;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.hardware.Camera;
 import android.opengl.GLSurfaceView;
 import android.os.Bundle;
 import android.view.View;
+import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
 
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
@@ -62,12 +67,26 @@ public class BenchmarkActivity extends AppCompatActivity {
     private GLSurfaceView surfaceView;
     private SampleRender render;
 
+    private Camera camera;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         filesPath = this.getExternalFilesDir(null).getAbsolutePath();
         resultsDisplay = (LinearLayout) findViewById(R.id.results_display);
+
+        int permission = ActivityCompat.checkSelfPermission(this, Manifest.permission.CAMERA);
+        if (permission != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CAMERA}, 1);
+        }
+
+        camera = Camera.open(0);
+        CameraPreview cameraPreview = new CameraPreview(this, camera);
+        cameraPreview.setSurfaceTextureListener(cameraPreview);
+
+        FrameLayout preview = (FrameLayout) findViewById(R.id.camera_frame);
+        preview.addView(cameraPreview);
     }
 
     public void onStartBenchmark(View view) {
