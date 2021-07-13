@@ -83,6 +83,17 @@
           android:value="benchmark.benchmark.BenchmarkActivity"/>
     </activity>
 
+    <activity
+        android:name="benchmark.camera_translator.CameraActivity"
+        android:parentActivityName="benchmark.benchmark.BenchmarkActivity"
+        android:configChanges="orientation|screenSize"
+        android:exported="true"
+        android:theme="@style/Theme.AppCompat.NoActionBar"
+        android:screenOrientation="locked">
+      <meta-data
+          android:name="android.support.PARENT_ACTIVITY"
+          android:value="benchmark.benchmark.BenchmarkActivity"/>
+    </activity>
 
     <!-- Indicates whether "Google Play Services for AR" (ARCore) is "required" or "optional". -->
     <meta-data android:name="com.google.ar.core" android:value="required" />
