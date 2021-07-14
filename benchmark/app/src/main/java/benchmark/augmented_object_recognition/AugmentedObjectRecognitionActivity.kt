@@ -71,6 +71,24 @@ class AugmentedObjectRecognitionActivity : AppCompatActivity() {
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
 
+    val intent = getIntent()
+    val activityNumber = intent.getIntExtra(BenchmarkActivity.ACTIVITY_NUMBER, 0)
+    fileName = BenchmarkActivity.ACTIVITY_RECORDINGS[activityNumber].recordingFileName
+    val f = File(getExternalFilesDir(null).toString() + "/" + fileName)
+    if (!f.exists()) try {
+      val `is`: InputStream = assets.open("recordings/$fileName")
+      var len: Int
+      val buffer = ByteArray(1024)
+      val fos = FileOutputStream(f)
+      while (`is`.read(buffer).also { len = it } > 0) {
+        fos.write(buffer, 0, len)
+      }
+      `is`.close()
+      fos.close()
+    } catch (e: Exception) {
+      throw RuntimeException(e)
+    }
+
     arCoreSessionHelper = ARCoreSessionLifecycleHelper(this)
     // When session creation or session.resume fails, we display a message and log detailed information.
     arCoreSessionHelper.exceptionCallback = { exception ->
@@ -105,12 +123,8 @@ class AugmentedObjectRecognitionActivity : AppCompatActivity() {
         .thenByDescending { it.imageSize.height }
       session.setCameraConfig(configs.sortedWith(sort)[0])
 
-      if (requestingPlayback) {
-        while (playbackFilePath == null) {
-          continue
-        }
-        session.setPlaybackDataset(playbackFilePath)
-      }
+      val destination = File(getExternalFilesDir(null), fileName).absolutePath
+      session.setPlaybackDataset(destination)
     }
     lifecycle.addObserver(arCoreSessionHelper)
 
@@ -122,23 +136,7 @@ class AugmentedObjectRecognitionActivity : AppCompatActivity() {
     arCoreSessionHelper.bindView(viewRecognition)
     lifecycle.addObserver(viewRecognition)
 
-    val intent = intent
-    val activityNumber = intent.getIntExtra(BenchmarkActivity.ACTIVITY_NUMBER, 0)
-    fileName = BenchmarkActivity.ACTIVITY_RECORDINGS[activityNumber].recordingFileName
-    val f = File(getExternalFilesDir(null).toString() + "/" + fileName)
-    if (!f.exists()) try {
-      val `is`: InputStream = assets.open("recordings/$fileName")
-      var len: Int
-      val buffer = ByteArray(1024)
-      val fos = FileOutputStream(f)
-      while (`is`.read(buffer).also { len = it } > 0) {
-        fos.write(buffer, 0, len)
-      }
-      `is`.close()
-      fos.close()
-    } catch (e: Exception) {
-      throw RuntimeException(e)
-    }
+
   }
 
   enum class AppState {

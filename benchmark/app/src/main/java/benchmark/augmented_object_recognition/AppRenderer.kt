@@ -40,6 +40,7 @@
 
 package benchmark.augmented_object_recognition;
 
+import android.opengl.GLES30
 import android.opengl.Matrix
 import android.util.Log
 import androidx.lifecycle.DefaultLifecycleObserver
@@ -138,15 +139,18 @@ class AppRenderer(val recognitionActivity: AugmentedObjectRecognitionActivity) :
 
     var updateTime = System.currentTimeMillis()
     val frame = try {
-     session.update()
+      session.update()
     } catch (e: CameraNotAvailableException) {
       Log.e(TAG, "Camera not available during onDrawFrame", e)
       showSnackbar("Camera not available. Try restarting the app.")
       return
     }
+    updateTime = System.currentTimeMillis() - updateTime
 
+    var renderBackgroundTime = System.currentTimeMillis()
     backgroundRenderer.updateDisplayGeometry(frame)
     backgroundRenderer.drawBackground(render)
+    renderBackgroundTime = System.currentTimeMillis() - renderBackgroundTime
 
     // Get camera and projection matrices.
     val camera = frame.camera
@@ -178,10 +182,13 @@ class AppRenderer(val recognitionActivity: AugmentedObjectRecognitionActivity) :
     } else if (session.playbackStatus == PlaybackStatus.FINISHED) {
       viewRecognition.fpsLog!!.close()
     }
-    updateTime = System.currentTimeMillis() - updateTime;
 
+    if (session.playbackStatus == PlaybackStatus.OK) {
+      if (!frame.getUpdatedTrackData(viewRecognition.SCAN_TRACK_ID).isEmpty()) {
+        scanButtonWasPressed = true
+      }
+    }
     var handleInputTime = System.currentTimeMillis()
-    handleInputTime = System.currentTimeMillis() - handleInputTime;
     if (scanButtonWasPressed) {
       scanButtonWasPressed = false
       val cameraImage = frame.tryAcquireCameraImage()
@@ -194,18 +201,7 @@ class AppRenderer(val recognitionActivity: AugmentedObjectRecognitionActivity) :
           cameraImage.close()
         }
       }
-      if (session.recordingStatus == RecordingStatus.OK) {
-        val payload = ByteBuffer.allocate(1)
-        payload.put(1)
-        try {
-          frame.recordTrackData(viewRecognition.SCAN_TRACK_ID, payload)
-        } catch (e: IllegalStateException) {
-          Log.e(TAG,"Error in recording scan input into external data track.", e)
-        }
-      }
     }
-
-    var renderBackgroundTime = System.currentTimeMillis()
 
     /** If results were completed this frame, create [Anchor]s from model results. */
     val objects = objectResults
@@ -219,26 +215,11 @@ class AppRenderer(val recognitionActivity: AugmentedObjectRecognitionActivity) :
         ARLabeledAnchor(anchor, obj.label)
       }
       arLabeledAnchors.addAll(anchors)
-      viewRecognition.post {
-//        view.resetButton.isEnabled = arLabeledAnchors.isNotEmpty()
-//        view.setScanningActive(false)
-//        when {
-//          objects.isEmpty() && currentAnalyzer == mlKitAnalyzer && !mlKitAnalyzer.hasCustomModel() ->
-//            showSnackbar("Default ML Kit classification model returned no results. " +
-//              "For better classification performance, see the README to configure a custom model.")
-//          objects.isEmpty() ->
-//            showSnackbar("Classification model returned no results.")
-//          anchors.size != objects.size ->
-//            showSnackbar("Objects were classified, but could not be attached to an anchor. " +
-//              "Try moving your device around to obtain a better understanding of the environment.")
-//        }
-      }
     }
-
-    var renderTime = System.currentTimeMillis()
-    renderBackgroundTime = renderTime - renderBackgroundTime
+    handleInputTime = System.currentTimeMillis() - handleInputTime
 
     // Draw labels at their anchor position.
+    var renderTime = System.currentTimeMillis()
     for (arDetectedObject in arLabeledAnchors) {
       val anchor = arDetectedObject.anchor
       if (anchor.trackingState != TrackingState.TRACKING) continue
@@ -251,9 +232,11 @@ class AppRenderer(val recognitionActivity: AugmentedObjectRecognitionActivity) :
       )
     }
 
-    renderTime = System.currentTimeMillis() - renderTime;
+    GLES30.glFinish()
+    renderTime = System.currentTimeMillis() - renderTime
     if (viewRecognition.fpsLog != null) {
-      val data = currentPhase.toString() + "," + frameTime + "," + updateTime + "," + handleInputTime + "," + renderBackgroundTime + "," + renderTime + "," + (System.currentTimeMillis() - frameTime) + "," + session.allAnchors.size + "\n";
+      val data =
+        currentPhase.toString() + "," + frameTime + "," + updateTime + "," + handleInputTime + "," + renderBackgroundTime + "," + renderTime + "," + (System.currentTimeMillis() - frameTime) + "," + session.allAnchors.size + "\n";
       viewRecognition.fpsLog!!.write(data)
     }
   }
@@ -272,7 +255,8 @@ class AppRenderer(val recognitionActivity: AugmentedObjectRecognitionActivity) :
   private fun showSnackbar(message: String): Unit =
     recognitionActivity.viewRecognition.snackbarHelper.showError(recognitionActivity, message)
 
-  private fun hideSnackbar() = recognitionActivity.viewRecognition.snackbarHelper.hide(recognitionActivity)
+  private fun hideSnackbar() =
+    recognitionActivity.viewRecognition.snackbarHelper.hide(recognitionActivity)
 
   /**
    * Temporary arrays to prevent allocations in [createAnchor].
@@ -296,32 +280,6 @@ class AppRenderer(val recognitionActivity: AugmentedObjectRecognitionActivity) :
     val hits = frame.hitTest(convertFloatsOut[0], convertFloatsOut[1])
     val result = hits.getOrNull(0) ?: return null
     return result.trackable.createAnchor(result.hitPose)
-  }
-
-  var fileNumber = 1
-
-  @Throws(
-    CameraNotAvailableException::class,
-    PlaybackFailedException::class,
-    UnavailableSdkTooOldException::class,
-    UnavailableDeviceNotCompatibleException::class,
-    UnavailableArcoreNotInstalledException::class,
-    UnavailableApkTooOldException::class
-  )
-  fun onPlayback(absolutePath: String) {
-    recognitionActivity.arCoreSessionHelper.onPause(recognitionActivity)
-    recognitionActivity.arCoreSessionHelper.onResume(recognitionActivity)
-    val session = recognitionActivity.arCoreSessionHelper.sessionCache ?: return;
-    // Switch to a different dataset.
-    displayRotationHelper.onPause()
-    viewRecognition.surfaceView.onPause()
-    session.pause()// Pause the playback of the first dataset.
-    // Specify a different dataset to use.
-    session.setPlaybackDataset(absolutePath)
-    session.resume()
-    viewRecognition.surfaceView.onResume()
-    displayRotationHelper.onResume()
-  // Start playback from the beginning of the new dataset.
   }
 }
 

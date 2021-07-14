@@ -125,13 +125,15 @@ class ARCoreSessionLifecycleHelper(
 //        val destination: String = File(viewRecognition.recognitionActivity.getExternalFilesDir(null), viewRecognition.recognitionActivity.fileName).absolutePath
 //        session.setPlaybackDataset(destination)
 //      }
-      val activity = viewRecognition.recognitionActivity;
-      activity.renderer.onPlayback(File(activity.getExternalFilesDir(null), activity.fileName!!).absolutePath)
+//      val activity = viewRecognition.recognitionActivity;
+//      activity.renderer.onPlayback(File(activity.getExternalFilesDir(null), activity.fileName!!).absolutePath)
+      session.resume()
       sessionCache = session
     } catch (e: CameraNotAvailableException) {
       exceptionCallback?.invoke(e)
     } catch (e: PlaybackFailedException) {
       viewRecognition.fpsLog?.close()
+      exceptionCallback?.invoke(e)
     }
   }
 
