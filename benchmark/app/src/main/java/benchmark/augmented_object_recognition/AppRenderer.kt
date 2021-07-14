@@ -40,6 +40,7 @@
 
 package benchmark.augmented_object_recognition;
 
+import android.R.id.message
 import android.app.Activity
 import android.opengl.GLES30
 import android.opengl.Matrix
@@ -47,7 +48,6 @@ import android.util.Log
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
 import benchmark.augmented_object_recognition.classification.DetectedObjectResult
-import benchmark.augmented_object_recognition.classification.GoogleCloudVisionDetector
 import benchmark.augmented_object_recognition.classification.MLKitObjectDetector
 import benchmark.augmented_object_recognition.classification.ObjectDetector
 import benchmark.augmented_object_recognition.render.LabelRender
@@ -61,10 +61,10 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.launch
-import java.io.File
-import java.nio.ByteBuffer
+import java.io.IOException
 import java.nio.IntBuffer
 import java.util.*
+
 
 /**
  * Renders the HelloAR application into using our example Renderer.
@@ -129,18 +129,13 @@ class AppRenderer(val recognitionActivity: AugmentedObjectRecognitionActivity) :
     if (session.playbackStatus == PlaybackStatus.FINISHED) {
       recognitionActivity.setResult(Activity.RESULT_OK)
       viewRecognition.fpsLog?.close()
+      recognitionActivity.finish()
       return
     }
 
     // Notify ARCore session that the view size changed so that the perspective matrix and
     // the video background can be properly adjusted.
     displayRotationHelper.updateSessionIfNeeded(session)
-//
-//    if (activity.appState == AugmentedObjectActivity.AppState.Playingback
-//      && session.playbackStatus == PlaybackStatus.FINISHED) {
-//      activity.runOnUiThread(activity.view::stopPlayingback)
-//      return
-//    }
 
     var updateTime = System.currentTimeMillis()
     val frame = try {

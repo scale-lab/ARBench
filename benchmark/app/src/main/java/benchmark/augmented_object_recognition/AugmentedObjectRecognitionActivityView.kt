@@ -48,6 +48,8 @@ import androidx.lifecycle.LifecycleOwner
 import benchmark.benchmark.R
 import benchmark.common.helpers.SnackbarHelper
 import benchmark.common.samplerender.SampleRender
+import com.google.ar.core.Session
+import com.google.ar.core.exceptions.*
 import java.io.BufferedWriter
 import java.io.FileWriter
 import java.io.IOException
