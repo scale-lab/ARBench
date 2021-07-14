@@ -41,6 +41,7 @@
 package benchmark.augmented_object_recognition
 
 import android.opengl.GLSurfaceView
+import android.util.Log
 import android.view.View
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
@@ -48,6 +49,8 @@ import benchmark.benchmark.R
 import benchmark.common.helpers.SnackbarHelper
 import benchmark.common.samplerender.SampleRender
 import java.io.BufferedWriter
+import java.io.FileWriter
+import java.io.IOException
 import java.util.*
 
 /**
@@ -79,6 +82,16 @@ class AugmentedObjectRecognitionActivityView(val recognitionActivity: AugmentedO
   var fpsLog: BufferedWriter? = null
 
   override fun onResume(owner: LifecycleOwner) {
+    try {
+      Log.d(
+        recognitionActivity.TAG,
+        "Logging FPS to " + recognitionActivity.getExternalFilesDir(null)?.getAbsolutePath() + "/fps.csv"
+      )
+      fpsLog =
+        BufferedWriter(FileWriter(recognitionActivity.getExternalFilesDir(null)?.getAbsolutePath() + "/fps.csv"))
+    } catch (e: IOException) {
+      recognitionActivity.renderer.showSnackbar("Could not open file to log FPS")
+    }
     surfaceView.onResume()
   }
 

@@ -40,6 +40,7 @@
 
 package benchmark.augmented_object_recognition;
 
+import android.app.Activity
 import android.opengl.GLES30
 import android.opengl.Matrix
 import android.util.Log
@@ -90,9 +91,8 @@ class AppRenderer(val recognitionActivity: AugmentedObjectRecognitionActivity) :
   var scanButtonWasPressed = false
 
   val mlKitAnalyzer = MLKitObjectDetector(recognitionActivity)
-  val gcpAnalyzer = GoogleCloudVisionDetector(recognitionActivity)
 
-  var currentAnalyzer: ObjectDetector = gcpAnalyzer
+  var currentAnalyzer: ObjectDetector = mlKitAnalyzer
   var currentPhase = 1
 
   override fun onResume(owner: LifecycleOwner) {
@@ -126,6 +126,11 @@ class AppRenderer(val recognitionActivity: AugmentedObjectRecognitionActivity) :
 
     val session = recognitionActivity.arCoreSessionHelper.sessionCache ?: return
     session.setCameraTextureNames(intArrayOf(backgroundRenderer.cameraColorTexture.textureId))
+    if (session.playbackStatus == PlaybackStatus.FINISHED) {
+      recognitionActivity.setResult(Activity.RESULT_OK)
+      viewRecognition.fpsLog?.close()
+      recognitionActivity.finish()
+    }
 
     // Notify ARCore session that the view size changed so that the perspective matrix and
     // the video background can be properly adjusted.
@@ -252,7 +257,7 @@ class AppRenderer(val recognitionActivity: AugmentedObjectRecognitionActivity) :
     throw e
   }
 
-  private fun showSnackbar(message: String): Unit =
+  fun showSnackbar(message: String): Unit =
     recognitionActivity.viewRecognition.snackbarHelper.showError(recognitionActivity, message)
 
   private fun hideSnackbar() =
