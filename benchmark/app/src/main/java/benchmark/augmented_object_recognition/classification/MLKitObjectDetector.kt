@@ -21,8 +21,8 @@ import android.content.res.AssetManager
 import android.content.res.Resources
 import android.media.Image
 import benchmark.augmented_object_recognition.classification.ObjectDetector
-import com.google.ar.core.examples.java.ml.classification.utils.ImageUtils
-import com.google.ar.core.examples.java.ml.classification.utils.VertexUtils.rotateCoordinates
+import benchmark.augmented_object_recognition.classification.utils.ImageUtils
+import benchmark.augmented_object_recognition.classification.utils.VertexUtils.rotateCoordinates
 import com.google.mlkit.common.model.LocalModel
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.objects.ObjectDetection

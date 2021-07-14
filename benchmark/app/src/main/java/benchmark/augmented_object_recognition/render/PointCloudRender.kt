@@ -16,12 +16,11 @@
 
 package benchmark.augmented_object_recognition.render
 
+import benchmark.common.samplerender.Mesh
+import benchmark.common.samplerender.SampleRender
+import benchmark.common.samplerender.Shader
 import benchmark.common.samplerender.VertexBuffer
 import com.google.ar.core.PointCloud
-import com.google.ar.core.examples.java.common.samplerender.Mesh
-import com.google.ar.core.examples.java.common.samplerender.SampleRender
-import com.google.ar.core.examples.java.common.samplerender.Shader
-import com.google.ar.core.examples.java.common.samplerender.VertexBuffer
 
 class PointCloudRender {
   lateinit var pointCloudVertexBuffer: VertexBuffer

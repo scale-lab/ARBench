@@ -47,6 +47,7 @@ import java.io.IOException;
 
 import benchmark.augmented_faces.AugmentedFacesActivity;
 import benchmark.augmented_image.AugmentedImageActivity;
+import benchmark.augmented_object_recognition.AugmentedObjectRecognitionActivity;
 import benchmark.common.samplerender.SampleRender;
 import benchmark.augmented_object_generation.AugmentedObjectGenerationActivity;
 
@@ -55,7 +56,8 @@ public class BenchmarkActivity extends AppCompatActivity {
 
     // This is the order of activities that the app will open.
     public static final ActivityRecording[] ACTIVITY_RECORDINGS = {
-            new ActivityRecording(AugmentedImageActivity.class, "aug-img-1.mp4"),
+            new ActivityRecording(AugmentedObjectRecognitionActivity.class, "aug-obj-rcg-1.mp4")
+//            new ActivityRecording(AugmentedImageActivity.class, "aug-img-1.mp4"),
 //            new ActivityRecording(AugmentedObjectGenerationActivity.class, "aug-obj-gen-1.mp4"),
 //            new ActivityRecording(AugmentedObjectGenerationActivity.class, "aug-obj-gen-2.mp4"),
 //            new ActivityRecording(AugmentedObjectGenerationActivity.class, "aug-obj-gen-3.mp4"),

@@ -44,21 +44,29 @@ import android.os.Bundle
 import android.util.Log
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import benchmark.benchmark.BenchmarkActivity
 import benchmark.common.helpers.FullScreenHelper
 import com.google.ar.core.CameraConfig
 import com.google.ar.core.CameraConfigFilter
 import com.google.ar.core.Config
 import com.google.ar.core.exceptions.*
+import java.io.File
+import java.io.FileOutputStream
+import java.io.InputStream
 
-class AugmentedObjectActivity : AppCompatActivity() {
+
+class AugmentedObjectRecognitionActivity : AppCompatActivity() {
   val TAG = "AugmentedObjectActivity"
   lateinit var arCoreSessionHelper: ARCoreSessionLifecycleHelper
 
   lateinit var renderer: AppRenderer
-  lateinit var view: AugmentedObjectActivityView
+  lateinit var viewRecognition: AugmentedObjectRecognitionActivityView
 
   private val MP4_VIDEO_MIME_TYPE = "video/mp4"
   private val REQUEST_MP4_SELECTOR = 1
+
+  var fileName: String? = null
+  var currentPhase = 1
 
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
@@ -108,11 +116,29 @@ class AugmentedObjectActivity : AppCompatActivity() {
 
     renderer = AppRenderer(this)
     lifecycle.addObserver(renderer)
-    view = AugmentedObjectActivityView(this, renderer)
-    setContentView(view.root)
-    renderer.bindView(view)
-    lifecycle.addObserver(view)
+    viewRecognition = AugmentedObjectRecognitionActivityView(this, renderer)
+    setContentView(viewRecognition.root)
+    renderer.bindView(viewRecognition)
+    arCoreSessionHelper.bindView(viewRecognition)
+    lifecycle.addObserver(viewRecognition)
 
+    val intent = intent
+    val activityNumber = intent.getIntExtra(BenchmarkActivity.ACTIVITY_NUMBER, 0)
+    fileName = BenchmarkActivity.ACTIVITY_RECORDINGS[activityNumber].recordingFileName
+    val f = File(getExternalFilesDir(null).toString() + "/" + fileName)
+    if (!f.exists()) try {
+      val `is`: InputStream = assets.open("recordings/$fileName")
+      var len: Int
+      val buffer = ByteArray(1024)
+      val fos = FileOutputStream(f)
+      while (`is`.read(buffer).also { len = it } > 0) {
+        fos.write(buffer, 0, len)
+      }
+      `is`.close()
+      fos.close()
+    } catch (e: Exception) {
+      throw RuntimeException(e)
+    }
   }
 
   enum class AppState {
