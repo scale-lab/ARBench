@@ -1,4 +1,28 @@
 /*
+ * Copyright 2021, Brown University, Providence, RI.
+ * Rahul Shahi, Sherief Reda, Seif Abdelaziz
+ *
+ *                        All Rights Reserved
+ *
+ * Permission to use, copy, modify, and distribute this software and
+ * its documentation for any purpose other than its incorporation into a
+ * commercial product or service is hereby granted without fee, provided
+ * that the above copyright notice appear in all copies and that both
+ * that copyright notice and this permission notice appear in supporting
+ * documentation, and that the name of Brown University not be used in
+ * advertising or publicity pertaining to distribution of the software
+ * without specific, written prior permission.
+ *
+ * BROWN UNIVERSITY DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE,
+ * INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR ANY
+ * PARTICULAR PURPOSE.  IN NO EVENT SHALL BROWN UNIVERSITY BE LIABLE FOR
+ * ANY SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ */
+
+/*
  * Copyright 2021 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,6 +41,7 @@
 package benchmark.augmented_object_recognition;
 
 import android.app.Activity
+import android.util.Log
 import android.widget.Toast
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
@@ -24,6 +49,10 @@ import benchmark.common.helpers.CameraPermissionHelper
 import com.google.ar.core.ArCoreApk
 import com.google.ar.core.Session
 import com.google.ar.core.exceptions.CameraNotAvailableException
+import com.google.ar.core.exceptions.PlaybackFailedException
+import java.io.BufferedWriter
+import java.io.File
+import java.io.FileWriter
 
 /**
  * Manages an ARCore Session using the Android Lifecycle API.
@@ -47,6 +76,14 @@ class ARCoreSessionLifecycleHelper(
   // https://developers.google.com/ar/reference/java/com/google/ar/core/Session#public-void-configure-config-config
   // https://developers.google.com/ar/reference/java/com/google/ar/core/Session#setCameraConfig(com.google.ar.core.CameraConfig)
   var beforeSessionResume: ((Session) -> Unit)? = null
+
+  lateinit var viewRecognition: AugmentedObjectRecognitionActivityView
+
+  private val TAG = ARCoreSessionLifecycleHelper::class.java.simpleName
+
+  fun bindView(viewRecognition: AugmentedObjectRecognitionActivityView) {
+    this.viewRecognition = viewRecognition
+  }
 
   // Creates a session. If ARCore is not installed, an installation will be requested.
   fun tryCreateSession(): Session? {
@@ -78,12 +115,23 @@ class ARCoreSessionLifecycleHelper(
     }
 
     val session = tryCreateSession() ?: return
+
+    viewRecognition.logPath = viewRecognition.recognitionActivity.getExternalFilesDir(null)!!.absolutePath + "/fps.csv";
+    Log.d(TAG, "Logging FPS to " + viewRecognition.logPath);
+    viewRecognition.fpsLog = BufferedWriter(FileWriter(viewRecognition.logPath));
     try {
       beforeSessionResume?.invoke(session)
-      session.resume()
+//      if(viewRecognition.recognitionActivity.fileName != null) {
+//        val destination: String = File(viewRecognition.recognitionActivity.getExternalFilesDir(null), viewRecognition.recognitionActivity.fileName).absolutePath
+//        session.setPlaybackDataset(destination)
+//      }
+      val activity = viewRecognition.recognitionActivity;
+      activity.renderer.onPlayback(File(activity.getExternalFilesDir(null), activity.fileName!!).absolutePath)
       sessionCache = session
     } catch (e: CameraNotAvailableException) {
       exceptionCallback?.invoke(e)
+    } catch (e: PlaybackFailedException) {
+      viewRecognition.fpsLog?.close()
     }
   }
 
@@ -92,6 +140,10 @@ class ARCoreSessionLifecycleHelper(
   }
 
   override fun onDestroy(owner: LifecycleOwner) {
+    if (viewRecognition.fpsLog != null) {
+      viewRecognition.fpsLog!!.close()
+    }
+
     // Explicitly close ARCore Session to release native resources.
     // Review the API reference for important considerations before calling close() in apps with
     // more complicated lifecycle requirements:

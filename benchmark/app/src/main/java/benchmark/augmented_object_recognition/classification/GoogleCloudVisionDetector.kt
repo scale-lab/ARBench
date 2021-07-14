@@ -18,12 +18,12 @@ package benchmark.augmented_object_recognition.classification
 
 import android.media.Image
 import android.util.Log
-import com.google.ar.core.examples.java.ml.MainActivity
-import com.google.ar.core.examples.java.ml.classification.utils.ImageUtils
-import com.google.ar.core.examples.java.ml.classification.utils.ImageUtils.toByteArray
-import com.google.ar.core.examples.java.ml.classification.utils.VertexUtils.calculateAverage
-import com.google.ar.core.examples.java.ml.classification.utils.VertexUtils.rotateCoordinates
-import com.google.ar.core.examples.java.ml.classification.utils.VertexUtils.toAbsoluteCoordinates
+import benchmark.augmented_object_recognition.AugmentedObjectRecognitionActivity
+import benchmark.augmented_object_recognition.classification.utils.ImageUtils
+import benchmark.augmented_object_recognition.classification.utils.ImageUtils.toByteArray
+import benchmark.augmented_object_recognition.classification.utils.VertexUtils.calculateAverage
+import benchmark.augmented_object_recognition.classification.utils.VertexUtils.rotateCoordinates
+import benchmark.augmented_object_recognition.classification.utils.VertexUtils.toAbsoluteCoordinates
 import com.google.auth.oauth2.GoogleCredentials
 import com.google.cloud.vision.v1.AnnotateImageRequest
 import com.google.cloud.vision.v1.Feature
@@ -37,7 +37,7 @@ import com.google.cloud.vision.v1.Image as GCVImage
  *
  * Finds detected objects ([DetectedObjectResult]s) given an [android.media.Image].
  */
-class GoogleCloudVisionDetector(val activity: MainActivity) : ObjectDetector(activity) {
+class GoogleCloudVisionDetector(val recognitionActivity: AugmentedObjectRecognitionActivity) : ObjectDetector(recognitionActivity) {
   companion object {
     val TAG = "GoogleCloudVisionDetector"
   }
@@ -45,9 +45,9 @@ class GoogleCloudVisionDetector(val activity: MainActivity) : ObjectDetector(act
   val credentials = try {
     // Providing GCP credentials is not mandatory for this app, so the existence of R.raw.credentials
     // is not guaranteed. Instead, use getIdentifier to determine an optional resource.
-    val res = activity.resources.getIdentifier("credentials", "raw", activity.packageName)
+    val res = recognitionActivity.resources.getIdentifier("credentials", "raw", recognitionActivity.packageName)
     if (res == 0) error("Missing GCP credentials in res/raw/credentials.json.")
-    GoogleCredentials.fromStream(activity.resources.openRawResource(res))
+    GoogleCredentials.fromStream(recognitionActivity.resources.openRawResource(res))
   } catch (e: Exception) {
     Log.e(TAG, "Unable to create Google credentials from res/raw/credentials.json. Cloud ML will be disabled.", e)
     null

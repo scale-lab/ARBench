@@ -46,20 +46,11 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:layout_gravity="bottom"
-    tools:context="benchmark.augmented_object_recognition.AugmentedObjectActivity">
+    tools:context="benchmark.augmented_object_recognition.AugmentedObjectRecognitionActivity">
 
     <android.opengl.GLSurfaceView
         android:id="@+id/surfaceview"
         android:layout_width="fill_parent"
-        android:layout_height="fill_parent" />
-
-    <androidx.appcompat.widget.SwitchCompat
-        android:id="@+id/useCloudMlSwitch"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="top|end"
-        android:background="#55FFFFFF"
-        android:padding="16dp"
-        android:text="@string/use_cloud_ml" />
+        android:layout_height="fill_parent" />/>
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

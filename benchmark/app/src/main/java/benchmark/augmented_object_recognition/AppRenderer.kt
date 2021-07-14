@@ -47,13 +47,13 @@ import androidx.lifecycle.LifecycleOwner
 import benchmark.augmented_object_recognition.classification.DetectedObjectResult
 import benchmark.augmented_object_recognition.classification.GoogleCloudVisionDetector
 import benchmark.augmented_object_recognition.classification.MLKitObjectDetector
+import benchmark.augmented_object_recognition.classification.ObjectDetector
 import benchmark.augmented_object_recognition.render.LabelRender
 import benchmark.augmented_object_recognition.render.PointCloudRender
 import benchmark.common.helpers.DisplayRotationHelper
 import benchmark.common.samplerender.SampleRender
-import com.google.ar.core.*
 import benchmark.common.samplerender.arcore.BackgroundRenderer
-import benchmark.augmented_object_recognition.classification.ObjectDetector
+import com.google.ar.core.*
 import com.google.ar.core.exceptions.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -61,22 +61,25 @@ import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.launch
 import java.io.File
 import java.nio.ByteBuffer
+import java.nio.IntBuffer
 import java.util.*
 
 /**
  * Renders the HelloAR application into using our example Renderer.
  */
-class AppRenderer(val activity: AugmentedObjectActivity) : DefaultLifecycleObserver, SampleRender.Renderer, CoroutineScope by MainScope() {
+class AppRenderer(val recognitionActivity: AugmentedObjectRecognitionActivity) : DefaultLifecycleObserver, SampleRender.Renderer, CoroutineScope by MainScope() {
   companion object {
     val TAG = "HelloArRenderer"
   }
 
-  lateinit var view: AugmentedObjectActivityView
+  lateinit var viewRecognition: AugmentedObjectRecognitionActivityView
 
-  val displayRotationHelper = DisplayRotationHelper(activity)
+  val displayRotationHelper = DisplayRotationHelper(recognitionActivity)
   lateinit var backgroundRenderer: BackgroundRenderer
   val pointCloudRender = PointCloudRender()
   val labelRenderer = LabelRender()
+
+  private val PHASE_TRACK_ID = UUID.fromString("53069eb5-21ef-4946-b71c-6ac4979216a7")
 
   val viewMatrix = FloatArray(16)
   val projectionMatrix = FloatArray(16)
@@ -85,10 +88,11 @@ class AppRenderer(val activity: AugmentedObjectActivity) : DefaultLifecycleObser
   val arLabeledAnchors = Collections.synchronizedList(mutableListOf<ARLabeledAnchor>())
   var scanButtonWasPressed = false
 
-  val mlKitAnalyzer = MLKitObjectDetector(activity)
-  val gcpAnalyzer = GoogleCloudVisionDetector(activity)
+  val mlKitAnalyzer = MLKitObjectDetector(recognitionActivity)
+  val gcpAnalyzer = GoogleCloudVisionDetector(recognitionActivity)
 
   var currentAnalyzer: ObjectDetector = gcpAnalyzer
+  var currentPhase = 1
 
   override fun onResume(owner: LifecycleOwner) {
     displayRotationHelper.onResume()
@@ -98,8 +102,8 @@ class AppRenderer(val activity: AugmentedObjectActivity) : DefaultLifecycleObser
     displayRotationHelper.onPause()
   }
 
-  fun bindView(view: AugmentedObjectActivityView) {
-    this.view = view
+  fun bindView(viewRecognition: AugmentedObjectRecognitionActivityView) {
+    this.viewRecognition = viewRecognition
   }
 
   override fun onSurfaceCreated(render: SampleRender) {
@@ -117,7 +121,9 @@ class AppRenderer(val activity: AugmentedObjectActivity) : DefaultLifecycleObser
   var objectResults: List<DetectedObjectResult>? = null
 
   override fun onDrawFrame(render: SampleRender) {
-    val session = activity.arCoreSessionHelper.sessionCache ?: return
+    val frameTime = System.currentTimeMillis()
+
+    val session = recognitionActivity.arCoreSessionHelper.sessionCache ?: return
     session.setCameraTextureNames(intArrayOf(backgroundRenderer.cameraColorTexture.textureId))
 
     // Notify ARCore session that the view size changed so that the perspective matrix and
@@ -130,6 +136,7 @@ class AppRenderer(val activity: AugmentedObjectActivity) : DefaultLifecycleObser
 //      return
 //    }
 
+    var updateTime = System.currentTimeMillis()
     val frame = try {
      session.update()
     } catch (e: CameraNotAvailableException) {
@@ -160,10 +167,21 @@ class AppRenderer(val activity: AugmentedObjectActivity) : DefaultLifecycleObser
     // Frame.acquireCameraImage must be used on the GL thread.
     // Check if the button was pressed last frame to start processing the camera image.
     if (session.playbackStatus == PlaybackStatus.OK) {
-      if (!frame.getUpdatedTrackData(view.SCAN_TRACK_ID).isEmpty()) {
-        scanButtonWasPressed = true
+      for (trackData in frame.getUpdatedTrackData(PHASE_TRACK_ID)) {
+        val payload = trackData.data
+        val intBuffer: IntBuffer = payload.asIntBuffer()
+        val phase = IntArray(1)
+        intBuffer.get(phase)
+        currentPhase = phase[0]
+        break
       }
+    } else if (session.playbackStatus == PlaybackStatus.FINISHED) {
+      viewRecognition.fpsLog!!.close()
     }
+    updateTime = System.currentTimeMillis() - updateTime;
+
+    var handleInputTime = System.currentTimeMillis()
+    handleInputTime = System.currentTimeMillis() - handleInputTime;
     if (scanButtonWasPressed) {
       scanButtonWasPressed = false
       val cameraImage = frame.tryAcquireCameraImage()
@@ -180,12 +198,14 @@ class AppRenderer(val activity: AugmentedObjectActivity) : DefaultLifecycleObser
         val payload = ByteBuffer.allocate(1)
         payload.put(1)
         try {
-          frame.recordTrackData(view.SCAN_TRACK_ID, payload)
+          frame.recordTrackData(viewRecognition.SCAN_TRACK_ID, payload)
         } catch (e: IllegalStateException) {
           Log.e(TAG,"Error in recording scan input into external data track.", e)
         }
       }
     }
+
+    var renderBackgroundTime = System.currentTimeMillis()
 
     /** If results were completed this frame, create [Anchor]s from model results. */
     val objects = objectResults
@@ -199,7 +219,7 @@ class AppRenderer(val activity: AugmentedObjectActivity) : DefaultLifecycleObser
         ARLabeledAnchor(anchor, obj.label)
       }
       arLabeledAnchors.addAll(anchors)
-      view.post {
+      viewRecognition.post {
 //        view.resetButton.isEnabled = arLabeledAnchors.isNotEmpty()
 //        view.setScanningActive(false)
 //        when {
@@ -215,6 +235,9 @@ class AppRenderer(val activity: AugmentedObjectActivity) : DefaultLifecycleObser
       }
     }
 
+    var renderTime = System.currentTimeMillis()
+    renderBackgroundTime = renderTime - renderBackgroundTime
+
     // Draw labels at their anchor position.
     for (arDetectedObject in arLabeledAnchors) {
       val anchor = arDetectedObject.anchor
@@ -226,6 +249,12 @@ class AppRenderer(val activity: AugmentedObjectActivity) : DefaultLifecycleObser
         camera.pose,
         arDetectedObject.label
       )
+    }
+
+    renderTime = System.currentTimeMillis() - renderTime;
+    if (viewRecognition.fpsLog != null) {
+      val data = currentPhase.toString() + "," + frameTime + "," + updateTime + "," + handleInputTime + "," + renderBackgroundTime + "," + renderTime + "," + (System.currentTimeMillis() - frameTime) + "," + session.allAnchors.size + "\n";
+      viewRecognition.fpsLog!!.write(data)
     }
   }
 
@@ -241,9 +270,9 @@ class AppRenderer(val activity: AugmentedObjectActivity) : DefaultLifecycleObser
   }
 
   private fun showSnackbar(message: String): Unit =
-    activity.view.snackbarHelper.showError(activity, message)
+    recognitionActivity.viewRecognition.snackbarHelper.showError(recognitionActivity, message)
 
-  private fun hideSnackbar() = activity.view.snackbarHelper.hide(activity)
+  private fun hideSnackbar() = recognitionActivity.viewRecognition.snackbarHelper.hide(recognitionActivity)
 
   /**
    * Temporary arrays to prevent allocations in [createAnchor].
@@ -270,7 +299,6 @@ class AppRenderer(val activity: AugmentedObjectActivity) : DefaultLifecycleObser
   }
 
   var fileNumber = 1
-  var fileName = "recording-$fileNumber"
 
   @Throws(
     CameraNotAvailableException::class,
@@ -280,20 +308,18 @@ class AppRenderer(val activity: AugmentedObjectActivity) : DefaultLifecycleObser
     UnavailableArcoreNotInstalledException::class,
     UnavailableApkTooOldException::class
   )
-  fun onPlayback() {
-    activity.arCoreSessionHelper.onPause(activity)
-    activity.arCoreSessionHelper.onResume(activity)
-    val session = activity.arCoreSessionHelper.sessionCache ?: return;
-    val destination: String =
-      File(activity.getExternalFilesDir(null), fileName + ".mp4").getAbsolutePath()
+  fun onPlayback(absolutePath: String) {
+    recognitionActivity.arCoreSessionHelper.onPause(recognitionActivity)
+    recognitionActivity.arCoreSessionHelper.onResume(recognitionActivity)
+    val session = recognitionActivity.arCoreSessionHelper.sessionCache ?: return;
     // Switch to a different dataset.
     displayRotationHelper.onPause()
-    view.surfaceView.onPause()
+    viewRecognition.surfaceView.onPause()
     session.pause()// Pause the playback of the first dataset.
     // Specify a different dataset to use.
-    session.setPlaybackDataset(destination)
+    session.setPlaybackDataset(absolutePath)
     session.resume()
-    view.surfaceView.onResume()
+    viewRecognition.surfaceView.onResume()
     displayRotationHelper.onResume()
   // Start playback from the beginning of the new dataset.
   }

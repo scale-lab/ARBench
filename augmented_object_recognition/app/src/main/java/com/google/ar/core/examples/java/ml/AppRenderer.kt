@@ -135,7 +135,6 @@ class AppRenderer(val activity: MainActivity) : DefaultLifecycleObserver, Sample
     pointCloudRender.onSurfaceCreated(render)
     labelRenderer.onSurfaceCreated(render)
   }
-
   override fun onSurfaceChanged(render: SampleRender?, width: Int, height: Int) {
     displayRotationHelper.onSurfaceChanged(width, height)
   }

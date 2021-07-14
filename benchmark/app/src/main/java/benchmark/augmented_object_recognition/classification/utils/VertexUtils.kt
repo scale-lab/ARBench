@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package benchmark.augmented_object_recognition.classification.util
+package benchmark.augmented_object_recognition.classification.utils
 
 import com.google.cloud.vision.v1.NormalizedVertex
 
