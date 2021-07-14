@@ -114,6 +114,7 @@ class AugmentedObjectRecognitionActivity : AppCompatActivity() {
           // To get the best image of the object in question, enable autofocus.
           focusMode = Config.FocusMode.AUTO
           updateMode = Config.UpdateMode.LATEST_CAMERA_IMAGE
+          depthMode = Config.DepthMode.DISABLED
 //          if (session.isDepthModeSupported(Config.DepthMode.AUTOMATIC)) {
 //            depthMode = Config.DepthMode.AUTOMATIC
 //          }
