@@ -60,9 +60,9 @@ public class BenchmarkActivity extends AppCompatActivity {
 //            new ActivityRecording(AugmentedObjectGenerationActivity.class, "aug-obj-gen-2.mp4"),
 //            new ActivityRecording(AugmentedObjectGenerationActivity.class, "aug-obj-gen-3.mp4"),
 //            new ActivityRecording(AugmentedFacesActivity.class, "aug-faces-1.mp4"),
-            new ActivityRecording(AugmentedImageActivity.class, "aug-img-1.mp4"),
+            //new ActivityRecording(AugmentedImageActivity.class, "aug-img-1.mp4"),
 //            new ActivityRecording(AugmentedObjectRecognitionActivity.class, "aug-obj-rcg-1.mp4"),
-//            new ActivityRecording(AugmentedObjectRecognitionActivity.class, "aug-obj-rcg-2.mp4")
+            new ActivityRecording(AugmentedObjectRecognitionActivity.class, "aug-obj-rcg-2.mp4")
     };
 
     private LinearLayout resultsDisplay;
@@ -121,6 +121,7 @@ public class BenchmarkActivity extends AppCompatActivity {
                             TextView results = new TextView(this);
                             results.setText(
                                     "FPS and Runtimes - Test " + requestCode + " Phase " + currentPhase + "\n"
+                                            + "File name: " + ACTIVITY_RECORDINGS[requestCode].getRecordingFileName() + "\n"
                                             + "FPS: " + fps + "\n"
                                             + "Update: " + (float) update / i + "\n"
                                             + "Max Input: " + maxInput + "\n"
@@ -147,8 +148,10 @@ public class BenchmarkActivity extends AppCompatActivity {
                     } else {
                         float fps = 1000.f * (i - 1) / (t - startTime);
                         TextView results = new TextView(this);
+                        results.setTextIsSelectable(true);
                         results.setText(
                                 "FPS and Runtimes - Test " + requestCode + " Phase " + currentPhase + "\n"
+                                        + "File name: " + ACTIVITY_RECORDINGS[requestCode].getRecordingFileName() + "\n"
                                         + "FPS: " + fps + "\n"
                                         + "Update: " + (float) update / i + "\n"
                                         + "Max Input: " + maxInput + "\n"
