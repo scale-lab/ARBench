@@ -129,7 +129,7 @@ class AppRenderer(val recognitionActivity: AugmentedObjectRecognitionActivity) :
     if (session.playbackStatus == PlaybackStatus.FINISHED) {
       recognitionActivity.setResult(Activity.RESULT_OK)
       viewRecognition.fpsLog?.close()
-      recognitionActivity.finish()
+      return
     }
 
     // Notify ARCore session that the view size changed so that the perspective matrix and
@@ -184,8 +184,6 @@ class AppRenderer(val recognitionActivity: AugmentedObjectRecognitionActivity) :
         currentPhase = phase[0]
         break
       }
-    } else if (session.playbackStatus == PlaybackStatus.FINISHED) {
-      viewRecognition.fpsLog!!.close()
     }
 
     if (session.playbackStatus == PlaybackStatus.OK) {

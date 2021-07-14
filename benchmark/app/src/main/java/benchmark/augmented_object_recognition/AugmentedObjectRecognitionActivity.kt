@@ -113,9 +113,10 @@ class AugmentedObjectRecognitionActivity : AppCompatActivity() {
         session.config.apply {
           // To get the best image of the object in question, enable autofocus.
           focusMode = Config.FocusMode.AUTO
-          if (session.isDepthModeSupported(Config.DepthMode.AUTOMATIC)) {
-            depthMode = Config.DepthMode.AUTOMATIC
-          }
+          updateMode = Config.UpdateMode.LATEST_CAMERA_IMAGE
+//          if (session.isDepthModeSupported(Config.DepthMode.AUTOMATIC)) {
+//            depthMode = Config.DepthMode.AUTOMATIC
+//          }
         }
       )
 

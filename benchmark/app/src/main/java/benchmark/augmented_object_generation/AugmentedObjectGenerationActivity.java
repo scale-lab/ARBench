@@ -165,7 +165,6 @@ public class AugmentedObjectGenerationActivity extends AppCompatActivity impleme
   private boolean installRequested;
 
   private Session session;
-  private Session session2;
   private final SnackbarHelper messageSnackbarHelper = new SnackbarHelper();
   private DisplayRotationHelper displayRotationHelper;
   private final TrackingStateHelper trackingStateHelper = new TrackingStateHelper(this);
@@ -306,7 +305,6 @@ public class AugmentedObjectGenerationActivity extends AppCompatActivity impleme
       // https://developers.google.com/ar/reference/java/arcore/reference/com/google/ar/core/Session#close()
       session.close();
       session = null;
-      session2.close();
     }
 
     super.onDestroy();
@@ -337,7 +335,6 @@ public class AugmentedObjectGenerationActivity extends AppCompatActivity impleme
 
         // Create the session.
         session = new Session(/* context= */ this);
-        session2 = new Session(this);
       } catch (UnavailableArcoreNotInstalledException
           | UnavailableUserDeclinedInstallationException e) {
         message = "Please install ARCore";
@@ -377,7 +374,6 @@ public class AugmentedObjectGenerationActivity extends AppCompatActivity impleme
       String destination = new File(this.getExternalFilesDir(null), fileName).getAbsolutePath();
       session.setPlaybackDataset(destination);
       session.resume();
-      session2.resume();
     } catch (CameraNotAvailableException e) {
       messageSnackbarHelper.showError(this, "Camera not available. Try restarting the app.");
       session = null;
@@ -406,7 +402,6 @@ public class AugmentedObjectGenerationActivity extends AppCompatActivity impleme
       displayRotationHelper.onPause();
       surfaceView.onPause();
       session.pause();
-      session2.pause();
     }
   }
 
@@ -536,7 +531,7 @@ public class AugmentedObjectGenerationActivity extends AppCompatActivity impleme
   @Override
   public void onDrawFrame(SampleRender render) {
     long frameTime = System.currentTimeMillis();
-    if (session == null || session2 == null) {
+    if (session == null) {
       return;
     }
 
@@ -546,8 +541,6 @@ public class AugmentedObjectGenerationActivity extends AppCompatActivity impleme
     if (!hasSetTextureNames) {
       session.setCameraTextureNames(
           new int[] {backgroundRenderer.getCameraColorTexture().getTextureId()});
-//      session2.setCameraTextureNames(
-//              new int[] {backgroundRenderer.getCameraColorTexture().getTextureId()+1});
       hasSetTextureNames = true;
     }
 
@@ -563,7 +556,6 @@ public class AugmentedObjectGenerationActivity extends AppCompatActivity impleme
     Frame frame, frame2;
     long updateTime = System.currentTimeMillis();
     try {
-//      frame2 = session2.update();
       frame = session.update();
     } catch (CameraNotAvailableException e) {
       Log.e(TAG, "Camera not available during onDrawFrame", e);

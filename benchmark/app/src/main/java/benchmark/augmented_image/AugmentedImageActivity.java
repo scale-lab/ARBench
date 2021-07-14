@@ -446,6 +446,7 @@ public class AugmentedImageActivity extends AppCompatActivity implements GLSurfa
         if (!setupAugmentedImageDatabase(config)) {
             messageSnackbarHelper.showError(this, "Could not setup augmented image database");
         }
+        config.setUpdateMode(Config.UpdateMode.LATEST_CAMERA_IMAGE);
         session.configure(config);
     }
 
