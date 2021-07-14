@@ -103,6 +103,9 @@ class AugmentedObjectRecognitionActivity : AppCompatActivity() {
       }
       Log.e(TAG, message, exception)
       Toast.makeText(this, message, Toast.LENGTH_LONG).show()
+      setResult(RESULT_CANCELED)
+      viewRecognition.fpsLog?.close()
+      finish()
     }
 
     arCoreSessionHelper.beforeSessionResume = { session ->
