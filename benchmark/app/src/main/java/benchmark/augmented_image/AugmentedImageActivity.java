@@ -76,6 +76,7 @@ import com.google.ar.core.exceptions.UnavailableUserDeclinedInstallationExceptio
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collection;
@@ -270,6 +271,14 @@ public class AugmentedImageActivity extends AppCompatActivity implements GLSurfa
         if (shouldConfigureSession) {
             configureSession();
             shouldConfigureSession = false;
+        }
+
+        try {
+            logPath = this.getExternalFilesDir(null).getAbsolutePath() + "/fps.csv";
+            Log.d(TAG, "Logging FPS to " + logPath);
+            fpsLog = new BufferedWriter(new FileWriter(logPath));
+        } catch (IOException e) {
+            messageSnackbarHelper.showError(this, "Could not open file to log FPS");
         }
 
         try {
