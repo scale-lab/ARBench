@@ -1,0 +1,1 @@
+This is just a barebones example of an ARCore app that allows for placement of objects and recording/playingback of ARCore sessions.
