@@ -38,6 +38,7 @@ import android.widget.TextView;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.SwitchCompat;
 import androidx.core.app.ActivityCompat;
 
 import java.io.BufferedReader;
@@ -72,6 +73,10 @@ public class BenchmarkActivity extends AppCompatActivity {
 
     private Camera camera;
 
+    private SwitchCompat useCameraSwitch;
+    private CameraPreview cameraPreview;
+    private FrameLayout preview;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -84,12 +89,31 @@ public class BenchmarkActivity extends AppCompatActivity {
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CAMERA}, 1);
         }
 
-        camera = Camera.open(0);
-        CameraPreview cameraPreview = new CameraPreview(this, camera);
-        cameraPreview.setSurfaceTextureListener(cameraPreview);
+        useCameraSwitch = findViewById(R.id.useCamera);
 
-        FrameLayout preview = (FrameLayout) findViewById(R.id.camera_frame);
+        camera = Camera.open(0);
+        cameraPreview = new CameraPreview(this, camera);
+        preview = (FrameLayout) findViewById(R.id.camera_frame);
+
+        cameraPreview.setSurfaceTextureListener(cameraPreview);
         preview.addView(cameraPreview);
+
+        useCameraSwitch.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if(camera != null) {
+                    cameraPreview.setSurfaceTextureListener(null);
+                    preview.removeAllViews();
+                    camera.stopPreview();
+                    camera.release();
+                    camera = null;
+                } else {
+                    camera = Camera.open(0);
+                    cameraPreview.setSurfaceTextureListener(cameraPreview);
+                    preview.addView(cameraPreview);
+                }
+            }
+        });
     }
 
     public void onStartBenchmark(View view) {

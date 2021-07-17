@@ -52,7 +52,7 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
     <FrameLayout
         android:id="@+id/camera_frame"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"/>
+        android:layout_height="match_parent" />
 
     <ImageButton
         android:id="@+id/settings_button"
@@ -79,6 +79,14 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
                 android:layout_height="wrap_content"
                 android:onClick="onStartBenchmark"
                 android:text="Start benchmark" />
+
+            <androidx.appcompat.widget.SwitchCompat
+                android:id="@+id/useCamera"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:padding="13dp"
+                android:checked="true"
+                android:text="Use camera in background" />
 
         </LinearLayout>
     </ScrollView>

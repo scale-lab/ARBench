@@ -242,6 +242,7 @@ class AppRenderer(val activity: MainActivity) : DefaultLifecycleObserver, Sample
 
     // Draw labels at their anchor position.
     for (arDetectedObject in arLabeledAnchors) {
+      println(arDetectedObject.label);
       val anchor = arDetectedObject.anchor
       if (anchor.trackingState != TrackingState.TRACKING) continue
       labelRenderer.draw(
@@ -253,6 +254,7 @@ class AppRenderer(val activity: MainActivity) : DefaultLifecycleObserver, Sample
       )
     }
   }
+
 
   /**
    * Utility method for [Frame.acquireCameraImage] that maps [NotYetAvailableException] to `null`.
