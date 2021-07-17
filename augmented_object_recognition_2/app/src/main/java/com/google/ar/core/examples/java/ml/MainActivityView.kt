@@ -60,7 +60,10 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
 import androidx.loader.content.CursorLoader
-import com.google.ar.core.*
+import com.google.ar.core.RecordingConfig
+import com.google.ar.core.RecordingStatus
+import com.google.ar.core.Session
+import com.google.ar.core.Track
 import com.google.ar.core.examples.java.common.helpers.SnackbarHelper
 import com.google.ar.core.examples.java.common.samplerender.SampleRender
 import com.google.ar.core.examples.java.ml.MainActivity.AppState
