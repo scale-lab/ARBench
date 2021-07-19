@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Google LLC
+ * Copyright 2017 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -69,7 +69,13 @@ public final class SnackbarHelper {
     lastMessage = "";
     Snackbar messageSnackbarToHide = messageSnackbar;
     messageSnackbar = null;
-    activity.runOnUiThread(() -> messageSnackbarToHide.dismiss());
+    activity.runOnUiThread(
+        new Runnable() {
+          @Override
+          public void run() {
+            messageSnackbarToHide.dismiss();
+          }
+        });
   }
 
   public void setMaxLines(int lines) {
@@ -107,13 +113,19 @@ public final class SnackbarHelper {
             if (dismissBehavior != DismissBehavior.HIDE) {
               messageSnackbar.setAction(
                   "Dismiss",
-                  v -> messageSnackbar.dismiss());
+                  new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                      messageSnackbar.dismiss();
+                    }
+                  });
               if (dismissBehavior == DismissBehavior.FINISH) {
                 messageSnackbar.addCallback(
                     new BaseTransientBottomBar.BaseCallback<Snackbar>() {
                       @Override
                       public void onDismissed(Snackbar transientBottomBar, int event) {
                         super.onDismissed(transientBottomBar, event);
+                        activity.finish();
                       }
                     });
               }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Google LLC
+ * Copyright 2020 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -161,14 +161,14 @@ public class BackgroundRenderer {
     HashMap<String, String> defines = new HashMap<>();
     defines.put("USE_OCCLUSION", useOcclusion ? "1" : "0");
     occlusionShader =
-            Shader.createFromAssets(render, "shaders/occlusion.vert", "shaders/occlusion.frag", defines)
-                    .setDepthTest(false)
-                    .setDepthWrite(false)
-                    .setBlend(Shader.BlendFactor.SRC_ALPHA, Shader.BlendFactor.ONE_MINUS_SRC_ALPHA);
+        Shader.createFromAssets(render, "shaders/occlusion.vert", "shaders/occlusion.frag", defines)
+            .setDepthTest(false)
+            .setDepthWrite(false)
+            .setBlend(Shader.BlendFactor.SRC_ALPHA, Shader.BlendFactor.ONE_MINUS_SRC_ALPHA);
     if (useOcclusion) {
       occlusionShader
-              .setTexture("u_CameraDepthTexture", cameraDepthTexture)
-              .setFloat("u_DepthAspectRatio", aspectRatio);
+          .setTexture("u_CameraDepthTexture", cameraDepthTexture)
+          .setFloat("u_DepthAspectRatio", aspectRatio);
     }
   }
 

@@ -321,6 +321,8 @@ class AppRenderer(val activity: MainActivity) : DefaultLifecycleObserver, Sample
         // used to draw the background camera image.
         backgroundRenderer.updateDisplayGeometry(frame)
 
+//        // Handle one tap per frame.
+//        handleTap(frame, camera)
 
         // -- Draw background
         if (frame.timestamp != 0L) {

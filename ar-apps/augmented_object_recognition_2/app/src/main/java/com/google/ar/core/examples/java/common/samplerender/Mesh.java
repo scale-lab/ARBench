@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 Google LLC
+ * Copyright 2020 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -145,7 +145,7 @@ public class Mesh implements Closeable {
 
       IndexBuffer indexBuffer = new IndexBuffer(render, vertexIndices);
 
-      return new Mesh(render, PrimitiveMode.TRIANGLES, indexBuffer, vertexBuffers);
+      return new Mesh(render, Mesh.PrimitiveMode.TRIANGLES, indexBuffer, vertexBuffers);
     }
   }
 
