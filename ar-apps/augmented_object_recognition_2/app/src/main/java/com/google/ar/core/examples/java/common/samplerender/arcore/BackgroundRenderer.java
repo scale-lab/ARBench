@@ -146,6 +146,33 @@ public class BackgroundRenderer {
   }
 
   /**
+   * Sets whether to use depth for occlusion. This reloads the shader code with new {@code
+   * #define}s, and must be called on the GL thread.
+   */
+  public void setUseOcclusion(SampleRender render, boolean useOcclusion) throws IOException {
+    if (occlusionShader != null) {
+      if (this.useOcclusion == useOcclusion) {
+        return;
+      }
+      occlusionShader.close();
+      occlusionShader = null;
+      this.useOcclusion = useOcclusion;
+    }
+    HashMap<String, String> defines = new HashMap<>();
+    defines.put("USE_OCCLUSION", useOcclusion ? "1" : "0");
+    occlusionShader =
+            Shader.createFromAssets(render, "shaders/occlusion.vert", "shaders/occlusion.frag", defines)
+                    .setDepthTest(false)
+                    .setDepthWrite(false)
+                    .setBlend(Shader.BlendFactor.SRC_ALPHA, Shader.BlendFactor.ONE_MINUS_SRC_ALPHA);
+    if (useOcclusion) {
+      occlusionShader
+              .setTexture("u_CameraDepthTexture", cameraDepthTexture)
+              .setFloat("u_DepthAspectRatio", aspectRatio);
+    }
+  }
+
+  /**
    * Updates the display geometry. This must be called every frame before calling either of
    * BackgroundRenderer's draw methods.
    *
