@@ -96,9 +96,8 @@ class MainActivity : AppCompatActivity() {
         session.config.apply {
           // To get the best image of the object in question, enable autofocus.
           focusMode = Config.FocusMode.AUTO
-          if (session.isDepthModeSupported(Config.DepthMode.AUTOMATIC)) {
-            depthMode = Config.DepthMode.AUTOMATIC
-          }
+          depthMode = Config.DepthMode.DISABLED
+          instantPlacementMode = Config.InstantPlacementMode.LOCAL_Y_UP
         }
       )
 
