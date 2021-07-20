@@ -40,7 +40,6 @@
 
 package benchmark.augmented_object_recognition;
 
-import android.R.id.message
 import android.app.Activity
 import android.opengl.GLES30
 import android.opengl.Matrix
@@ -53,6 +52,7 @@ import benchmark.augmented_object_recognition.classification.ObjectDetector
 import benchmark.augmented_object_recognition.render.LabelRender
 import benchmark.augmented_object_recognition.render.PointCloudRender
 import benchmark.common.helpers.DisplayRotationHelper
+import benchmark.common.helpers.TrackingStateHelper
 import benchmark.common.samplerender.SampleRender
 import benchmark.common.samplerender.arcore.BackgroundRenderer
 import com.google.ar.core.*
@@ -61,7 +61,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.launch
-import java.io.IOException
 import java.nio.IntBuffer
 import java.util.*
 
@@ -75,6 +74,8 @@ class AppRenderer(val recognitionActivity: AugmentedObjectRecognitionActivity) :
   }
 
   lateinit var viewRecognition: AugmentedObjectRecognitionActivityView
+
+  private lateinit var trackingStateHelper: TrackingStateHelper
 
   val displayRotationHelper = DisplayRotationHelper(recognitionActivity)
   lateinit var backgroundRenderer: BackgroundRenderer
@@ -105,6 +106,8 @@ class AppRenderer(val recognitionActivity: AugmentedObjectRecognitionActivity) :
 
   fun bindView(viewRecognition: AugmentedObjectRecognitionActivityView) {
     this.viewRecognition = viewRecognition
+
+    trackingStateHelper = TrackingStateHelper(viewRecognition.recognitionActivity)
   }
 
   override fun onSurfaceCreated(render: SampleRender) {
@@ -162,6 +165,9 @@ class AppRenderer(val recognitionActivity: AugmentedObjectRecognitionActivity) :
     if (camera.trackingState != TrackingState.TRACKING) {
       return
     }
+
+    // Keep the screen unlocked while tracking, but allow it to lock when tracking stops.
+    trackingStateHelper.updateKeepScreenOnFlag(camera.trackingState)
 
     // Draw point cloud.
     frame.acquirePointCloud().use { pointCloud ->
