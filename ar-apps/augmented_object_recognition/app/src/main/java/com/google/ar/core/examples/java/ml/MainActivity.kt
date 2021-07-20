@@ -105,8 +105,8 @@ class MainActivity : AppCompatActivity() {
       val filter = CameraConfigFilter(session)
         .setFacingDirection(CameraConfig.FacingDirection.BACK)
       val configs = session.getSupportedCameraConfigs(filter)
-      val sort = compareByDescending<CameraConfig> { it.imageSize.width }
-        .thenByDescending { it.imageSize.height }
+      val sort = compareByDescending<CameraConfig> { 640 }
+        .thenByDescending { 480 }
       session.setCameraConfig(configs.sortedWith(sort)[0])
 
       if (requestingPlayback) {
