@@ -102,15 +102,9 @@ public class BenchmarkActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 if(camera != null) {
-                    cameraPreview.setSurfaceTextureListener(null);
-                    preview.removeAllViews();
-                    camera.stopPreview();
-                    camera.release();
-                    camera = null;
+                    turnCameraOff();
                 } else {
-                    camera = Camera.open(0);
-                    cameraPreview.setSurfaceTextureListener(cameraPreview);
-                    preview.addView(cameraPreview);
+                    turnCameraOn();
                 }
             }
         });
@@ -120,6 +114,38 @@ public class BenchmarkActivity extends AppCompatActivity {
         Intent intent = new Intent(this, ACTIVITY_RECORDINGS[0].getActivity());
         intent.putExtra(ACTIVITY_NUMBER, 0);
         startActivityForResult(intent, 0);
+    }
+
+    @Override
+    public void onPause() {
+        if(camera != null) {
+            System.out.println("Turning camera off...");
+            turnCameraOff();
+        }
+        super.onPause();
+    }
+
+    @Override
+    public void onResume() {
+        if(camera == null && useCameraSwitch.isChecked()) {
+            System.out.println("Turning camera on...");
+            turnCameraOn();
+        }
+        super.onResume();
+    }
+
+    private void turnCameraOn() {
+        camera = Camera.open(0);
+        cameraPreview.setSurfaceTextureListener(cameraPreview);
+        preview.addView(cameraPreview);
+    }
+
+    private void turnCameraOff() {
+        cameraPreview.setSurfaceTextureListener(null);
+        preview.removeAllViews();
+        camera.stopPreview();
+        camera.release();
+        camera = null;
     }
 
     @SuppressLint("SetTextI18n")
