@@ -234,7 +234,7 @@ class AppRenderer(val activity: MainActivity) : DefaultLifecycleObserver, Sample
 //          objects.isEmpty() ->
 //            showSnackbar("Classification model returned no results.")
 //          anchors.size != objects.size ->
-//            showSnackbar("Objects were classified, but could not be attached to an anchor. " +
+            showSnackbar("Objects were classified, but could not be attached to an anchor. " +
 //              "Try moving your device around to obtain a better understanding of the environment.")
 //        }
       }

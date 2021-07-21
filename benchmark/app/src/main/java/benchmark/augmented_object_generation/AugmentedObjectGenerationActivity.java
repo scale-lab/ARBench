@@ -223,7 +223,6 @@ public class AugmentedObjectGenerationActivity extends AppCompatActivity impleme
   private final float[] worldLightDirection = {0.0f, 0.0f, 0.0f, 0.0f};
   private final float[] viewLightDirection = new float[4]; // view x world light direction
 
-  public String logPath;
   private BufferedWriter fpsLog;
 
   String fileName;
@@ -262,7 +261,7 @@ public class AugmentedObjectGenerationActivity extends AppCompatActivity impleme
     Intent intent = getIntent();
     int activityNumber = intent.getIntExtra(BenchmarkActivity.ACTIVITY_NUMBER, 0);
     fileName = BenchmarkActivity.ACTIVITY_RECORDINGS[activityNumber].getRecordingFileName();
-    File f = new File(this.getExternalFilesDir(null)+"/"+fileName);
+    File f = new File(getExternalFilesDir(null)+"/"+fileName);
     if (!f.exists()) try {
 
       InputStream is = getAssets().open("recordings/"+fileName);
@@ -361,9 +360,10 @@ public class AugmentedObjectGenerationActivity extends AppCompatActivity impleme
     }
 
     try {
-      logPath = this.getExternalFilesDir(null).getAbsolutePath() + "/fps.csv";
+      String logPath = getExternalFilesDir(null).getAbsolutePath() + "/frame-log.csv";
       Log.d(TAG, "Logging FPS to " + logPath);
-      fpsLog = new BufferedWriter(new FileWriter(logPath));
+      fpsLog = new BufferedWriter(new FileWriter(logPath, true));
+      fpsLog.write(fileName + "\n");
     } catch (IOException e) {
       messageSnackbarHelper.showError(this, "Could not open file to log FPS");
     }
@@ -371,7 +371,7 @@ public class AugmentedObjectGenerationActivity extends AppCompatActivity impleme
     // Note that order matters - see the note in onPause(), the reverse applies here.
     try {
       configureSession();
-      String destination = new File(this.getExternalFilesDir(null), fileName).getAbsolutePath();
+      String destination = new File(getExternalFilesDir(null), fileName).getAbsolutePath();
       session.setPlaybackDataset(destination);
       session.resume();
     } catch (CameraNotAvailableException e) {
@@ -534,6 +534,18 @@ public class AugmentedObjectGenerationActivity extends AppCompatActivity impleme
     if (session == null) {
       return;
     }
+    if (session.getPlaybackStatus() == PlaybackStatus.FINISHED) {
+      setResult(RESULT_OK);
+      try {
+        if (fpsLog != null) {
+          fpsLog.close();
+        }
+      } catch (IOException e) {
+        setResult(RESULT_CANCELED);
+      }
+      finish();
+      return;
+    }
 
     // Texture names should only be set once on a GL thread unless they change. This is done during
     // onDrawFrame rather than onSurfaceCreated since the session is not guaranteed to have been
@@ -553,7 +565,7 @@ public class AugmentedObjectGenerationActivity extends AppCompatActivity impleme
     // Obtain the current frame from ARSession. When the configuration is set to
     // UpdateMode.BLOCKING (it is by default), this will throttle the rendering to the
     // camera framerate.
-    Frame frame, frame2;
+    Frame frame;
     long updateTime = System.currentTimeMillis();
     try {
       frame = session.update();
@@ -564,18 +576,17 @@ public class AugmentedObjectGenerationActivity extends AppCompatActivity impleme
     }
     Camera camera = frame.getCamera();
 
-    if (session.getRecordingStatus() == RecordingStatus.OK) {
-      int[] phase = new int[1];
-      phase[0] = currentPhase;
-      ByteBuffer payload = ByteBuffer.allocate(4);
-      IntBuffer intBuffer = payload.asIntBuffer();
-      intBuffer.put(phase);
-      try {
-        frame.recordTrackData(PHASE_TRACK_ID, payload);
-      } catch (IllegalStateException e) {
-        Log.e(TAG, "Error in recording tap input into external data track.", e);
-      }
-    } else if (session.getPlaybackStatus() == PlaybackStatus.OK) {
+    long handleInputTime = System.currentTimeMillis();
+    updateTime = handleInputTime - updateTime;
+
+    // Handle one tap per frame.
+    handleTap(frame, camera);
+    handleInputTime = System.currentTimeMillis() - handleInputTime;
+
+    // Keep the screen unlocked while tracking, but allow it to lock when tracking stops.
+    trackingStateHelper.updateKeepScreenOnFlag(camera.getTrackingState());
+
+    if (session.getPlaybackStatus() == PlaybackStatus.OK) {
       for (TrackData trackData : frame.getUpdatedTrackData(PHASE_TRACK_ID)) {
         ByteBuffer payload = trackData.getData();
         IntBuffer intBuffer = payload.asIntBuffer();
@@ -586,6 +597,8 @@ public class AugmentedObjectGenerationActivity extends AppCompatActivity impleme
       }
     }
 
+    GLES30.glFinish();
+    long renderBackgroundTime = System.currentTimeMillis();
     // Update BackgroundRenderer state to match the depth settings.
     try {
       backgroundRenderer.setUseDepthVisualization(
@@ -610,58 +623,17 @@ public class AugmentedObjectGenerationActivity extends AppCompatActivity impleme
         // spam the logcat with this.
       }
     }
-    updateTime = System.currentTimeMillis() - updateTime;
-
-    // Handle one tap per frame.
-
-    long handleInputTime = System.currentTimeMillis();
-    handleTap(frame, camera);
-    handleInputTime = System.currentTimeMillis() - handleInputTime;
-
-    // Keep the screen unlocked while tracking, but allow it to lock when tracking stops.
-    trackingStateHelper.updateKeepScreenOnFlag(camera.getTrackingState());
-
-    // Show a message based on whether tracking has failed, if planes are detected, and if the user
-    // has placed any objects.
-    String message = null;
-    if (session.getPlaybackStatus() == PlaybackStatus.OK) {
-      message = "Performing playback";
-    } else if (session.getPlaybackStatus() == PlaybackStatus.FINISHED) {
-      message = "Playback complete";
-      setResult(RESULT_OK);
-      try {
-        fpsLog.close();
-      } catch (IOException e) {
-
-      }
-      finish();
-    } else if (camera.getTrackingState() == TrackingState.PAUSED) {
-      if (camera.getTrackingFailureReason() == TrackingFailureReason.NONE) {
-        message = SEARCHING_PLANE_MESSAGE;
-      } else {
-        message = TrackingStateHelper.getTrackingFailureReasonString(camera);
-      }
-    } else if (hasTrackingPlane()) {
-      if (anchors.isEmpty()) {
-        message = WAITING_FOR_TAP_MESSAGE;
-      }
-    } else {
-      message = SEARCHING_PLANE_MESSAGE;
-    }
-    if (message == null) {
-      messageSnackbarHelper.hide(this);
-    } else {
-      messageSnackbarHelper.showMessage(this, message);
-    }
 
     // -- Draw background
-    GLES30.glFinish();
-    long renderBackgroundTime = System.currentTimeMillis();
     if (frame.getTimestamp() != 0) {
       // Suppress rendering if the camera did not produce the first frame yet. This is to avoid
       // drawing possible leftover data from previous sessions if the texture is reused.
       backgroundRenderer.drawBackground(render);
     }
+
+    GLES30.glFinish();
+    long renderTime = System.currentTimeMillis();
+    renderBackgroundTime = renderTime - renderBackgroundTime;
 
     // If not tracking, don't draw 3D objects.
     if (camera.getTrackingState() == TrackingState.PAUSED) {
@@ -694,10 +666,6 @@ public class AugmentedObjectGenerationActivity extends AppCompatActivity impleme
         session.getAllTrackables(Plane.class),
         camera.getDisplayOrientedPose(),
         projectionMatrix);
-
-    GLES30.glFinish();
-    long renderTime = System.currentTimeMillis();
-    renderBackgroundTime = renderTime - renderBackgroundTime;
 
     // -- Draw occluded virtual objects
 
@@ -736,7 +704,6 @@ public class AugmentedObjectGenerationActivity extends AppCompatActivity impleme
       }
     } catch (IOException e) {
       Log.e(TAG, "Failed to log frame data", e);
-      messageSnackbarHelper.showError(this, "Failed to log frame data: " + e);
     }
 
   }

@@ -122,8 +122,9 @@ public class AugmentedFacesActivity extends AppCompatActivity implements GLSurfa
     private final float[] leftEarMatrix = new float[16];
     private static final float[] DEFAULT_COLOR = new float[]{0f, 0f, 0f, 0f};
 
-    public String logPath;
     private BufferedWriter fpsLog;
+
+    private int currentPhase = 1;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -145,7 +146,7 @@ public class AugmentedFacesActivity extends AppCompatActivity implements GLSurfa
         Intent intent = getIntent();
         int activityNumber = intent.getIntExtra(BenchmarkActivity.ACTIVITY_NUMBER, 0);
         fileName = BenchmarkActivity.ACTIVITY_RECORDINGS[activityNumber].getRecordingFileName();
-        File f = new File(this.getExternalFilesDir(null) + "/" + fileName);
+        File f = new File(getExternalFilesDir(null) + "/" + fileName);
         if (!f.exists()) try {
 
             InputStream is = getAssets().open("recordings/" + fileName);
@@ -247,16 +248,17 @@ public class AugmentedFacesActivity extends AppCompatActivity implements GLSurfa
         }
 
         try {
-            logPath = this.getExternalFilesDir(null).getAbsolutePath() + "/fps.csv";
+            String logPath = getExternalFilesDir(null).getAbsolutePath() + "/frame-log.csv";
             Log.d(TAG, "Logging FPS to " + logPath);
             fpsLog = new BufferedWriter(new FileWriter(logPath));
+            fpsLog.write(fileName + "\n");
         } catch (IOException e) {
             messageSnackbarHelper.showError(this, "Could not open file to log FPS");
         }
 
         // Note that order matters - see the note in onPause(), the reverse applies here.
         try {
-            String destination = new File(this.getExternalFilesDir(null), fileName).getAbsolutePath();
+            String destination = new File(getExternalFilesDir(null), fileName).getAbsolutePath();
             session.setPlaybackDataset(destination);
             session.resume();
         } catch (CameraNotAvailableException e) {
@@ -443,7 +445,7 @@ public class AugmentedFacesActivity extends AppCompatActivity implements GLSurfa
 
                 try {
                     if (fpsLog != null) {
-                        fpsLog.write("1," + frameTime + "," + updateTime + "," + processTime + "," + renderBackgroundTime + "," + renderTime + "," + (System.currentTimeMillis() - frameTime) + "\n");
+                        fpsLog.write(currentPhase + "," + frameTime + "," + updateTime + "," + processTime + "," + renderBackgroundTime + "," + renderTime + "," + (System.currentTimeMillis() - frameTime) + "\n");
                     }
                 } catch (IOException e) {
                     Log.e(TAG, "Failed to log frame data", e);
