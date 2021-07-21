@@ -39,6 +39,7 @@ import android.widget.TextView;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.SwitchCompat;
 import androidx.core.app.ActivityCompat;
 
 import java.io.BufferedReader;
@@ -75,6 +76,10 @@ public class BenchmarkActivity extends AppCompatActivity {
 
     private Camera camera;
 
+    private SwitchCompat useCameraSwitch;
+    private CameraPreview cameraPreview;
+    private FrameLayout preview;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -88,12 +93,24 @@ public class BenchmarkActivity extends AppCompatActivity {
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CAMERA}, 1);
         }
 
-        camera = Camera.open(0);
-        CameraPreview cameraPreview = new CameraPreview(this, camera);
-        cameraPreview.setSurfaceTextureListener(cameraPreview);
+        useCameraSwitch = findViewById(R.id.useCamera);
 
-        FrameLayout preview = (FrameLayout) findViewById(R.id.camera_frame);
+        camera = Camera.open(0);
+        cameraPreview = new CameraPreview(this, camera);
+        preview = (FrameLayout) findViewById(R.id.camera_frame);
+
+        cameraPreview.setSurfaceTextureListener(cameraPreview);
         preview.addView(cameraPreview);
+        useCameraSwitch.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if(camera != null) {
+                    turnCameraOff();
+                } else {
+                    turnCameraOn();
+                }
+            }
+        });
         onStartBenchmark(null);
     }
 
@@ -101,6 +118,38 @@ public class BenchmarkActivity extends AppCompatActivity {
         Intent intent = new Intent(this, ACTIVITY_RECORDINGS[0].getActivity());
         intent.putExtra(ACTIVITY_NUMBER, 0);
         startActivityForResult(intent, 0);
+    }
+
+    @Override
+    public void onPause() {
+        if(camera != null) {
+            System.out.println("Turning camera off...");
+            turnCameraOff();
+        }
+        super.onPause();
+    }
+
+    @Override
+    public void onResume() {
+        if(camera == null && useCameraSwitch.isChecked()) {
+            System.out.println("Turning camera on...");
+            turnCameraOn();
+        }
+        super.onResume();
+    }
+
+    private void turnCameraOn() {
+        camera = Camera.open(0);
+        cameraPreview.setSurfaceTextureListener(cameraPreview);
+        preview.addView(cameraPreview);
+    }
+
+    private void turnCameraOff() {
+        cameraPreview.setSurfaceTextureListener(null);
+        preview.removeAllViews();
+        camera.stopPreview();
+        camera.release();
+        camera = null;
     }
 
     @SuppressLint("SetTextI18n")
