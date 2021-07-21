@@ -116,9 +116,6 @@ class ARCoreSessionLifecycleHelper(
 
     val session = tryCreateSession() ?: return
 
-    val logPath = viewRecognition.recognitionActivity.getExternalFilesDir(null)!!.getAbsolutePath() + "/frame-log.csv";
-    Log.d(TAG, "Logging FPS to " + logPath);
-    viewRecognition.fpsLog = BufferedWriter(FileWriter(logPath, true));
     try {
       beforeSessionResume?.invoke(session)
 //      if(viewRecognition.recognitionActivity.fileName != null) {

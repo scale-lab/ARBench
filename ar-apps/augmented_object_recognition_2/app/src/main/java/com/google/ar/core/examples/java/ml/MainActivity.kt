@@ -98,6 +98,8 @@ class MainActivity : AppCompatActivity() {
           focusMode = Config.FocusMode.AUTO
           depthMode = Config.DepthMode.DISABLED
           instantPlacementMode = Config.InstantPlacementMode.LOCAL_Y_UP
+          lightEstimationMode = Config.LightEstimationMode.ENVIRONMENTAL_HDR
+          planeFindingMode = Config.PlaneFindingMode.DISABLED
         }
       )
 

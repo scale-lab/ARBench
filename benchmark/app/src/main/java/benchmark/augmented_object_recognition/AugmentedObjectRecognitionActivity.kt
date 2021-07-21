@@ -50,9 +50,7 @@ import com.google.ar.core.CameraConfig
 import com.google.ar.core.CameraConfigFilter
 import com.google.ar.core.Config
 import com.google.ar.core.exceptions.*
-import java.io.File
-import java.io.FileOutputStream
-import java.io.InputStream
+import java.io.*
 
 
 class AugmentedObjectRecognitionActivity : AppCompatActivity() {
@@ -141,7 +139,10 @@ class AugmentedObjectRecognitionActivity : AppCompatActivity() {
     arCoreSessionHelper.bindView(viewRecognition)
     lifecycle.addObserver(viewRecognition)
 
-
+    val logPath = getExternalFilesDir(null)!!.getAbsolutePath() + "/frame-log";
+    Log.d(TAG, "Logging FPS to " + logPath);
+    viewRecognition.fpsLog = BufferedWriter(FileWriter(logPath, true));
+    viewRecognition.fpsLog?.write("test " + fileName + "\n")
   }
 
   enum class AppState {
