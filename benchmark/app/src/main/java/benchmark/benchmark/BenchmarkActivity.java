@@ -43,6 +43,7 @@ import androidx.appcompat.widget.SwitchCompat;
 import androidx.core.app.ActivityCompat;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
@@ -93,28 +94,32 @@ public class BenchmarkActivity extends AppCompatActivity {
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CAMERA}, 1);
         }
 
-        useCameraSwitch = findViewById(R.id.useCamera);
-
-        camera = Camera.open(0);
-        cameraPreview = new CameraPreview(this, camera);
-        preview = (FrameLayout) findViewById(R.id.camera_frame);
-
-        cameraPreview.setSurfaceTextureListener(cameraPreview);
-        preview.addView(cameraPreview);
-        useCameraSwitch.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if(camera != null) {
-                    turnCameraOff();
-                } else {
-                    turnCameraOn();
-                }
-            }
-        });
+//        useCameraSwitch = findViewById(R.id.useCamera);
+//
+//        camera = Camera.open(0);
+//        cameraPreview = new CameraPreview(this, camera);
+//        preview = (FrameLayout) findViewById(R.id.camera_frame);
+//
+//        cameraPreview.setSurfaceTextureListener(cameraPreview);
+//        preview.addView(cameraPreview);
+//        useCameraSwitch.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View v) {
+//                if(camera != null) {
+//                    turnCameraOff();
+//                } else {
+//                    turnCameraOn();
+//                }
+//            }
+//        });
         onStartBenchmark(null);
     }
 
     public void onStartBenchmark(View view) {
+        File previousLog = new File(getExternalFilesDir(null).getAbsolutePath() + "/frame-log");
+        if (previousLog.exists() && !previousLog.delete()) {
+            new AlertDialog.Builder(this).setMessage("Failed to remove previous benchmark results").show();
+        }
         Intent intent = new Intent(this, ACTIVITY_RECORDINGS[0].getActivity());
         intent.putExtra(ACTIVITY_NUMBER, 0);
         startActivityForResult(intent, 0);
@@ -122,19 +127,19 @@ public class BenchmarkActivity extends AppCompatActivity {
 
     @Override
     public void onPause() {
-        if(camera != null) {
-            System.out.println("Turning camera off...");
-            turnCameraOff();
-        }
+//        if(camera != null) {
+//            System.out.println("Turning camera off...");
+//            turnCameraOff();
+//        }
         super.onPause();
     }
 
     @Override
     public void onResume() {
-        if(camera == null && useCameraSwitch.isChecked()) {
-            System.out.println("Turning camera on...");
-            turnCameraOn();
-        }
+//        if(camera == null && useCameraSwitch.isChecked()) {
+//            System.out.println("Turning camera on...");
+//            turnCameraOn();
+//        }
         super.onResume();
     }
 
@@ -157,9 +162,9 @@ public class BenchmarkActivity extends AppCompatActivity {
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == 0) {
-            String filesPath = getExternalFilesDir(null).getAbsolutePath();
+            String logPath = getExternalFilesDir(null).getAbsolutePath() + "/frame-log";
             try {
-                fpsLog = new BufferedReader(new FileReader(filesPath + "/frame-log.csv"));
+                fpsLog = new BufferedReader(new FileReader(logPath));
             } catch (FileNotFoundException e) {
                 new AlertDialog.Builder(this).setMessage("Could not access logged frame data").show();
             }
@@ -171,12 +176,14 @@ public class BenchmarkActivity extends AppCompatActivity {
             long startTime = 0, t = 0;
             long update = 0, maxInput = 0, renderBackground = 0, renderObjects = 0, total = 0;
             try {
+                String recordingName = ACTIVITY_RECORDINGS[requestCode].getRecordingFileName();
                 String line = fpsLog.readLine();
-                if (!line.equals(ACTIVITY_RECORDINGS[requestCode].getRecordingFileName())) {
+                if (!line.equals("test " + recordingName)) {
                     new AlertDialog.Builder(this).setMessage("No frame data for test " + requestCode).show();
                     line = null;
                 } else {
                     line = fpsLog.readLine();
+                    startTime = Long.decode(line.split(",")[1]);
                 }
                 int i = 0;
                 while (true) {

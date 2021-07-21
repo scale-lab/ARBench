@@ -375,24 +375,6 @@ class AppRenderer(val activity: MainActivity) : DefaultLifecycleObserver, Sample
 
         // Visualize anchors created by touch.
         render.clear(virtualSceneFramebuffer, 0f, 0f, 0f, 0f)
-        for (anchor in anchors) {
-            if (anchor.trackingState != TrackingState.TRACKING) {
-                continue
-            }
-
-            // Get the current pose of an Anchor in world space. The Anchor pose is updated
-            // during calls to session.update() as ARCore refines its estimate of the world.
-            anchor.pose.toMatrix(modelMatrix, 0)
-
-            // Calculate model/view/projection matrices
-            Matrix.multiplyMM(modelViewMatrix, 0, viewMatrix, 0, modelMatrix, 0)
-            Matrix.multiplyMM(modelViewProjectionMatrix, 0, projectionMatrix, 0, modelViewMatrix, 0)
-
-            // Update shader properties and draw
-            virtualObjectShader!!.setMat4("u_ModelView", modelViewMatrix)
-            virtualObjectShader!!.setMat4("u_ModelViewProjection", modelViewProjectionMatrix)
-            render.draw(virtualObjectMesh, virtualObjectShader, virtualSceneFramebuffer)
-        }
 
         // Frame.acquireCameraImage must be used on the GL thread.
         // Check if the button was pressed last frame to start processing the camera image.
@@ -459,49 +441,28 @@ class AppRenderer(val activity: MainActivity) : DefaultLifecycleObserver, Sample
             //println(arDetectedObject.label);
             val anchor = arDetectedObject.anchor
             if (anchor.trackingState != TrackingState.TRACKING) continue
+
+            // Get the current pose of an Anchor in world space. The Anchor pose is updated
+            // during calls to session.update() as ARCore refines its estimate of the world.
+            anchor.pose.toMatrix(modelMatrix, 0)
+
+            // Calculate model/view/projection matrices
+            Matrix.multiplyMM(modelViewMatrix, 0, viewMatrix, 0, modelMatrix, 0)
+            Matrix.multiplyMM(modelViewProjectionMatrix, 0, projectionMatrix, 0, modelViewMatrix, 0)
+
+            // Update shader properties and draw
+            virtualObjectShader!!.setMat4("u_ModelView", modelViewMatrix)
+            virtualObjectShader!!.setMat4("u_ModelViewProjection", modelViewProjectionMatrix)
+            render.draw(virtualObjectMesh, virtualObjectShader, virtualSceneFramebuffer)
+
             labelRenderer.draw(
                 render,
                 viewProjectionMatrix,
                 anchor.pose,
                 camera.pose,
-                arDetectedObject.label
+                arDetectedObject.label,
+                virtualSceneFramebuffer
             )
-
-            var hitResultList: List<HitResult> = frame.hitTest(
-                camera.pose.tx(),
-                camera.pose.ty()
-            )
-            for (hit in hitResultList) {
-                // If any plane, Oriented Point, or Instant Placement Point was hit, create an anchor.
-                val trackable = hit.trackable
-                // If a plane was hit, check that it was hit inside the plane polygon.
-                // DepthPoints are only returned if Config.DepthMode is set to AUTOMATIC.
-                if ((trackable is Plane
-                            && trackable.isPoseInPolygon(hit.hitPose)
-                            && PlaneRenderer.calculateDistanceToPlane(hit.hitPose, camera.pose) > 0)
-                    || (trackable is Point
-                            && trackable.orientationMode
-                            == Point.OrientationMode.ESTIMATED_SURFACE_NORMAL)
-                    || trackable is InstantPlacementPoint
-                    || trackable is DepthPoint
-                ) {
-                    // Cap the number of objects created. This avoids overloading both the
-                    // rendering system and ARCore.
-                    if (anchors.size >= 20) {
-                        anchors[0].detach()
-                        anchors.removeAt(0)
-                    }
-
-                    // Adding an Anchor tells ARCore that it should track this position in
-                    // space. This anchor is created on the Plane to place the 3D model
-                    // in the correct position relative both to the world and to the plane.
-                    anchors.add(hit.createAnchor())
-
-                    // Hits are sorted by depth. Consider only closest hit on a plane, Oriented Point, or
-                    // Instant Placement Point.
-                    break
-                }
-            }
         }
 
         // Compose the virtual scene with the background.

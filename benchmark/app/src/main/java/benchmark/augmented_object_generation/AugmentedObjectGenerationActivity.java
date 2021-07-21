@@ -274,6 +274,15 @@ public class AugmentedObjectGenerationActivity extends AppCompatActivity impleme
       is.close();
       fos.close();
     } catch (Exception e) { throw new RuntimeException(e); }
+
+    try {
+      String logPath = getExternalFilesDir(null).getAbsolutePath() + "/frame-log";
+      Log.d(TAG, "Logging FPS to " + logPath);
+      fpsLog = new BufferedWriter(new FileWriter(logPath, true));
+      fpsLog.write("test " + fileName + "\n");
+    } catch (IOException e) {
+      messageSnackbarHelper.showError(this, "Could not open file to log FPS");
+    }
   }
 
   /** Menu button to launch feature specific settings. */
@@ -357,15 +366,6 @@ public class AugmentedObjectGenerationActivity extends AppCompatActivity impleme
         Log.e(TAG, "Exception creating session", exception);
         return;
       }
-    }
-
-    try {
-      String logPath = getExternalFilesDir(null).getAbsolutePath() + "/frame-log.csv";
-      Log.d(TAG, "Logging FPS to " + logPath);
-      fpsLog = new BufferedWriter(new FileWriter(logPath, true));
-      fpsLog.write(fileName + "\n");
-    } catch (IOException e) {
-      messageSnackbarHelper.showError(this, "Could not open file to log FPS");
     }
 
     // Note that order matters - see the note in onPause(), the reverse applies here.
