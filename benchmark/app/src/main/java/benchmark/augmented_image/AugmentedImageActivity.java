@@ -148,7 +148,6 @@ public class AugmentedImageActivity extends AppCompatActivity implements GLSurfa
     private int REQUEST_MP4_SELECTOR = 1;
     private boolean hasSetTextureNames = false;
 
-    public String logPath;
     private BufferedWriter fpsLog;
 
     String fileName;
@@ -182,7 +181,7 @@ public class AugmentedImageActivity extends AppCompatActivity implements GLSurfa
         Intent intent = getIntent();
         int activityNumber = intent.getIntExtra(BenchmarkActivity.ACTIVITY_NUMBER, 0);
         fileName = BenchmarkActivity.ACTIVITY_RECORDINGS[activityNumber].getRecordingFileName();
-        File f = new File(this.getExternalFilesDir(null) + "/" + fileName);
+        File f = new File(getExternalFilesDir(null) + "/" + fileName);
         if (!f.exists()) try {
             InputStream is = getAssets().open("recordings/" + fileName);
             int len;
@@ -274,16 +273,17 @@ public class AugmentedImageActivity extends AppCompatActivity implements GLSurfa
         }
 
         try {
-            logPath = this.getExternalFilesDir(null).getAbsolutePath() + "/fps.csv";
+            String logPath = getExternalFilesDir(null).getAbsolutePath() + "/frame-log.csv";
             Log.d(TAG, "Logging FPS to " + logPath);
-            fpsLog = new BufferedWriter(new FileWriter(logPath));
+            fpsLog = new BufferedWriter(new FileWriter(logPath, true));
+            fpsLog.write(fileName + "\n");
         } catch (IOException e) {
             messageSnackbarHelper.showError(this, "Could not open file to log FPS");
         }
 
         try {
             configureSession();
-            String destination = new File(this.getExternalFilesDir(null), fileName).getAbsolutePath();
+            String destination = new File(getExternalFilesDir(null), fileName).getAbsolutePath();
             session.setPlaybackDataset(destination);
             session.resume();
         } catch (CameraNotAvailableException e) {
@@ -435,7 +435,7 @@ public class AugmentedImageActivity extends AppCompatActivity implements GLSurfa
 
             try {
                 if (fpsLog != null) {
-                    fpsLog.write("1," + frameTime + "," + updateTime + "," + processTime + "," + renderBackgroundTime + "," + renderTime + "," + (System.currentTimeMillis() - frameTime) + "\n");
+                    fpsLog.write(currentPhase + "," + frameTime + "," + updateTime + "," + processTime + "," + renderBackgroundTime + "," + renderTime + "," + (System.currentTimeMillis() - frameTime) + "\n");
                 }
             } catch (IOException e) {
                 Log.e(TAG, "Failed to log frame data", e);

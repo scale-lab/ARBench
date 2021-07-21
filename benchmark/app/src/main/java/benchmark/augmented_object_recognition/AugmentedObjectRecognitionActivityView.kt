@@ -80,20 +80,9 @@ class AugmentedObjectRecognitionActivityView(val recognitionActivity: AugmentedO
   public val PHASE_TRACK_ID = UUID.fromString("53069eb5-21ef-4946-b71c-6ac4979216a7")
   private val PHASE_TRACK_MIME_TYPE = "application/recording-playback-phase"
 
-  var logPath: String? = null
   var fpsLog: BufferedWriter? = null
 
   override fun onResume(owner: LifecycleOwner) {
-    try {
-      Log.d(
-        recognitionActivity.TAG,
-        "Logging FPS to " + recognitionActivity.getExternalFilesDir(null)?.getAbsolutePath() + "/fps.csv"
-      )
-      fpsLog =
-        BufferedWriter(FileWriter(recognitionActivity.getExternalFilesDir(null)?.getAbsolutePath() + "/fps.csv"))
-    } catch (e: IOException) {
-      recognitionActivity.renderer.showSnackbar("Could not open file to log FPS")
-    }
     surfaceView.onResume()
   }
 

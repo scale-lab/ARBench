@@ -31,6 +31,7 @@ import android.content.pm.PackageManager;
 import android.hardware.Camera;
 import android.opengl.GLSurfaceView;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
@@ -52,21 +53,23 @@ import benchmark.common.samplerender.SampleRender;
 import benchmark.augmented_object_generation.AugmentedObjectGenerationActivity;
 
 public class BenchmarkActivity extends AppCompatActivity {
+    private static final String TAG = BenchmarkActivity.class.getSimpleName();
     public static final String ACTIVITY_NUMBER = "benchmark.ACTIVITY_NUMBER";
 
     // This is the order of activities that the app will open.
     public static final ActivityRecording[] ACTIVITY_RECORDINGS = {
+//            new ActivityRecording(AugmentedObjectGenerationActivity.class, "recording-6.mp4")
             new ActivityRecording(AugmentedObjectGenerationActivity.class, "aug-obj-gen-1.mp4"),
-            new ActivityRecording(AugmentedObjectGenerationActivity.class, "aug-obj-gen-2.mp4"),
-            new ActivityRecording(AugmentedObjectGenerationActivity.class, "aug-obj-gen-3.mp4"),
+//            new ActivityRecording(AugmentedObjectGenerationActivity.class, "aug-obj-gen-2.mp4"),
+//            new ActivityRecording(AugmentedObjectGenerationActivity.class, "aug-obj-gen-3.mp4"),
             new ActivityRecording(AugmentedFacesActivity.class, "aug-faces-1.mp4"),
-            new ActivityRecording(AugmentedImageActivity.class, "aug-img-1.mp4"),
+//            new ActivityRecording(AugmentedImageActivity.class, "aug-img-1.mp4"),
             new ActivityRecording(AugmentedObjectRecognitionActivity.class, "aug-obj-rcg-1.mp4"),
-            new ActivityRecording(AugmentedObjectRecognitionActivity.class, "aug-obj-rcg-2.mp4")
+//            new ActivityRecording(AugmentedObjectRecognitionActivity.class, "aug-obj-rcg-2.mp4")
     };
 
     private LinearLayout resultsDisplay;
-    private String filesPath;
+    private BufferedReader fpsLog;
     private GLSurfaceView surfaceView;
     private SampleRender render;
 
@@ -76,8 +79,9 @@ public class BenchmarkActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        filesPath = this.getExternalFilesDir(null).getAbsolutePath();
         resultsDisplay = (LinearLayout) findViewById(R.id.results_display);
+
+        Log.i(TAG, "MARAbenchmark External Files Directory: " + getExternalFilesDir(null).getAbsolutePath());
 
         int permission = ActivityCompat.checkSelfPermission(this, Manifest.permission.CAMERA);
         if (permission != PackageManager.PERMISSION_GRANTED) {
@@ -90,6 +94,7 @@ public class BenchmarkActivity extends AppCompatActivity {
 
         FrameLayout preview = (FrameLayout) findViewById(R.id.camera_frame);
         preview.addView(cameraPreview);
+        onStartBenchmark(null);
     }
 
     public void onStartBenchmark(View view) {
@@ -102,15 +107,28 @@ public class BenchmarkActivity extends AppCompatActivity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == 0) {
+            String filesPath = getExternalFilesDir(null).getAbsolutePath();
+            try {
+                fpsLog = new BufferedReader(new FileReader(filesPath + "/frame-log.csv"));
+            } catch (FileNotFoundException e) {
+                new AlertDialog.Builder(this).setMessage("Could not access logged frame data").show();
+            }
+        }
         if (resultCode == RESULT_CANCELED) {
             new AlertDialog.Builder(this).setMessage("Failed to perform test " + requestCode).show();
         } else {
+            int currentPhase = 1;
+            long startTime = 0, t = 0;
+            long update = 0, maxInput = 0, renderBackground = 0, renderObjects = 0, total = 0;
             try {
-                BufferedReader reader = new BufferedReader(new FileReader(filesPath + "/fps.csv"));
-                String line = reader.readLine();
-                int currentPhase = 1;
-                long startTime = Long.decode(line.split(",")[1]), t = 0;
-                long update = 0, maxInput = 0, renderBackground = 0, renderObjects = 0, total = 0;
+                String line = fpsLog.readLine();
+                if (!line.equals(ACTIVITY_RECORDINGS[requestCode].getRecordingFileName())) {
+                    new AlertDialog.Builder(this).setMessage("No frame data for test " + requestCode).show();
+                    line = null;
+                } else {
+                    line = fpsLog.readLine();
+                }
                 int i = 0;
                 while (true) {
                     if (line != null) {
@@ -161,10 +179,8 @@ public class BenchmarkActivity extends AppCompatActivity {
                         resultsDisplay.addView(results);
                         break;
                     }
-                    line = reader.readLine();
+                    line = fpsLog.readLine();
                 }
-            } catch (FileNotFoundException e) {
-                new AlertDialog.Builder(this).setMessage("Failed to perform test " + requestCode).show();
             } catch (IOException e) {
                 new AlertDialog.Builder(this).setMessage("Failed to perform test " + requestCode).show();
             } catch (Exception e) {
