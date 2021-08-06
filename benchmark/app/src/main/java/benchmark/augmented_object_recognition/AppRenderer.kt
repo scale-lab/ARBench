@@ -129,18 +129,12 @@ class AppRenderer(val recognitionActivity: AugmentedObjectRecognitionActivity) :
 
     val session = recognitionActivity.arCoreSessionHelper.sessionCache ?: return
     session.setCameraTextureNames(intArrayOf(backgroundRenderer.cameraColorTexture.textureId))
-    if (session.playbackStatus == PlaybackStatus.FINISHED) {
-      recognitionActivity.setResult(Activity.RESULT_OK)
-      viewRecognition.fpsLog?.close()
-      recognitionActivity.finish()
-      return
-    }
 
     // Notify ARCore session that the view size changed so that the perspective matrix and
     // the video background can be properly adjusted.
     displayRotationHelper.updateSessionIfNeeded(session)
 
-    var updateTime = System.currentTimeMillis()
+    var processTime = System.currentTimeMillis()
     val frame = try {
       session.update()
     } catch (e: CameraNotAvailableException) {
@@ -148,12 +142,6 @@ class AppRenderer(val recognitionActivity: AugmentedObjectRecognitionActivity) :
       showSnackbar("Camera not available. Try restarting the app.")
       return
     }
-    updateTime = System.currentTimeMillis() - updateTime
-
-    var renderBackgroundTime = System.currentTimeMillis()
-    backgroundRenderer.updateDisplayGeometry(frame)
-    backgroundRenderer.drawBackground(render)
-    renderBackgroundTime = System.currentTimeMillis() - renderBackgroundTime
 
     // Get camera and projection matrices.
     val camera = frame.camera
@@ -161,19 +149,17 @@ class AppRenderer(val recognitionActivity: AugmentedObjectRecognitionActivity) :
     camera.getProjectionMatrix(projectionMatrix, 0, 0.01f, 100.0f)
     Matrix.multiplyMM(viewProjectionMatrix, 0, projectionMatrix, 0, viewMatrix, 0)
 
-    // Handle tracking failures.
-    if (camera.trackingState != TrackingState.TRACKING) {
-      return
-    }
+    processTime = System.currentTimeMillis() - processTime
 
     // Keep the screen unlocked while tracking, but allow it to lock when tracking stops.
     trackingStateHelper.updateKeepScreenOnFlag(camera.trackingState)
 
-    // Draw point cloud.
-    frame.acquirePointCloud().use { pointCloud ->
-      pointCloudRender.drawPointCloud(render, pointCloud, viewProjectionMatrix)
+    if (session.playbackStatus == PlaybackStatus.FINISHED) {
+      recognitionActivity.setResult(Activity.RESULT_OK)
+      viewRecognition.fpsLog?.close()
+      recognitionActivity.finish()
+      return
     }
-
     // Frame.acquireCameraImage must be used on the GL thread.
     // Check if the button was pressed last frame to start processing the camera image.
     if (session.playbackStatus == PlaybackStatus.OK) {
@@ -192,7 +178,14 @@ class AppRenderer(val recognitionActivity: AugmentedObjectRecognitionActivity) :
         scanButtonWasPressed = true
       }
     }
+
+    GLES30.glFinish()
+    var renderBackgroundTime = System.currentTimeMillis()
+    backgroundRenderer.updateDisplayGeometry(frame)
+    backgroundRenderer.drawBackground(render)
+
     var handleInputTime = System.currentTimeMillis()
+    renderBackgroundTime = handleInputTime - renderBackgroundTime
     if (scanButtonWasPressed) {
       scanButtonWasPressed = false
       val cameraImage = frame.tryAcquireCameraImage()
@@ -220,10 +213,21 @@ class AppRenderer(val recognitionActivity: AugmentedObjectRecognitionActivity) :
       }
       arLabeledAnchors.addAll(anchors)
     }
-    handleInputTime = System.currentTimeMillis() - handleInputTime
 
     // Draw labels at their anchor position.
     var renderTime = System.currentTimeMillis()
+    handleInputTime = renderTime - handleInputTime
+
+    // Handle tracking failures.
+    if (camera.trackingState != TrackingState.TRACKING) {
+      return
+    }
+
+    // Draw point cloud.
+    frame.acquirePointCloud().use { pointCloud ->
+      pointCloudRender.drawPointCloud(render, pointCloud, viewProjectionMatrix)
+    }
+
     for (arDetectedObject in arLabeledAnchors) {
       val anchor = arDetectedObject.anchor
       if (anchor.trackingState != TrackingState.TRACKING) continue
@@ -240,7 +244,7 @@ class AppRenderer(val recognitionActivity: AugmentedObjectRecognitionActivity) :
     renderTime = System.currentTimeMillis() - renderTime
     if (viewRecognition.fpsLog != null) {
       val data =
-        currentPhase.toString() + "," + frameTime + "," + updateTime + "," + handleInputTime + "," + renderBackgroundTime + "," + renderTime + "," + (System.currentTimeMillis() - frameTime) + "," + session.allAnchors.size + "\n";
+        currentPhase.toString() + "," + frameTime + "," + processTime + "," + handleInputTime + "," + renderBackgroundTime + "," + renderTime + "," + (System.currentTimeMillis() - frameTime) + "\n";
       viewRecognition.fpsLog!!.write(data)
     }
   }

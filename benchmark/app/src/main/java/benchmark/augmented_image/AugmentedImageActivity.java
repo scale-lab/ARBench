@@ -394,12 +394,10 @@ public class AugmentedImageActivity extends AppCompatActivity implements GLSurfa
             // Obtain the current frame from ARSession. When the configuration is set to
             // UpdateMode.BLOCKING (it is by default), this will throttle the rendering to the
             // camera framerate.
-            long updateTime = System.currentTimeMillis();
+            long processTime = System.currentTimeMillis();
             frame = session.update();
-            updateTime = System.currentTimeMillis() - updateTime;
             Camera camera = frame.getCamera();
 
-            long processTime = System.currentTimeMillis();
             // Get projection matrix.
             float[] projectionMatrix = new float[16];
             camera.getProjectionMatrix(projectionMatrix, 0, 0.1f, 100.0f);
@@ -413,7 +411,11 @@ public class AugmentedImageActivity extends AppCompatActivity implements GLSurfa
             // The last one is the average pixel intensity in gamma space.
             final float[] colorCorrectionRgba = new float[4];
             frame.getLightEstimate().getColorCorrection(colorCorrectionRgba, 0);
+
             processTime = System.currentTimeMillis() - processTime;
+
+            // Keep the screen unlocked while tracking, but allow it to lock when tracking stops.
+            trackingStateHelper.updateKeepScreenOnFlag(camera.getTrackingState());
 
             // If frame is ready, render camera preview image to the GL surface.
             GLES20.glFinish();
@@ -423,9 +425,6 @@ public class AugmentedImageActivity extends AppCompatActivity implements GLSurfa
             long renderTime = System.currentTimeMillis();
             renderBackgroundTime = renderTime - renderBackgroundTime;
 
-            // Keep the screen unlocked while tracking, but allow it to lock when tracking stops.
-            trackingStateHelper.updateKeepScreenOnFlag(camera.getTrackingState());
-
             // Visualize augmented images.
             drawAugmentedImages(frame, projectionMatrix, viewMatrix, colorCorrectionRgba);
 
@@ -434,7 +433,7 @@ public class AugmentedImageActivity extends AppCompatActivity implements GLSurfa
 
             try {
                 if (fpsLog != null) {
-                    fpsLog.write(currentPhase + "," + frameTime + "," + updateTime + "," + processTime + "," + renderBackgroundTime + "," + renderTime + "," + (System.currentTimeMillis() - frameTime) + "\n");
+                    fpsLog.write(currentPhase + "," + frameTime + "," + processTime + ",0," + renderBackgroundTime + "," + renderTime + "," + (System.currentTimeMillis() - frameTime) + "\n");
                 }
             } catch (IOException e) {
                 Log.e(TAG, "Failed to log frame data", e);

@@ -60,18 +60,15 @@ public class BenchmarkActivity extends AppCompatActivity {
 
     // This is the order of activities that the app will open.
     public static final ActivityRecording[] ACTIVITY_RECORDINGS = {
-//            new ActivityRecording(AugmentedObjectGenerationActivity.class, "recording-6.mp4")
             new ActivityRecording(AugmentedObjectGenerationActivity.class, "aug-obj-gen-1.mp4"),
-//            new ActivityRecording(AugmentedObjectGenerationActivity.class, "aug-obj-gen-2.mp4"),
-//            new ActivityRecording(AugmentedObjectGenerationActivity.class, "aug-obj-gen-3.mp4"),
-            new ActivityRecording(AugmentedFacesActivity.class, "aug-faces-1.mp4"),
+            new ActivityRecording(AugmentedObjectGenerationActivity.class, "aug-obj-gen-2.mp4"),
+            new ActivityRecording(AugmentedObjectGenerationActivity.class, "aug-obj-gen-3.mp4"),
+//            new ActivityRecording(AugmentedFacesActivity.class, "aug-faces-1.mp4"),
 //            new ActivityRecording(AugmentedImageActivity.class, "aug-img-1.mp4"),
-            new ActivityRecording(AugmentedObjectRecognitionActivity.class, "aug-obj-rcg-1.mp4"),
-//            new ActivityRecording(AugmentedObjectRecognitionActivity.class, "aug-obj-rcg-2.mp4")
+//            new ActivityRecording(AugmentedObjectRecognitionActivity.class, "aug-obj-rcg-1.mp4"),
     };
 
     private LinearLayout resultsDisplay;
-    private BufferedReader fpsLog;
     private GLSurfaceView surfaceView;
     private SampleRender render;
 
@@ -89,11 +86,11 @@ public class BenchmarkActivity extends AppCompatActivity {
 
         Log.i(TAG, "MARAbenchmark External Files Directory: " + getExternalFilesDir(null).getAbsolutePath());
 
-        int permission = ActivityCompat.checkSelfPermission(this, Manifest.permission.CAMERA);
-        if (permission != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CAMERA}, 1);
-        }
-
+//        int permission = ActivityCompat.checkSelfPermission(this, Manifest.permission.CAMERA);
+//        if (permission != PackageManager.PERMISSION_GRANTED) {
+//            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CAMERA}, 1);
+//        }
+//
 //        useCameraSwitch = findViewById(R.id.useCamera);
 //
 //        camera = Camera.open(0);
@@ -112,6 +109,7 @@ public class BenchmarkActivity extends AppCompatActivity {
 //                }
 //            }
 //        });
+
         onStartBenchmark(null);
     }
 
@@ -123,24 +121,6 @@ public class BenchmarkActivity extends AppCompatActivity {
         Intent intent = new Intent(this, ACTIVITY_RECORDINGS[0].getActivity());
         intent.putExtra(ACTIVITY_NUMBER, 0);
         startActivityForResult(intent, 0);
-    }
-
-    @Override
-    public void onPause() {
-//        if(camera != null) {
-//            System.out.println("Turning camera off...");
-//            turnCameraOff();
-//        }
-        super.onPause();
-    }
-
-    @Override
-    public void onResume() {
-//        if(camera == null && useCameraSwitch.isChecked()) {
-//            System.out.println("Turning camera on...");
-//            turnCameraOn();
-//        }
-        super.onResume();
     }
 
     private void turnCameraOn() {
@@ -161,46 +141,70 @@ public class BenchmarkActivity extends AppCompatActivity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == 0) {
-            String logPath = getExternalFilesDir(null).getAbsolutePath() + "/frame-log";
-            try {
-                fpsLog = new BufferedReader(new FileReader(logPath));
-            } catch (FileNotFoundException e) {
-                new AlertDialog.Builder(this).setMessage("Could not access logged frame data").show();
-            }
-        }
         if (resultCode == RESULT_CANCELED) {
-            new AlertDialog.Builder(this).setMessage("Failed to perform test " + requestCode).show();
+            new AlertDialog.Builder(this).setMessage("Test " + requestCode + " did not complete").show();
+        }
+
+        if(requestCode + 1 < ACTIVITY_RECORDINGS.length) {
+            Intent intent = new Intent(this, ACTIVITY_RECORDINGS[requestCode + 1].getActivity());
+            intent.putExtra(ACTIVITY_NUMBER, requestCode + 1);
+            startActivityForResult(intent, requestCode + 1);
         } else {
+            reportResults();
+        }
+    }
+
+    private void reportResults() {
+        BufferedReader fpsLog;
+        String logPath = getExternalFilesDir(null).getAbsolutePath() + "/frame-log";
+        try {
+            fpsLog = new BufferedReader(new FileReader(logPath));
+        } catch (FileNotFoundException e) {
+            new AlertDialog.Builder(this).setMessage("Could not access logged frame data").show();
+            return;
+        }
+
+        String line;
+        try {
+            line = fpsLog.readLine();
+        } catch (IOException e) {
+            new AlertDialog.Builder(this).setMessage("Error reading frame data").show();
+            return;
+        }
+        for (int testNumber=0; testNumber < ACTIVITY_RECORDINGS.length; testNumber++) {
             int currentPhase = 1;
             long startTime = 0, t = 0;
-            long update = 0, maxInput = 0, renderBackground = 0, renderObjects = 0, total = 0;
+            long update = 0, maxInput = 0, renderBackground = 0, total = 0;
+            float renderObjects = 0.f;
             try {
-                String recordingName = ACTIVITY_RECORDINGS[requestCode].getRecordingFileName();
-                String line = fpsLog.readLine();
-                if (!line.equals("test " + recordingName)) {
-                    new AlertDialog.Builder(this).setMessage("No frame data for test " + requestCode).show();
-                    line = null;
+                String recordingName = ACTIVITY_RECORDINGS[testNumber].getRecordingFileName();
+                if (line == null || !line.equals("test " + recordingName)) {
+                    new AlertDialog.Builder(this).setMessage("No frame data for test " + testNumber).show();
+                    continue;
                 } else {
                     line = fpsLog.readLine();
                     startTime = Long.decode(line.split(",")[1]);
                 }
                 int i = 0;
                 while (true) {
-                    if (line != null) {
+                    if (line != null && !line.startsWith("test ")) {
                         String[] times = line.split(",");
+                        if (times.length < 7) {
+                            line = fpsLog.readLine();
+                            continue;
+                        }
                         int phase = Integer.decode(times[0]);
                         if (phase != currentPhase) {
                             float fps = 1000.f * (i - 1) / (t - startTime);
                             TextView results = new TextView(this);
                             results.setText(
-                                    "FPS and Runtimes - Test " + requestCode + " Phase " + currentPhase + "\n"
-                                            + "File name: " + ACTIVITY_RECORDINGS[requestCode].getRecordingFileName() + "\n"
+                                    "FPS and Runtimes - Test " + testNumber + " Phase " + currentPhase + "\n"
+                                            + "File name: " + recordingName + "\n"
                                             + "FPS: " + fps + "\n"
                                             + "Update: " + (float) update / i + "\n"
                                             + "Max Input: " + maxInput + "\n"
                                             + "Render Background: " + (float) renderBackground / i + "\n"
-                                            + "Render Objects: " + (float) renderObjects / i + "\n"
+                                            + "Render Objects: " + renderObjects / i + "\n"
                                             + "Total Runtime: " + (float) total / i + "\n");
                             resultsDisplay.addView(results);
                             startTime = Long.decode(times[1]);
@@ -216,7 +220,7 @@ public class BenchmarkActivity extends AppCompatActivity {
                         update += Integer.decode(times[2]);
                         maxInput = Math.max(maxInput, Integer.decode(times[3]));
                         renderBackground += Integer.decode(times[4]);
-                        renderObjects += Integer.decode(times[5]);
+                        renderObjects += Float.parseFloat(times[5])/1e6;
                         total += Integer.decode(times[6]);
                         i++;
                     } else {
@@ -224,13 +228,13 @@ public class BenchmarkActivity extends AppCompatActivity {
                         TextView results = new TextView(this);
                         results.setTextIsSelectable(true);
                         results.setText(
-                                "FPS and Runtimes - Test " + requestCode + " Phase " + currentPhase + "\n"
-                                        + "File name: " + ACTIVITY_RECORDINGS[requestCode].getRecordingFileName() + "\n"
+                                "FPS and Runtimes - Test " + testNumber + " Phase " + currentPhase + "\n"
+                                        + "File name: " + recordingName + "\n"
                                         + "FPS: " + fps + "\n"
                                         + "Update: " + (float) update / i + "\n"
                                         + "Max Input: " + maxInput + "\n"
                                         + "Render Background: " + (float) renderBackground / i + "\n"
-                                        + "Render Objects: " + (float) renderObjects / i + "\n"
+                                        + "Render Objects: " + renderObjects / i + "\n"
                                         + "Total Runtime: " + (float) total / i + "\n");
                         resultsDisplay.addView(results);
                         break;
@@ -238,16 +242,13 @@ public class BenchmarkActivity extends AppCompatActivity {
                     line = fpsLog.readLine();
                 }
             } catch (IOException e) {
-                new AlertDialog.Builder(this).setMessage("Failed to perform test " + requestCode).show();
-            } catch (Exception e) {
-                new AlertDialog.Builder(this).setMessage(e.getMessage()).show();
+                new AlertDialog.Builder(this).setMessage("Error reading frame data").show();
             }
         }
+    }
 
-        if(requestCode + 1 < ACTIVITY_RECORDINGS.length) {
-            Intent intent = new Intent(this, ACTIVITY_RECORDINGS[requestCode + 1].getActivity());
-            intent.putExtra(ACTIVITY_NUMBER, requestCode + 1);
-            startActivityForResult(intent, requestCode + 1);
-        }
+    protected void onDestroy() {
+//        turnCameraOff();
+        super.onDestroy();
     }
 }

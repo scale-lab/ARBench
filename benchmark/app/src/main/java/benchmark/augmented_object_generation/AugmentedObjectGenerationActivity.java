@@ -44,7 +44,9 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.res.Resources;
 import android.media.Image;
+import android.opengl.EGLExt;
 import android.opengl.GLES30;
+import android.opengl.GLES32;
 import android.opengl.GLSurfaceView;
 import android.opengl.Matrix;
 import android.os.Bundle;
@@ -140,7 +142,7 @@ public class AugmentedObjectGenerationActivity extends AppCompatActivity impleme
   private static final String WAITING_FOR_TAP_MESSAGE = "Tap on a surface to place an object.";
 
   // See the definition of updateSphericalHarmonicsCoefficients for an explanation of these
-  // constants.de
+  // constants.
   private static final float[] sphericalHarmonicFactors = {
     0.282095f,
     -0.325735f,
@@ -228,6 +230,13 @@ public class AugmentedObjectGenerationActivity extends AppCompatActivity impleme
   String fileName;
   int currentPhase = 1;
 
+  private boolean hasTimerExtension;
+  private static final int TIME_ELAPSED_EXT = 0x88BF;
+  private static final int NUM_QUERIES = 10;
+  private int[] timeQueries;
+  private int[] queryBuffer;
+  private int queryIndex;
+
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
@@ -283,6 +292,14 @@ public class AugmentedObjectGenerationActivity extends AppCompatActivity impleme
     } catch (IOException e) {
       messageSnackbarHelper.showError(this, "Could not open file to log FPS");
     }
+
+    timeQueries = new int[NUM_QUERIES];
+    queryBuffer = new int[1];
+    queryBuffer[0] = 0;
+    queryIndex = 0;
+    for (int i=0; i < NUM_QUERIES; i++) {
+      timeQueries[i] = -1;
+    }
   }
 
   /** Menu button to launch feature specific settings. */
@@ -297,15 +314,24 @@ public class AugmentedObjectGenerationActivity extends AppCompatActivity impleme
     return false;
   }
 
-  @Override
-  protected void onDestroy() {
+  private void cleanupCollectionResources() {
     try {
       if (fpsLog != null) {
+        fpsLog.flush();
         fpsLog.close();
       }
+      for (int i=0; i < NUM_QUERIES; i++) {
+        if (timeQueries[i] >= 0) {
+          GLES30.glDeleteQueries(1, timeQueries, i);
+        }
+      }
     } catch (IOException e) {
-
+      Log.e(TAG, "Exception closing frame log: ", e);
     }
+  }
+
+  @Override
+  protected void onDestroy() {
     if (session != null) {
       // Explicitly close ARCore Session to release native resources.
       // Review the API reference for important considerations before calling close() in apps with
@@ -380,12 +406,8 @@ public class AugmentedObjectGenerationActivity extends AppCompatActivity impleme
       return;
     } catch (PlaybackFailedException e) {
       setResult(RESULT_CANCELED);
-        try {
-            fpsLog.close();
-        } catch (IOException ioException) {
-            ioException.printStackTrace();
-        }
-        finish();
+      cleanupCollectionResources();
+      finish();
     }
 
     surfaceView.onResume();
@@ -519,7 +541,8 @@ public class AugmentedObjectGenerationActivity extends AppCompatActivity impleme
       Log.e(TAG, "Failed to read a required asset file", e);
       messageSnackbarHelper.showError(this, "Failed to read a required asset file: " + e);
     }
-
+    String extensions = GLES30.glGetString(GLES30.GL_EXTENSIONS);
+    hasTimerExtension = extensions.contains(" GL_EXT_disjoint_timer_query ");
   }
 
   @Override
@@ -536,13 +559,7 @@ public class AugmentedObjectGenerationActivity extends AppCompatActivity impleme
     }
     if (session.getPlaybackStatus() == PlaybackStatus.FINISHED) {
       setResult(RESULT_OK);
-      try {
-        if (fpsLog != null) {
-          fpsLog.close();
-        }
-      } catch (IOException e) {
-        setResult(RESULT_CANCELED);
-      }
+      cleanupCollectionResources();
       finish();
       return;
     }
@@ -566,7 +583,7 @@ public class AugmentedObjectGenerationActivity extends AppCompatActivity impleme
     // UpdateMode.BLOCKING (it is by default), this will throttle the rendering to the
     // camera framerate.
     Frame frame;
-    long updateTime = System.currentTimeMillis();
+    long processTime = System.currentTimeMillis();
     try {
       frame = session.update();
     } catch (CameraNotAvailableException e) {
@@ -575,9 +592,15 @@ public class AugmentedObjectGenerationActivity extends AppCompatActivity impleme
       return;
     }
     Camera camera = frame.getCamera();
+    // Get projection matrix.
+    camera.getProjectionMatrix(projectionMatrix, 0, Z_NEAR, Z_FAR);
+
+    // Get camera matrix and draw.
+    camera.getViewMatrix(viewMatrix, 0);
+    Matrix.multiplyMM(modelViewProjectionMatrix, 0, projectionMatrix, 0, viewMatrix, 0);
 
     long handleInputTime = System.currentTimeMillis();
-    updateTime = handleInputTime - updateTime;
+    processTime = handleInputTime - processTime;
 
     // Handle one tap per frame.
     handleTap(frame, camera);
@@ -597,7 +620,6 @@ public class AugmentedObjectGenerationActivity extends AppCompatActivity impleme
       }
     }
 
-    GLES30.glFinish();
     long renderBackgroundTime = System.currentTimeMillis();
     // Update BackgroundRenderer state to match the depth settings.
     try {
@@ -631,7 +653,6 @@ public class AugmentedObjectGenerationActivity extends AppCompatActivity impleme
       backgroundRenderer.drawBackground(render);
     }
 
-    GLES30.glFinish();
     long renderTime = System.currentTimeMillis();
     renderBackgroundTime = renderTime - renderBackgroundTime;
 
@@ -642,12 +663,6 @@ public class AugmentedObjectGenerationActivity extends AppCompatActivity impleme
 
     // -- Draw non-occluded virtual objects (planes, point cloud)
 
-    // Get projection matrix.
-    camera.getProjectionMatrix(projectionMatrix, 0, Z_NEAR, Z_FAR);
-
-    // Get camera matrix and draw.
-    camera.getViewMatrix(viewMatrix, 0);
-
     // Visualize tracked points.
     // Use try-with-resources to automatically release the point cloud.
     try (PointCloud pointCloud = frame.acquirePointCloud()) {
@@ -655,7 +670,6 @@ public class AugmentedObjectGenerationActivity extends AppCompatActivity impleme
         pointCloudVertexBuffer.set(pointCloud.getPoints());
         lastPointCloudTimestamp = pointCloud.getTimestamp();
       }
-      Matrix.multiplyMM(modelViewProjectionMatrix, 0, projectionMatrix, 0, viewMatrix, 0);
       pointCloudShader.setMat4("u_ModelViewProjection", modelViewProjectionMatrix);
       render.draw(pointCloudMesh, pointCloudShader);
     }
@@ -671,6 +685,22 @@ public class AugmentedObjectGenerationActivity extends AppCompatActivity impleme
 
     // Update lighting parameters in the shader
     updateLightEstimation(frame.getLightEstimate(), viewMatrix);
+
+    if (!hasTimerExtension) {
+      messageSnackbarHelper.showError(this, "OpenGL extension EXT_disjoint_timer_query is unavailable on this device");
+      return;
+    }
+    if (timeQueries[queryIndex] < 0) {
+      GLES30.glGenQueries(1, timeQueries, queryIndex);
+    }
+    if (timeQueries[(queryIndex + 1) % NUM_QUERIES] >= 0) {
+      IntBuffer queryResult = IntBuffer.allocate(1);
+      GLES30.glGetQueryObjectuiv(timeQueries[(queryIndex + 1) % NUM_QUERIES], GLES30.GL_QUERY_RESULT_AVAILABLE, queryResult);
+      if (queryResult.get() == GLES30.GL_TRUE) {
+        GLES30.glGetQueryObjectuiv(timeQueries[(queryIndex + 1) % NUM_QUERIES], GLES30.GL_QUERY_RESULT, queryBuffer, 0);
+      }
+    }
+    GLES30.glBeginQuery(TIME_ELAPSED_EXT, timeQueries[queryIndex]);
 
     // Visualize anchors created by touch.
     render.clear(virtualSceneFramebuffer, 0f, 0f, 0f, 0f);
@@ -696,16 +726,16 @@ public class AugmentedObjectGenerationActivity extends AppCompatActivity impleme
     // Compose the virtual scene with the background.
     backgroundRenderer.drawVirtualScene(render, virtualSceneFramebuffer, Z_NEAR, Z_FAR);
 
-    GLES30.glFinish();
+    GLES30.glEndQuery(TIME_ELAPSED_EXT);
+    queryIndex = (queryIndex + 1) % NUM_QUERIES;
     renderTime = System.currentTimeMillis() - renderTime;
     try {
       if (fpsLog != null) {
-        fpsLog.write(currentPhase + "," + frameTime + "," + updateTime + "," + handleInputTime + "," + renderBackgroundTime + "," + renderTime + "," + (System.currentTimeMillis() - frameTime) + "," + session.getAllAnchors().size() + "\n");
+        fpsLog.write(currentPhase + "," + frameTime + "," + processTime + "," + handleInputTime + "," + renderTime + "," + Integer.toUnsignedLong(queryBuffer[0]) + "," + (System.currentTimeMillis() - frameTime) + "," + session.getAllAnchors().size() + "\n");
       }
     } catch (IOException e) {
       Log.e(TAG, "Failed to log frame data", e);
     }
-
   }
 
   // Handle only one tap per frame, as taps are usually low frequency compared to frame rate.
