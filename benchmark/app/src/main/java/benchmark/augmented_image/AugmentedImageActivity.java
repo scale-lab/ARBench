@@ -44,7 +44,8 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
-import android.opengl.GLES20;
+import android.opengl.GLES30;
+import android.opengl.GLES30;
 import android.opengl.GLSurfaceView;
 import android.os.Bundle;
 import android.util.Log;
@@ -79,6 +80,7 @@ import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.IntBuffer;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -153,6 +155,13 @@ public class AugmentedImageActivity extends AppCompatActivity implements GLSurfa
     String fileName;
     int currentPhase = 1;
 
+    private boolean hasTimerExtension;
+    private static final int TIME_ELAPSED_EXT = 0x88BF;
+    private static final int NUM_QUERIES = 10;
+    private int[] timeQueries;
+    private int[] queryBuffer;
+    private int queryIndex;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -202,6 +211,30 @@ public class AugmentedImageActivity extends AppCompatActivity implements GLSurfa
             fpsLog.write("test " + fileName + "\n");
         } catch (IOException e) {
             messageSnackbarHelper.showError(this, "Could not open file to log FPS");
+        }
+
+        timeQueries = new int[NUM_QUERIES];
+        queryBuffer = new int[1];
+        queryBuffer[0] = 0;
+        queryIndex = 0;
+        for (int i=0; i < NUM_QUERIES; i++) {
+            timeQueries[i] = -1;
+        }
+    }
+
+    private void cleanupCollectionResources() {
+        try {
+            if (fpsLog != null) {
+                fpsLog.flush();
+                fpsLog.close();
+            }
+            for (int i=0; i < NUM_QUERIES; i++) {
+                if (timeQueries[i] >= 0) {
+                    GLES30.glDeleteQueries(1, timeQueries, i);
+                }
+            }
+        } catch (IOException e) {
+            Log.e(TAG, "Exception closing frame log: ", e);
         }
     }
 
@@ -291,11 +324,7 @@ public class AugmentedImageActivity extends AppCompatActivity implements GLSurfa
             return;
         } catch (PlaybackFailedException e) {
             setResult(RESULT_CANCELED);
-            try {
-                fpsLog.close();
-            } catch (IOException ioException) {
-                ioException.printStackTrace();
-            }
+            cleanupCollectionResources();
             finish();
         }
 
@@ -342,7 +371,7 @@ public class AugmentedImageActivity extends AppCompatActivity implements GLSurfa
 
     @Override
     public void onSurfaceCreated(GL10 gl, EGLConfig config) {
-        GLES20.glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+        GLES30.glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 
         // Prepare the rendering objects. This involves reading shaders, so may throw an IOException.
         try {
@@ -352,12 +381,14 @@ public class AugmentedImageActivity extends AppCompatActivity implements GLSurfa
         } catch (IOException e) {
             Log.e(TAG, "Failed to read an asset file", e);
         }
+        String extensions = GLES30.glGetString(GLES30.GL_EXTENSIONS);
+        hasTimerExtension = extensions.contains(" GL_EXT_disjoint_timer_query ");
     }
 
     @Override
     public void onSurfaceChanged(GL10 gl, int width, int height) {
         displayRotationHelper.onSurfaceChanged(width, height);
-        GLES20.glViewport(0, 0, width, height);
+        GLES30.glViewport(0, 0, width, height);
     }
 
     @Override
@@ -374,7 +405,7 @@ public class AugmentedImageActivity extends AppCompatActivity implements GLSurfa
         }
 
         // Clear screen to notify driver it should not load any pixels from previous frame.
-        GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT | GLES20.GL_DEPTH_BUFFER_BIT);
+        GLES30.glClear(GLES30.GL_COLOR_BUFFER_BIT | GLES30.GL_DEPTH_BUFFER_BIT);
 
         if (session == null) {
             return;
@@ -418,22 +449,37 @@ public class AugmentedImageActivity extends AppCompatActivity implements GLSurfa
             trackingStateHelper.updateKeepScreenOnFlag(camera.getTrackingState());
 
             // If frame is ready, render camera preview image to the GL surface.
-            GLES20.glFinish();
             long renderBackgroundTime = System.currentTimeMillis();
             backgroundRenderer.draw(frame);
-            GLES20.glFinish();
             long renderTime = System.currentTimeMillis();
             renderBackgroundTime = renderTime - renderBackgroundTime;
+
+            if (!hasTimerExtension) {
+                messageSnackbarHelper.showError(this, "OpenGL extension EXT_disjoint_timer_query is unavailable on this device");
+                return;
+            }
+            if (timeQueries[queryIndex] < 0) {
+                GLES30.glGenQueries(1, timeQueries, queryIndex);
+            }
+            if (timeQueries[(queryIndex + 1) % NUM_QUERIES] >= 0) {
+                IntBuffer queryResult = IntBuffer.allocate(1);
+                GLES30.glGetQueryObjectuiv(timeQueries[(queryIndex + 1) % NUM_QUERIES], GLES30.GL_QUERY_RESULT_AVAILABLE, queryResult);
+                if (queryResult.get() == GLES30.GL_TRUE) {
+                    GLES30.glGetQueryObjectuiv(timeQueries[(queryIndex + 1) % NUM_QUERIES], GLES30.GL_QUERY_RESULT, queryBuffer, 0);
+                }
+            }
+            GLES30.glBeginQuery(TIME_ELAPSED_EXT, timeQueries[queryIndex]);
 
             // Visualize augmented images.
             drawAugmentedImages(frame, projectionMatrix, viewMatrix, colorCorrectionRgba);
 
-            GLES20.glFinish();
+            GLES30.glEndQuery(TIME_ELAPSED_EXT);
+            queryIndex = (queryIndex + 1) % NUM_QUERIES;
             renderTime = System.currentTimeMillis() - renderTime;
 
             try {
                 if (fpsLog != null) {
-                    fpsLog.write(currentPhase + "," + frameTime + "," + processTime + ",0," + renderBackgroundTime + "," + renderTime + "," + (System.currentTimeMillis() - frameTime) + "\n");
+                    fpsLog.write(currentPhase + "," + frameTime + ",0,0,0" + "," + queryBuffer[0] + "," + (System.currentTimeMillis() - frameTime) + "\n");
                 }
             } catch (IOException e) {
                 Log.e(TAG, "Failed to log frame data", e);
@@ -443,7 +489,7 @@ public class AugmentedImageActivity extends AppCompatActivity implements GLSurfa
             // Avoid crashing the application due to unhandled exceptions.
             Log.e(TAG, "Exception on the OpenGL thread", t);
         } finally {
-            GLES20.glDepthMask(true);
+            GLES30.glDepthMask(true);
         }
     }
 
@@ -469,7 +515,7 @@ public class AugmentedImageActivity extends AppCompatActivity implements GLSurfa
                     // When an image is in PAUSED state, but the camera is not PAUSED, it has been detected,
                     // but not yet tracked.
                     String text = String.format("Detected Image %d", augmentedImage.getIndex());
-                    messageSnackbarHelper.showMessage(this, text);
+                    Log.d(TAG, text);
                     break;
 
                 case TRACKING:
