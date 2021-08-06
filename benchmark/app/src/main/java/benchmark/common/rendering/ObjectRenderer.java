@@ -21,6 +21,8 @@ import android.graphics.BitmapFactory;
 import android.opengl.GLES20;
 import android.opengl.GLUtils;
 import android.opengl.Matrix;
+import android.util.Log;
+
 import de.javagl.obj.Obj;
 import de.javagl.obj.ObjData;
 import de.javagl.obj.ObjReader;
@@ -353,7 +355,11 @@ public class ObjectRenderer {
       float[] colorCorrectionRgba,
       float[] objColor) {
 
-    ShaderUtil.checkGLError(TAG, "Before draw");
+    try {
+      ShaderUtil.checkGLError(TAG, "Before draw");
+    } catch (RuntimeException e) {
+      Log.e(TAG, e.getMessage());
+    }
 
     // Build the ModelView and ModelViewProjection matrices
     // for calculating object position and light.
@@ -452,7 +458,11 @@ public class ObjectRenderer {
 
     GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, 0);
 
-    ShaderUtil.checkGLError(TAG, "After draw");
+    try {
+      ShaderUtil.checkGLError(TAG, "After draw");
+    } catch (RuntimeException e) {
+      Log.e(TAG, e.getMessage());
+    }
   }
 
   private static void normalizeVec3(float[] v) {

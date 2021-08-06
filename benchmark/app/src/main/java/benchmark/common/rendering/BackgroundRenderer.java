@@ -19,6 +19,8 @@ import android.content.Context;
 import android.opengl.GLES11Ext;
 import android.opengl.GLES20;
 import android.opengl.GLSurfaceView;
+import android.util.Log;
+
 import androidx.annotation.NonNull;
 import com.google.ar.core.Coordinates2d;
 import com.google.ar.core.Frame;
@@ -298,7 +300,11 @@ public class BackgroundRenderer {
     GLES20.glDepthMask(true);
     GLES20.glEnable(GLES20.GL_DEPTH_TEST);
 
-    ShaderUtil.checkGLError(TAG, "BackgroundRendererDraw");
+    try {
+      ShaderUtil.checkGLError(TAG, "BackgroundRendererDraw");
+    } catch (RuntimeException e) {
+      Log.e(TAG, e.getMessage());
+    }
   }
 
   /**

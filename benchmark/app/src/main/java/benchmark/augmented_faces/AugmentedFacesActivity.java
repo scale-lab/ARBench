@@ -41,7 +41,7 @@
 package benchmark.augmented_faces;
 
 import android.content.Intent;
-import android.opengl.GLES20;
+import android.opengl.GLES30;
 import android.opengl.GLSurfaceView;
 import android.os.Bundle;
 import android.util.Log;
@@ -72,6 +72,7 @@ import benchmark.common.rendering.BackgroundRenderer;
 import benchmark.common.rendering.ObjectRenderer;
 
 import com.google.ar.core.exceptions.CameraNotAvailableException;
+import com.google.ar.core.exceptions.PlaybackFailedException;
 import com.google.ar.core.exceptions.UnavailableApkTooOldException;
 import com.google.ar.core.exceptions.UnavailableArcoreNotInstalledException;
 import com.google.ar.core.exceptions.UnavailableDeviceNotCompatibleException;
@@ -84,6 +85,7 @@ import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.IntBuffer;
 import java.util.Collection;
 import java.util.EnumSet;
 import java.util.List;
@@ -125,6 +127,13 @@ public class AugmentedFacesActivity extends AppCompatActivity implements GLSurfa
     private BufferedWriter fpsLog;
 
     private int currentPhase = 1;
+
+    private boolean hasTimerExtension;
+    private static final int TIME_ELAPSED_EXT = 0x88BF;
+    private static final int NUM_QUERIES = 10;
+    private int[] timeQueries;
+    private int[] queryBuffer;
+    private int queryIndex;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -168,6 +177,30 @@ public class AugmentedFacesActivity extends AppCompatActivity implements GLSurfa
             fpsLog.write("test " + fileName + "\n");
         } catch (IOException e) {
             messageSnackbarHelper.showError(this, "Could not open file to log FPS");
+        }
+
+        timeQueries = new int[NUM_QUERIES];
+        queryBuffer = new int[1];
+        queryBuffer[0] = 0;
+        queryIndex = 0;
+        for (int i=0; i < NUM_QUERIES; i++) {
+            timeQueries[i] = -1;
+        }
+    }
+
+    private void cleanupCollectionResources() {
+        try {
+            if (fpsLog != null) {
+                fpsLog.flush();
+                fpsLog.close();
+            }
+            for (int i=0; i < NUM_QUERIES; i++) {
+                if (timeQueries[i] >= 0) {
+                    GLES30.glDeleteQueries(1, timeQueries, i);
+                }
+            }
+        } catch (IOException e) {
+            Log.e(TAG, "Exception closing frame log: ", e);
         }
     }
 
@@ -264,13 +297,9 @@ public class AugmentedFacesActivity extends AppCompatActivity implements GLSurfa
             messageSnackbarHelper.showError(this, "Camera not available. Try restarting the app.");
             session = null;
             return;
-        } catch (Exception e) {
+        } catch (PlaybackFailedException e) {
             setResult(RESULT_CANCELED);
-            try {
-                fpsLog.close();
-            } catch (IOException f) {
-
-            }
+            cleanupCollectionResources();
             finish();
         }
 
@@ -313,7 +342,7 @@ public class AugmentedFacesActivity extends AppCompatActivity implements GLSurfa
 
     @Override
     public void onSurfaceCreated(GL10 gl, EGLConfig config) {
-        GLES20.glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+        GLES30.glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 
         // Prepare the rendering objects. This involves reading shaders, so may throw an IOException.
         try {
@@ -334,12 +363,14 @@ public class AugmentedFacesActivity extends AppCompatActivity implements GLSurfa
         } catch (IOException e) {
             Log.e(TAG, "Failed to read an asset file", e);
         }
+        String extensions = GLES30.glGetString(GLES30.GL_EXTENSIONS);
+        hasTimerExtension = extensions.contains(" GL_EXT_disjoint_timer_query ");
     }
 
     @Override
     public void onSurfaceChanged(GL10 gl, int width, int height) {
         displayRotationHelper.onSurfaceChanged(width, height);
-        GLES20.glViewport(0, 0, width, height);
+        GLES30.glViewport(0, 0, width, height);
     }
 
     @Override
@@ -355,7 +386,7 @@ public class AugmentedFacesActivity extends AppCompatActivity implements GLSurfa
             finish();
         }
         // Clear screen to notify driver it should not load any pixels from previous frame.
-        GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT | GLES20.GL_DEPTH_BUFFER_BIT);
+        GLES30.glClear(GLES30.GL_COLOR_BUFFER_BIT | GLES30.GL_DEPTH_BUFFER_BIT);
 
         if (session == null) {
             return;
@@ -389,17 +420,30 @@ public class AugmentedFacesActivity extends AppCompatActivity implements GLSurfa
             frame.getLightEstimate().getColorCorrection(colorCorrectionRgba, 0);
             processTime = System.currentTimeMillis() - processTime;
 
-            GLES20.glFinish();
-
             // Keep the screen unlocked while tracking, but allow it to lock when tracking stops.
             trackingStateHelper.updateKeepScreenOnFlag(camera.getTrackingState());
 
             // If frame is ready, render camera preview image to the GL surface.
             long renderBackgroundTime = System.currentTimeMillis();
             backgroundRenderer.draw(frame);
-            GLES20.glFinish();
             long renderTime = System.currentTimeMillis();
             renderBackgroundTime = renderTime - renderBackgroundTime;
+
+            if (!hasTimerExtension) {
+                messageSnackbarHelper.showError(this, "OpenGL extension EXT_disjoint_timer_query is unavailable on this device");
+                return;
+            }
+            if (timeQueries[queryIndex] < 0) {
+                GLES30.glGenQueries(1, timeQueries, queryIndex);
+            }
+            if (timeQueries[(queryIndex + 1) % NUM_QUERIES] >= 0) {
+                IntBuffer queryResult = IntBuffer.allocate(1);
+                GLES30.glGetQueryObjectuiv(timeQueries[(queryIndex + 1) % NUM_QUERIES], GLES30.GL_QUERY_RESULT_AVAILABLE, queryResult);
+                if (queryResult.get() == GLES30.GL_TRUE) {
+                    GLES30.glGetQueryObjectuiv(timeQueries[(queryIndex + 1) % NUM_QUERIES], GLES30.GL_QUERY_RESULT, queryBuffer, 0);
+                }
+            }
+            GLES30.glBeginQuery(TIME_ELAPSED_EXT, timeQueries[queryIndex]);
 
             // ARCore's face detection works best on upright faces, relative to gravity.
             // If the device cannot determine a screen side aligned with gravity, face
@@ -413,7 +457,7 @@ public class AugmentedFacesActivity extends AppCompatActivity implements GLSurfa
                 float scaleFactor = 1.0f;
 
                 // Face objects use transparency so they must be rendered back to front without depth write.
-                GLES20.glDepthMask(false);
+                GLES30.glDepthMask(false);
 
                 // Each face's region poses, mesh vertices, and mesh normals are updated every frame.
 
@@ -438,12 +482,13 @@ public class AugmentedFacesActivity extends AppCompatActivity implements GLSurfa
                 noseObject.updateModelMatrix(noseMatrix, scaleFactor);
                 noseObject.draw(viewMatrix, projectionMatrix, colorCorrectionRgba, DEFAULT_COLOR);
 
-                GLES20.glFinish();
+                GLES30.glEndQuery(TIME_ELAPSED_EXT);
+                queryIndex = (queryIndex + 1) % NUM_QUERIES;
                 renderTime = System.currentTimeMillis() - renderTime;
 
                 try {
                     if (fpsLog != null) {
-                        fpsLog.write(currentPhase + "," + frameTime + "," + processTime + ",0," + renderBackgroundTime + "," + renderTime + "," + (System.currentTimeMillis() - frameTime) + "\n");
+                        fpsLog.write(currentPhase + "," + frameTime + ",0,0,0," + queryBuffer[0] + "," + (System.currentTimeMillis() - frameTime) + "\n");
                     }
                 } catch (IOException e) {
                     Log.e(TAG, "Failed to log frame data", e);
@@ -454,7 +499,7 @@ public class AugmentedFacesActivity extends AppCompatActivity implements GLSurfa
             // Avoid crashing the application due to unhandled exceptions.
             Log.e(TAG, "Exception on the OpenGL thread", t);
         } finally {
-            GLES20.glDepthMask(true);
+            GLES30.glDepthMask(true);
         }
 
     }

@@ -46,6 +46,7 @@ import android.opengl.Matrix
 import android.util.Log
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
+import benchmark.augmented_object_generation.AugmentedObjectGenerationActivity
 import benchmark.augmented_object_recognition.classification.DetectedObjectResult
 import benchmark.augmented_object_recognition.classification.MLKitObjectDetector
 import benchmark.augmented_object_recognition.classification.ObjectDetector
@@ -61,6 +62,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.launch
+import java.io.IOException
 import java.nio.IntBuffer
 import java.util.*
 
@@ -96,6 +98,27 @@ class AppRenderer(val recognitionActivity: AugmentedObjectRecognitionActivity) :
   var currentAnalyzer: ObjectDetector = mlKitAnalyzer
   var currentPhase = 1
 
+  private var hasTimerExtension = false
+  private val TIME_ELAPSED_EXT = 0x88BF
+  private val NUM_QUERIES = 10
+  private var timeQueries: IntArray = IntArray(NUM_QUERIES)
+  private var queryBuffer: IntArray = IntArray(1)
+  private var queryIndex = 0
+
+  private fun cleanupCollectionResources() {
+    try {
+      viewRecognition.fpsLog?.flush()
+      viewRecognition.fpsLog?.close()
+      for (i in 0 until NUM_QUERIES) {
+        if (timeQueries[i] >= 0) {
+          GLES30.glDeleteQueries(1, timeQueries, i)
+        }
+      }
+    } catch (e: IOException) {
+      Log.e(TAG, "Exception closing frame log: ", e)
+    }
+  }
+
   override fun onResume(owner: LifecycleOwner) {
     displayRotationHelper.onResume()
   }
@@ -116,6 +139,14 @@ class AppRenderer(val recognitionActivity: AugmentedObjectRecognitionActivity) :
     }
     pointCloudRender.onSurfaceCreated(render)
     labelRenderer.onSurfaceCreated(render)
+
+    queryBuffer[0] = 0
+    queryIndex = 0
+    for (i in 0 until NUM_QUERIES) {
+      timeQueries[i] = -1
+    }
+    val extensions = GLES30.glGetString(GLES30.GL_EXTENSIONS)
+    hasTimerExtension = extensions.contains(" GL_EXT_disjoint_timer_query ")
   }
 
   override fun onSurfaceChanged(render: SampleRender?, width: Int, height: Int) {
@@ -156,7 +187,7 @@ class AppRenderer(val recognitionActivity: AugmentedObjectRecognitionActivity) :
 
     if (session.playbackStatus == PlaybackStatus.FINISHED) {
       recognitionActivity.setResult(Activity.RESULT_OK)
-      viewRecognition.fpsLog?.close()
+      cleanupCollectionResources()
       recognitionActivity.finish()
       return
     }
@@ -179,7 +210,6 @@ class AppRenderer(val recognitionActivity: AugmentedObjectRecognitionActivity) :
       }
     }
 
-    GLES30.glFinish()
     var renderBackgroundTime = System.currentTimeMillis()
     backgroundRenderer.updateDisplayGeometry(frame)
     backgroundRenderer.drawBackground(render)
@@ -228,6 +258,31 @@ class AppRenderer(val recognitionActivity: AugmentedObjectRecognitionActivity) :
       pointCloudRender.drawPointCloud(render, pointCloud, viewProjectionMatrix)
     }
 
+    if (!hasTimerExtension) {
+      showSnackbar("OpenGL extension EXT_disjoint_timer_query is unavailable on this device")
+      return
+    }
+    if (timeQueries[queryIndex] < 0) {
+      GLES30.glGenQueries(1, timeQueries, queryIndex)
+    }
+    if (timeQueries[(queryIndex + 1) % NUM_QUERIES] >= 0) {
+      val queryResult = IntBuffer.allocate(1)
+      GLES30.glGetQueryObjectuiv(
+        timeQueries[(queryIndex + 1) % NUM_QUERIES],
+        GLES30.GL_QUERY_RESULT_AVAILABLE,
+        queryResult
+      )
+      if (queryResult.get() == GLES30.GL_TRUE) {
+        GLES30.glGetQueryObjectuiv(
+          timeQueries[(queryIndex + 1) % NUM_QUERIES],
+          GLES30.GL_QUERY_RESULT,
+          queryBuffer,
+          0
+        )
+      }
+    }
+    GLES30.glBeginQuery(TIME_ELAPSED_EXT, timeQueries[queryIndex])
+
     for (arDetectedObject in arLabeledAnchors) {
       val anchor = arDetectedObject.anchor
       if (anchor.trackingState != TrackingState.TRACKING) continue
@@ -240,11 +295,12 @@ class AppRenderer(val recognitionActivity: AugmentedObjectRecognitionActivity) :
       )
     }
 
-    GLES30.glFinish()
+    GLES30.glEndQuery(TIME_ELAPSED_EXT)
+    queryIndex = (queryIndex + 1) % NUM_QUERIES
     renderTime = System.currentTimeMillis() - renderTime
     if (viewRecognition.fpsLog != null) {
       val data =
-        currentPhase.toString() + "," + frameTime + "," + processTime + "," + handleInputTime + "," + renderBackgroundTime + "," + renderTime + "," + (System.currentTimeMillis() - frameTime) + "\n";
+        currentPhase.toString() + "," + frameTime + ",0," + handleInputTime + ",0," + queryBuffer[0] + "," + (System.currentTimeMillis() - frameTime) + "\n";
       viewRecognition.fpsLog!!.write(data)
     }
   }

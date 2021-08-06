@@ -731,7 +731,7 @@ public class AugmentedObjectGenerationActivity extends AppCompatActivity impleme
     renderTime = System.currentTimeMillis() - renderTime;
     try {
       if (fpsLog != null) {
-        fpsLog.write(currentPhase + "," + frameTime + "," + processTime + "," + handleInputTime + "," + renderTime + "," + Integer.toUnsignedLong(queryBuffer[0]) + "," + (System.currentTimeMillis() - frameTime) + "," + session.getAllAnchors().size() + "\n");
+        fpsLog.write(currentPhase + "," + frameTime + "," + processTime + "," + handleInputTime + "," + renderTime + "," + queryBuffer[0] + "," + (System.currentTimeMillis() - frameTime) + "," + session.getAllAnchors().size() + "\n");
       }
     } catch (IOException e) {
       Log.e(TAG, "Failed to log frame data", e);
