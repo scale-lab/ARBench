@@ -370,12 +370,10 @@ public class AugmentedFacesActivity extends AppCompatActivity implements GLSurfa
             // Obtain the current frame from ARSession. When the configuration is set to
             // UpdateMode.BLOCKING (it is by default), this will throttle the rendering to the
             // camera framerate.
-            long updateTime = System.currentTimeMillis();
+            long processTime = System.currentTimeMillis();
             Frame frame = session.update();
-            updateTime = System.currentTimeMillis() - updateTime;
             Camera camera = frame.getCamera();
 
-            long processTime = System.currentTimeMillis();
             // Get projection matrix.
             float[] projectionMatrix = new float[16];
             camera.getProjectionMatrix(projectionMatrix, 0, 0.1f, 100.0f);
@@ -391,16 +389,17 @@ public class AugmentedFacesActivity extends AppCompatActivity implements GLSurfa
             frame.getLightEstimate().getColorCorrection(colorCorrectionRgba, 0);
             processTime = System.currentTimeMillis() - processTime;
 
-            // If frame is ready, render camera preview image to the GL surface.
             GLES20.glFinish();
+
+            // Keep the screen unlocked while tracking, but allow it to lock when tracking stops.
+            trackingStateHelper.updateKeepScreenOnFlag(camera.getTrackingState());
+
+            // If frame is ready, render camera preview image to the GL surface.
             long renderBackgroundTime = System.currentTimeMillis();
             backgroundRenderer.draw(frame);
             GLES20.glFinish();
             long renderTime = System.currentTimeMillis();
             renderBackgroundTime = renderTime - renderBackgroundTime;
-
-            // Keep the screen unlocked while tracking, but allow it to lock when tracking stops.
-            trackingStateHelper.updateKeepScreenOnFlag(camera.getTrackingState());
 
             // ARCore's face detection works best on upright faces, relative to gravity.
             // If the device cannot determine a screen side aligned with gravity, face
@@ -444,7 +443,7 @@ public class AugmentedFacesActivity extends AppCompatActivity implements GLSurfa
 
                 try {
                     if (fpsLog != null) {
-                        fpsLog.write(currentPhase + "," + frameTime + "," + updateTime + "," + processTime + "," + renderBackgroundTime + "," + renderTime + "," + (System.currentTimeMillis() - frameTime) + "\n");
+                        fpsLog.write(currentPhase + "," + frameTime + "," + processTime + ",0," + renderBackgroundTime + "," + renderTime + "," + (System.currentTimeMillis() - frameTime) + "\n");
                     }
                 } catch (IOException e) {
                     Log.e(TAG, "Failed to log frame data", e);
