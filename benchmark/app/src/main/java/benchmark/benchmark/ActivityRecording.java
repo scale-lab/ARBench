@@ -27,10 +27,14 @@ package benchmark.benchmark;
 public class ActivityRecording {
     private Class<?> activity;
     private String recordingFileName;
+    private String sectionName;
+    private boolean enabled;
 
-    public ActivityRecording(Class<?> activity, String recordingFileName) {
+    public ActivityRecording(Class<?> activity, String recordingFileName, String sectionName) {
         this.activity = activity;
         this.recordingFileName = recordingFileName;
+        this.sectionName = sectionName;
+        this.enabled = true;
     }
 
     public Class<?> getActivity() {
@@ -45,7 +49,18 @@ public class ActivityRecording {
         return recordingFileName;
     }
 
+    public String getSectionName() { return sectionName; }
+
     public void setRecordingFileName(String recordingFileName) {
         this.recordingFileName = recordingFileName;
     }
+
+    public void setSectionName(String sectionName) {
+        this.sectionName = sectionName;
+    }
+
+    public void setEnabled(boolean enabled) {
+        this.enabled = enabled;
+    }
+
 }

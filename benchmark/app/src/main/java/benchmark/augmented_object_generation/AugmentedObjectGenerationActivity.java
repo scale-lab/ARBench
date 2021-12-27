@@ -43,6 +43,7 @@ package benchmark.augmented_object_generation;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.res.Resources;
+import android.graphics.Bitmap;
 import android.media.Image;
 import android.opengl.EGLExt;
 import android.opengl.GLES30;
@@ -54,6 +55,7 @@ import android.os.SystemClock;
 import android.util.Log;
 import android.view.MenuItem;
 import android.view.MotionEvent;
+import android.view.SurfaceHolder;
 import android.view.View;
 import android.widget.ImageButton;
 import android.widget.PopupMenu;
@@ -96,6 +98,7 @@ import benchmark.common.helpers.TrackingStateHelper;
 import benchmark.common.samplerender.Framebuffer;
 import benchmark.common.samplerender.GLError;
 import benchmark.common.samplerender.Mesh;
+import benchmark.common.samplerender.OffscreenRender;
 import benchmark.common.samplerender.SampleRender;
 import benchmark.common.samplerender.Shader;
 import benchmark.common.samplerender.Texture;
@@ -171,7 +174,7 @@ public class AugmentedObjectGenerationActivity extends AppCompatActivity impleme
   private DisplayRotationHelper displayRotationHelper;
   private final TrackingStateHelper trackingStateHelper = new TrackingStateHelper(this);
   private TapHelper tapHelper;
-  private SampleRender render;
+  private OffscreenRender render;
 
   private PlaneRenderer planeRenderer;
   private BackgroundRenderer backgroundRenderer;
@@ -192,6 +195,7 @@ public class AugmentedObjectGenerationActivity extends AppCompatActivity impleme
   // place an object on the ground or floor in front of them.
   private static final float APPROXIMATE_DISTANCE_METERS = 2.0f;
 
+  // Data tracks to record screen taps, phase information
   private static final UUID TAP_TRACK_ID = UUID.fromString("53069eb5-21ef-4946-b71c-6ac4979216a6");;
   private static final String TAP_TRACK_MIME_TYPE = "application/recording-playback-tap";
   private static final UUID PHASE_TRACK_ID = UUID.fromString("53069eb5-21ef-4946-b71c-6ac4979216a7");;
@@ -225,11 +229,12 @@ public class AugmentedObjectGenerationActivity extends AppCompatActivity impleme
   private final float[] worldLightDirection = {0.0f, 0.0f, 0.0f, 0.0f};
   private final float[] viewLightDirection = new float[4]; // view x world light direction
 
-  private BufferedWriter fpsLog;
-
+  // Recording filename
   String fileName;
+  private BufferedWriter fpsLog;
   int currentPhase = 1;
 
+  // For GPU timing extension
   private boolean hasTimerExtension;
   private static final int TIME_ELAPSED_EXT = 0x88BF;
   private static final int NUM_QUERIES = 10;
@@ -249,7 +254,25 @@ public class AugmentedObjectGenerationActivity extends AppCompatActivity impleme
     surfaceView.setOnTouchListener(tapHelper);
 
     // Set up renderer.
-    render = new SampleRender(surfaceView, this, getAssets());
+    // Offscreen
+    surfaceView.getHolder().addCallback(new SurfaceHolder.Callback() {
+      @Override
+      public void surfaceCreated(SurfaceHolder holder) {
+        render = new OffscreenRender(surfaceView, AugmentedObjectGenerationActivity.this, getAssets());
+      }
+
+      @Override
+      public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
+
+      }
+
+      @Override
+      public void surfaceDestroyed(SurfaceHolder holder) {
+        render.stop();
+      }
+    });
+    // Onscreen
+    // render = new SampleRender(surfaceView, this, getAssets());
 
     installRequested = false;
 
@@ -332,6 +355,7 @@ public class AugmentedObjectGenerationActivity extends AppCompatActivity impleme
 
   @Override
   protected void onDestroy() {
+    render.stop();
     if (session != null) {
       // Explicitly close ARCore Session to release native resources.
       // Review the API reference for important considerations before calling close() in apps with
@@ -340,7 +364,7 @@ public class AugmentedObjectGenerationActivity extends AppCompatActivity impleme
       session.close();
       session = null;
     }
-
+    cleanupCollectionResources();
     super.onDestroy();
   }
 
@@ -410,7 +434,8 @@ public class AugmentedObjectGenerationActivity extends AppCompatActivity impleme
       finish();
     }
 
-    surfaceView.onResume();
+    // Commented out for offscreen
+    // surfaceView.onResume();
     displayRotationHelper.onResume();
   }
 
@@ -422,7 +447,8 @@ public class AugmentedObjectGenerationActivity extends AppCompatActivity impleme
       // to query the session. If Session is paused before GLSurfaceView, GLSurfaceView may
       // still call session.update() and get a SessionPausedException.
       displayRotationHelper.onPause();
-      surfaceView.onPause();
+      // Commented out for offscreen
+      // surfaceView.onPause();
       session.pause();
     }
   }
@@ -558,8 +584,18 @@ public class AugmentedObjectGenerationActivity extends AppCompatActivity impleme
       return;
     }
     if (session.getPlaybackStatus() == PlaybackStatus.FINISHED) {
+      session.close();
+      session = null;
+      saveLastFrame(this.render.getViewportWidth(), this.render.getViewportHeight());
+      try {
+        if (fpsLog != null) {
+          fpsLog.flush();
+          fpsLog.close();
+          fpsLog = null;
+        }
+      } catch (IOException e) {
+      }
       setResult(RESULT_OK);
-      cleanupCollectionResources();
       finish();
       return;
     }
@@ -795,10 +831,6 @@ public class AugmentedObjectGenerationActivity extends AppCompatActivity impleme
             || (trackable instanceof DepthPoint)) {
           // Cap the number of objects created. This avoids overloading both the
           // rendering system and ARCore.
-//          if (anchors.size() >= 50) {
-//            anchors.get(0).detach();
-//            anchors.remove(0);
-//          }
 
           // Adding an Anchor tells ARCore that it should track this position in
           // space. This anchor is created on the Plane to place the 3D model
@@ -1008,5 +1040,13 @@ public class AugmentedObjectGenerationActivity extends AppCompatActivity impleme
 //      new AlertDialog.Builder(this).setMessage("no stereo").show();
     }
     session.configure(config);
+  }
+
+  private void saveLastFrame(int width, int height) {
+    int size = width * height;
+    int[] lastFrameArray = new int[size];
+    IntBuffer lastFrameBuffer = IntBuffer.allocate(size);
+    Bitmap lastFrameBitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+    GLES30.glReadPixels();
   }
 }

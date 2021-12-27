@@ -41,13 +41,14 @@ import benchmark.common.samplerender.GLError;
 import benchmark.common.samplerender.Mesh;
 import benchmark.common.samplerender.Shader;
 
-/** A SampleRender context. */
+/** Renders frames offscreen as frequently as possible. */
 public class OffscreenRender extends SampleRender {
   private static final String TAG = OffscreenRender.class.getSimpleName();
 
   private Renderer renderer;
   private Thread renderingThread;
 
+  // EGL Context Information
   EGL10 mEGL;
   EGLDisplay mEGLDisplay;
   EGLConfig mEGLConfig;
@@ -138,7 +139,7 @@ public class OffscreenRender extends SampleRender {
     while (running) {
         renderer.onDrawFrame(this);
         long currentFrameTime = System.currentTimeMillis();
-        // 30fps for preview
+        // Display onscreen preview at approx 30fps
         if (currentFrameTime - lastPreviewFrameTime > 33) {
           mEGL.eglSwapBuffers(mEGLDisplay, mEGLSurface);
           lastPreviewFrameTime = currentFrameTime;

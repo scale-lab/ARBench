@@ -27,8 +27,13 @@ public class SampleRender {
 
   private final AssetManager assetManager;
 
-  private int viewportWidth = 1;
-  private int viewportHeight = 1;
+  protected int viewportWidth = 1;
+  protected int viewportHeight = 1;
+
+  /* Inherited by OffscreenRender */
+  public SampleRender(AssetManager assetManager) {
+    this.assetManager = assetManager;
+  }
 
   /**
    * Constructs a SampleRender object and instantiates GLSurfaceView parameters.
