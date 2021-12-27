@@ -33,6 +33,7 @@ import android.opengl.GLSurfaceView;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.widget.CheckBox;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -60,12 +61,12 @@ public class BenchmarkActivity extends AppCompatActivity {
 
     // This is the order of activities that the app will open.
     public static final ActivityRecording[] ACTIVITY_RECORDINGS = {
-//            new ActivityRecording(AugmentedObjectGenerationActivity.class, "aug-obj-gen-1.mp4"),
-//            new ActivityRecording(AugmentedObjectGenerationActivity.class, "aug-obj-gen-2.mp4"),
-//            new ActivityRecording(AugmentedObjectGenerationActivity.class, "aug-obj-gen-3.mp4"),
-//            new ActivityRecording(AugmentedFacesActivity.class, "aug-faces-1.mp4"),
-//            new ActivityRecording(AugmentedImageActivity.class, "aug-img-1.mp4"),
-            new ActivityRecording(AugmentedObjectRecognitionActivity.class, "aug-obj-rcg-1.mp4"),
+            new ActivityRecording(AugmentedObjectGenerationActivity.class, "aug-obj-gen-1.mp4", "Object Generation - Single Object"),
+            new ActivityRecording(AugmentedObjectGenerationActivity.class, "aug-obj-gen-2.mp4", "Object Generation - Multiple Objects"),
+            new ActivityRecording(AugmentedObjectGenerationActivity.class, "aug-obj-gen-3.mp4", "Object Generation - Scene Overloading"),
+            new ActivityRecording(AugmentedFacesActivity.class, "aug-faces-1.mp4", "Augmented Faces"),
+            new ActivityRecording(AugmentedImageActivity.class, "aug-img-1.mp4", "Augmented Image"),
+            new ActivityRecording(AugmentedObjectRecognitionActivity.class, "aug-obj-rcg-1.mp4", "Object Recognition"),
     };
 
     private LinearLayout resultsDisplay;
@@ -77,6 +78,7 @@ public class BenchmarkActivity extends AppCompatActivity {
     private SwitchCompat useCameraSwitch;
     private CameraPreview cameraPreview;
     private FrameLayout preview;
+    private CheckBox[] sectionCheckBoxes;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -85,30 +87,42 @@ public class BenchmarkActivity extends AppCompatActivity {
         resultsDisplay = (LinearLayout) findViewById(R.id.results_display);
 
         Log.i(TAG, "MARAbenchmark External Files Directory: " + getExternalFilesDir(null).getAbsolutePath());
+        TextView textView = new TextView(this);
+        textView.setText("Sections to include:");
+        resultsDisplay.addView(textView);
+        sectionCheckBoxes = new CheckBox[ACTIVITY_RECORDINGS.length];
 
-//        int permission = ActivityCompat.checkSelfPermission(this, Manifest.permission.CAMERA);
-//        if (permission != PackageManager.PERMISSION_GRANTED) {
-//            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CAMERA}, 1);
-//        }
-//
-//        useCameraSwitch = findViewById(R.id.useCamera);
-//
-//        camera = Camera.open(0);
-//        cameraPreview = new CameraPreview(this, camera);
-//        preview = (FrameLayout) findViewById(R.id.camera_frame);
-//
-//        cameraPreview.setSurfaceTextureListener(cameraPreview);
-//        preview.addView(cameraPreview);
-//        useCameraSwitch.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View v) {
-//                if(camera != null) {
-//                    turnCameraOff();
-//                } else {
-//                    turnCameraOn();
-//                }
-//            }
-//        });
+        for (int i = 0; i < ACTIVITY_RECORDINGS.length; i++) {
+            CheckBox checkBox = new CheckBox(this);
+            checkBox.setText(ACTIVITY_RECORDINGS[i].getSectionName());
+            checkBox.setChecked(true);
+            sectionCheckBoxes[i] = checkBox;
+            resultsDisplay.addView(checkBox);
+        }
+
+        int permission = ActivityCompat.checkSelfPermission(this, Manifest.permission.CAMERA);
+        if (permission != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CAMERA}, 1);
+        }
+
+        useCameraSwitch = findViewById(R.id.useCamera);
+
+        camera = Camera.open(0);
+        cameraPreview = new CameraPreview(this, camera);
+        preview = (FrameLayout) findViewById(R.id.camera_frame);
+
+        cameraPreview.setSurfaceTextureListener(cameraPreview);
+        preview.addView(cameraPreview);
+        useCameraSwitch.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if(camera != null) {
+                    turnCameraOff();
+                } else {
+                    turnCameraOn();
+                }
+            }
+        });
 
         onStartBenchmark(null);
     }
@@ -118,9 +132,19 @@ public class BenchmarkActivity extends AppCompatActivity {
         if (previousLog.exists() && !previousLog.delete()) {
             new AlertDialog.Builder(this).setMessage("Failed to remove previous benchmark results").show();
         }
-        Intent intent = new Intent(this, ACTIVITY_RECORDINGS[0].getActivity());
-        intent.putExtra(ACTIVITY_NUMBER, 0);
-        startActivityForResult(intent, 0);
+
+        for (int i = 0; i < ACTIVITY_RECORDINGS.length; i++) {
+            ACTIVITY_RECORDINGS[i].setEnabled(sectionCheckBoxes[i].isChecked());
+        }
+
+        for (int i = 0; i < ACTIVITY_RECORDINGS.length; i++) {
+            if (ACTIVITY_RECORDINGS[i].isEnabled()) {
+                Intent intent = new Intent(this, ACTIVITY_RECORDINGS[i].getActivity());
+                intent.putExtra(ACTIVITY_NUMBER, i);
+                startActivityForResult(intent, i);
+                break;
+            }
+        }
     }
 
     private void turnCameraOn() {
@@ -145,11 +169,18 @@ public class BenchmarkActivity extends AppCompatActivity {
             new AlertDialog.Builder(this).setMessage("Test " + requestCode + " did not complete").show();
         }
 
-        if(requestCode + 1 < ACTIVITY_RECORDINGS.length) {
-            Intent intent = new Intent(this, ACTIVITY_RECORDINGS[requestCode + 1].getActivity());
-            intent.putExtra(ACTIVITY_NUMBER, requestCode + 1);
-            startActivityForResult(intent, requestCode + 1);
-        } else {
+        boolean flag = false;
+        for (int i = requestCode + 1; i < ACTIVITY_RECORDINGS.length; i++) {
+            if (ACTIVITY_RECORDINGS[i].isEnabled()) {
+                Intent intent = new Intent(this, ACTIVITY_RECORDINGS[i].getActivity());
+                intent.putExtra(ACTIVITY_NUMBER, i);
+                startActivityForResult(intent, i);
+                flag = true;
+                break;
+            }
+        }
+
+        if (!flag) {
             reportResults();
         }
     }
