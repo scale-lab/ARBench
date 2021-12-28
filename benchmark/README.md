@@ -3,7 +3,7 @@
 This app includes six sections that represent different Augmented Reality workloads. For each section chosen by the user, the app plays back a recorded user session in an AR application. The performance metrics for each section are then reported.
 
 ## Running the Benchmark
-1. The APK app/release/app-release.apk is provided for installation. The app can also be launched using Android Studio.
+1. Open the project in Android Studio. Click Run to launch the app on your device.
 2. Select the sections to run and click on Start Benchmark.
 
 ## Sections
