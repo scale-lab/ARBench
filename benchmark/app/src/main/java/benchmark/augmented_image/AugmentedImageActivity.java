@@ -43,15 +43,15 @@ package benchmark.augmented_image;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.net.Uri;
-import android.opengl.GLES30;
 import android.opengl.GLES30;
 import android.opengl.GLSurfaceView;
 import android.os.Bundle;
 import android.util.Log;
 import android.util.Pair;
-import android.view.View;
+import android.view.SurfaceHolder;
+import android.view.SurfaceView;
 import android.widget.ImageView;
+import android.widget.RelativeLayout;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -85,9 +85,6 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
-import javax.microedition.khronos.egl.EGLConfig;
-import javax.microedition.khronos.opengles.GL10;
-
 import benchmark.benchmark.BenchmarkActivity;
 import benchmark.benchmark.R;
 import benchmark.common.helpers.CameraPermissionHelper;
@@ -96,6 +93,8 @@ import benchmark.common.helpers.FullScreenHelper;
 import benchmark.common.helpers.SnackbarHelper;
 import benchmark.common.helpers.TrackingStateHelper;
 import benchmark.common.rendering.BackgroundRenderer;
+import benchmark.common.samplerender.OffscreenRender;
+import benchmark.common.samplerender.SampleRender;
 
 /**
  * This app extends the HelloAR Java app to include image tracking functionality.
@@ -107,16 +106,17 @@ import benchmark.common.rendering.BackgroundRenderer;
  * href="https://developers.google.com/ar/develop/java/augmented-images/">Recognize and Augment
  * Images</a>.
  */
-public class AugmentedImageActivity extends AppCompatActivity implements GLSurfaceView.Renderer {
+public class AugmentedImageActivity extends AppCompatActivity implements SampleRender.Renderer {
     private static final String TAG = AugmentedImageActivity.class.getSimpleName();
 
     // Rendering. The Renderers are created here, and initialized when the GL surface is created.
-    private GLSurfaceView surfaceView;
+    private SurfaceView surfaceView;
     private ImageView fitToScanView;
     private RequestManager glideRequestManager;
 
     private boolean installRequested;
 
+    private OffscreenRender render;
     private Session session;
     private final SnackbarHelper messageSnackbarHelper = new SnackbarHelper();
     private DisplayRotationHelper displayRotationHelper;
@@ -134,16 +134,6 @@ public class AugmentedImageActivity extends AppCompatActivity implements GLSurfa
     // the
     // database.
     private final Map<Integer, Pair<AugmentedImage, Anchor>> augmentedImageMap = new HashMap<>();
-
-    // Represents the app's working state.
-    public enum AppState {
-        Idle,
-        Recording,
-        Playingback
-    }
-
-    // Tracks app's specific state changes.
-    private AppState appState = AppState.Idle;
 
     private final String MP4_VIDEO_MIME_TYPE = "video/mp4";
     private final int REQUEST_WRITE_EXTERNAL_STORAGE = 1;
@@ -166,24 +156,36 @@ public class AugmentedImageActivity extends AppCompatActivity implements GLSurfa
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_augmented_image);
-        surfaceView = findViewById(R.id.surfaceview);
+        surfaceView = new SurfaceView(this);
         displayRotationHelper = new DisplayRotationHelper(/*context=*/ this);
 
         // Set up renderer.
-        surfaceView.setPreserveEGLContextOnPause(true);
-        surfaceView.setEGLContextClientVersion(2);
-        surfaceView.setEGLConfigChooser(8, 8, 8, 8, 16, 0); // Alpha used for plane blending.
-        surfaceView.setRenderer(this);
-        surfaceView.setRenderMode(GLSurfaceView.RENDERMODE_CONTINUOUSLY);
-        surfaceView.setWillNotDraw(false);
+        // Offscreen
+        surfaceView.getHolder().addCallback(new SurfaceHolder.Callback() {
+            @Override
+            public void surfaceCreated(SurfaceHolder holder) {
+                render = new OffscreenRender(surfaceView, AugmentedImageActivity.this, getAssets());
+            }
 
-        System.out.println(Uri.parse("file:///android_asset/fit_to_scan.png"));
+            @Override
+            public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
 
-        fitToScanView = findViewById(R.id.image_view_fit_to_scan);
-        glideRequestManager = Glide.with(this);
-        glideRequestManager
-                .load(Uri.parse("file:///android_asset/fit_to_scan.png"))
-                .into(fitToScanView);
+            }
+
+            @Override
+            public void surfaceDestroyed(SurfaceHolder holder) {
+                render.stop();
+            }
+        });
+        RelativeLayout mainLayout =  findViewById(R.id.layout_main);
+        mainLayout.addView(surfaceView);
+        // Onscreen
+//        surfaceView.setPreserveEGLContextOnPause(true);
+//        surfaceView.setEGLContextClientVersion(2);
+//        surfaceView.setEGLConfigChooser(8, 8, 8, 8, 16, 0); // Alpha used for plane blending.
+//        surfaceView.setRenderer(this);
+//        surfaceView.setRenderMode(GLSurfaceView.RENDERMODE_CONTINUOUSLY);
+//        surfaceView.setWillNotDraw(false);
 
         installRequested = false;
 
@@ -256,7 +258,7 @@ public class AugmentedImageActivity extends AppCompatActivity implements GLSurfa
             session.close();
             session = null;
         }
-
+        cleanupCollectionResources();
         super.onDestroy();
     }
 
@@ -328,10 +330,9 @@ public class AugmentedImageActivity extends AppCompatActivity implements GLSurfa
             finish();
         }
 
-        surfaceView.onResume();
+        //surfaceView.onResume();
         displayRotationHelper.onResume();
 
-        fitToScanView.setVisibility(View.VISIBLE);
     }
 
     @Override
@@ -342,8 +343,7 @@ public class AugmentedImageActivity extends AppCompatActivity implements GLSurfa
             // to query the session. If Session is paused before GLSurfaceView, GLSurfaceView may
             // still call session.update() and get a SessionPausedException.
             displayRotationHelper.onPause();
-            surfaceView.onPause();
-            surfaceView.onPause();
+            //surfaceView.onPause();
             session.pause();
         }
     }
@@ -370,7 +370,7 @@ public class AugmentedImageActivity extends AppCompatActivity implements GLSurfa
     }
 
     @Override
-    public void onSurfaceCreated(GL10 gl, EGLConfig config) {
+    public void onSurfaceCreated(SampleRender render) {
         GLES30.glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 
         // Prepare the rendering objects. This involves reading shaders, so may throw an IOException.
@@ -386,30 +386,36 @@ public class AugmentedImageActivity extends AppCompatActivity implements GLSurfa
     }
 
     @Override
-    public void onSurfaceChanged(GL10 gl, int width, int height) {
+    public void onSurfaceChanged(SampleRender render, int width, int height) {
         displayRotationHelper.onSurfaceChanged(width, height);
         GLES30.glViewport(0, 0, width, height);
     }
 
     @Override
-    public void onDrawFrame(GL10 gl) {
+    public void onDrawFrame(SampleRender render) {
         long frameTime = System.currentTimeMillis();
+        if (session == null) {
+            return;
+        }
         if (session.getPlaybackStatus() == PlaybackStatus.FINISHED) {
-            setResult(RESULT_OK);
+            session.close();
+            session = null;
+            saveLastFrame(this.render.getViewportWidth(), this.render.getViewportHeight());
             try {
-                fpsLog.close();
+                if (fpsLog != null) {
+                    fpsLog.flush();
+                    fpsLog.close();
+                    fpsLog = null;
+                }
             } catch (IOException e) {
-                e.printStackTrace();
             }
+            setResult(RESULT_OK);
             finish();
+            return;
         }
 
         // Clear screen to notify driver it should not load any pixels from previous frame.
         GLES30.glClear(GLES30.GL_COLOR_BUFFER_BIT | GLES30.GL_DEPTH_BUFFER_BIT);
-
-        if (session == null) {
-            return;
-        }
 
         if (!hasSetTextureNames) {
             session.setCameraTextureName(backgroundRenderer.getTextureId());
@@ -449,10 +455,7 @@ public class AugmentedImageActivity extends AppCompatActivity implements GLSurfa
             trackingStateHelper.updateKeepScreenOnFlag(camera.getTrackingState());
 
             // If frame is ready, render camera preview image to the GL surface.
-            long renderBackgroundTime = System.currentTimeMillis();
             backgroundRenderer.draw(frame);
-            long renderTime = System.currentTimeMillis();
-            renderBackgroundTime = renderTime - renderBackgroundTime;
 
             if (!hasTimerExtension) {
                 messageSnackbarHelper.showError(this, "OpenGL extension EXT_disjoint_timer_query is unavailable on this device");
@@ -475,11 +478,10 @@ public class AugmentedImageActivity extends AppCompatActivity implements GLSurfa
 
             GLES30.glEndQuery(TIME_ELAPSED_EXT);
             queryIndex = (queryIndex + 1) % NUM_QUERIES;
-            renderTime = System.currentTimeMillis() - renderTime;
 
             try {
                 if (fpsLog != null) {
-                    fpsLog.write(currentPhase + "," + frameTime + ",0,0,0" + "," + queryBuffer[0] + "," + (System.currentTimeMillis() - frameTime) + "\n");
+                    fpsLog.write(currentPhase + "," + frameTime + "," + processTime + ",0," + queryBuffer[0] + "," + (System.currentTimeMillis() - frameTime) + "\n");
                 }
             } catch (IOException e) {
                 Log.e(TAG, "Failed to log frame data", e);
@@ -524,7 +526,6 @@ public class AugmentedImageActivity extends AppCompatActivity implements GLSurfa
                             new Runnable() {
                                 @Override
                                 public void run() {
-                                    fitToScanView.setVisibility(View.GONE);
                                 }
                             });
 
@@ -603,5 +604,29 @@ public class AugmentedImageActivity extends AppCompatActivity implements GLSurfa
             Log.e(TAG, "IO exception loading augmented image bitmap.", e);
         }
         return null;
+    }
+
+    private void saveLastFrame(int width, int height) {
+        int size = width * height;
+        int[] imageArray = new int[size];
+        IntBuffer intBuffer = IntBuffer.allocate(size);
+        Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+        GLES30.glReadPixels(0, 0, width, height, GLES30.GL_RGBA, GLES30.GL_UNSIGNED_BYTE, intBuffer);
+        int[] imageArray2 = intBuffer.array();
+        for (int i=0; i < height; i++) {
+            for (int j=0; j < width; j++) {
+                imageArray[(height - i - 1) * width + j] = imageArray2[i * width + j];
+            }
+        }
+        bitmap.copyPixelsFromBuffer(IntBuffer.wrap(imageArray));
+        File imageFile = new File(getExternalFilesDir(null) + "/" + this.fileName.replace(".mp4", ".jpg"));
+        try {
+            imageFile.delete();
+            FileOutputStream fileOutputStream = new FileOutputStream(imageFile);
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 50, fileOutputStream);
+            fileOutputStream.close();
+        } catch (IOException e) {
+            Log.e(TAG, "Failed to save preview image: ", e);
+        }
     }
 }

@@ -50,9 +50,6 @@ import com.google.ar.core.ArCoreApk
 import com.google.ar.core.Session
 import com.google.ar.core.exceptions.CameraNotAvailableException
 import com.google.ar.core.exceptions.PlaybackFailedException
-import java.io.BufferedWriter
-import java.io.File
-import java.io.FileWriter
 
 /**
  * Manages an ARCore Session using the Android Lifecycle API.
@@ -118,12 +115,6 @@ class ARCoreSessionLifecycleHelper(
 
     try {
       beforeSessionResume?.invoke(session)
-//      if(viewRecognition.recognitionActivity.fileName != null) {
-//        val destination: String = File(viewRecognition.recognitionActivity.getExternalFilesDir(null), viewRecognition.recognitionActivity.fileName).absolutePath
-//        session.setPlaybackDataset(destination)
-//      }
-//      val activity = viewRecognition.recognitionActivity;
-//      activity.renderer.onPlayback(File(activity.getExternalFilesDir(null), activity.fileName!!).absolutePath)
       session.resume()
       sessionCache = session
     } catch (e: CameraNotAvailableException) {

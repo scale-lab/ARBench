@@ -48,9 +48,5 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
     android:layout_gravity="bottom"
     tools:context="benchmark.augmented_object_recognition.AugmentedObjectRecognitionActivity">
 
-    <android.opengl.GLSurfaceView
-        android:id="@+id/surfaceview"
-        android:layout_width="fill_parent"
-        android:layout_height="fill_parent" />/>
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

@@ -41,10 +41,14 @@
 package benchmark.augmented_faces;
 
 import android.content.Intent;
+import android.graphics.Bitmap;
 import android.opengl.GLES30;
 import android.opengl.GLSurfaceView;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.SurfaceHolder;
+import android.view.SurfaceView;
+import android.widget.RelativeLayout;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -90,21 +94,20 @@ import java.util.Collection;
 import java.util.EnumSet;
 import java.util.List;
 
-import javax.microedition.khronos.egl.EGLConfig;
-import javax.microedition.khronos.opengles.GL10;
-
 import benchmark.benchmark.R;
+import benchmark.common.samplerender.OffscreenRender;
+import benchmark.common.samplerender.SampleRender;
 
 /**
  * This is a simple example that shows how to create an augmented reality (AR) application using the
  * ARCore API. The application will display any detected planes and will allow the user to tap on a
  * plane to place a 3d model of the Android robot.
  */
-public class AugmentedFacesActivity extends AppCompatActivity implements GLSurfaceView.Renderer {
+public class AugmentedFacesActivity extends AppCompatActivity implements SampleRender.Renderer {
     private static final String TAG = AugmentedFacesActivity.class.getSimpleName();
 
     // Rendering. The Renderers are created here, and initialized when the GL surface is created.
-    private GLSurfaceView surfaceView;
+    private SurfaceView surfaceView;
 
     private boolean installRequested;
 
@@ -118,6 +121,7 @@ public class AugmentedFacesActivity extends AppCompatActivity implements GLSurfa
     private final ObjectRenderer noseObject = new ObjectRenderer();
     private final ObjectRenderer rightEarObject = new ObjectRenderer();
     private final ObjectRenderer leftEarObject = new ObjectRenderer();
+    private OffscreenRender render;
     // Temporary matrix allocated here to reduce number of allocations for each frame.
     private final float[] noseMatrix = new float[16];
     private final float[] rightEarMatrix = new float[16];
@@ -125,7 +129,7 @@ public class AugmentedFacesActivity extends AppCompatActivity implements GLSurfa
     private static final float[] DEFAULT_COLOR = new float[]{0f, 0f, 0f, 0f};
 
     private BufferedWriter fpsLog;
-
+    String fileName;
     private int currentPhase = 1;
 
     private boolean hasTimerExtension;
@@ -139,16 +143,36 @@ public class AugmentedFacesActivity extends AppCompatActivity implements GLSurfa
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_augmented_faces);
-        surfaceView = findViewById(R.id.surfaceview);
+        surfaceView = new SurfaceView(this);
         displayRotationHelper = new DisplayRotationHelper(/*context=*/ this);
 
         // Set up renderer.
-        surfaceView.setPreserveEGLContextOnPause(true);
-        surfaceView.setEGLContextClientVersion(2);
-        surfaceView.setEGLConfigChooser(8, 8, 8, 8, 16, 0); // Alpha used for plane blending.
-        surfaceView.setRenderer(this);
-        surfaceView.setRenderMode(GLSurfaceView.RENDERMODE_CONTINUOUSLY);
-        surfaceView.setWillNotDraw(false);
+        // Offscreen
+        surfaceView.getHolder().addCallback(new SurfaceHolder.Callback() {
+            @Override
+            public void surfaceCreated(SurfaceHolder holder) {
+                render = new OffscreenRender(surfaceView, AugmentedFacesActivity.this, getAssets());
+            }
+
+            @Override
+            public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
+
+            }
+
+            @Override
+            public void surfaceDestroyed(SurfaceHolder holder) {
+                render.stop();
+            }
+        });
+        RelativeLayout mainLayout =  findViewById(R.id.layout_main);
+        mainLayout.addView(surfaceView);
+        // Onscreen
+//        surfaceView.setPreserveEGLContextOnPause(true);
+//        surfaceView.setEGLContextClientVersion(2);
+//        surfaceView.setEGLConfigChooser(8, 8, 8, 8, 16, 0); // Alpha used for plane blending.
+//        surfaceView.setRenderer(this);
+//        surfaceView.setRenderMode(GLSurfaceView.RENDERMODE_CONTINUOUSLY);
+//        surfaceView.setWillNotDraw(false);
 
         installRequested = false;
 
@@ -221,7 +245,7 @@ public class AugmentedFacesActivity extends AppCompatActivity implements GLSurfa
             session.close();
             session = null;
         }
-
+        cleanupCollectionResources();
         super.onDestroy();
     }
 
@@ -303,7 +327,7 @@ public class AugmentedFacesActivity extends AppCompatActivity implements GLSurfa
             finish();
         }
 
-        surfaceView.onResume();
+        //surfaceView.onResume();
         displayRotationHelper.onResume();
     }
 
@@ -315,7 +339,7 @@ public class AugmentedFacesActivity extends AppCompatActivity implements GLSurfa
             // to query the session. If Session is paused before GLSurfaceView, GLSurfaceView may
             // still call session.update() and get a SessionPausedException.
             displayRotationHelper.onPause();
-            surfaceView.onPause();
+            //surfaceView.onPause();
             session.pause();
         }
     }
@@ -341,7 +365,7 @@ public class AugmentedFacesActivity extends AppCompatActivity implements GLSurfa
     }
 
     @Override
-    public void onSurfaceCreated(GL10 gl, EGLConfig config) {
+    public void onSurfaceCreated(SampleRender render) {
         GLES30.glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 
         // Prepare the rendering objects. This involves reading shaders, so may throw an IOException.
@@ -368,29 +392,37 @@ public class AugmentedFacesActivity extends AppCompatActivity implements GLSurfa
     }
 
     @Override
-    public void onSurfaceChanged(GL10 gl, int width, int height) {
+    public void onSurfaceChanged(SampleRender render, int width, int height) {
         displayRotationHelper.onSurfaceChanged(width, height);
         GLES30.glViewport(0, 0, width, height);
     }
 
     @Override
-    public void onDrawFrame(GL10 gl) {
+    public void onDrawFrame(SampleRender render) {
         long frameTime = System.currentTimeMillis();
-        if (session.getPlaybackStatus() == PlaybackStatus.FINISHED) {
-            setResult(RESULT_OK);
-            try {
-                fpsLog.close();
-            } catch (IOException e) {
-
-            }
-            finish();
-        }
-        // Clear screen to notify driver it should not load any pixels from previous frame.
-        GLES30.glClear(GLES30.GL_COLOR_BUFFER_BIT | GLES30.GL_DEPTH_BUFFER_BIT);
-
         if (session == null) {
             return;
         }
+        if (session.getPlaybackStatus() == PlaybackStatus.FINISHED) {
+            session.close();
+            session = null;
+            saveLastFrame(this.render.getViewportWidth(), this.render.getViewportHeight());
+            try {
+                if (fpsLog != null) {
+                    fpsLog.flush();
+                    fpsLog.close();
+                    fpsLog = null;
+                }
+            } catch (IOException e) {
+            }
+            setResult(RESULT_OK);
+            finish();
+            return;
+        }
+
+        // Clear screen to notify driver it should not load any pixels from previous frame.
+        GLES30.glClear(GLES30.GL_COLOR_BUFFER_BIT | GLES30.GL_DEPTH_BUFFER_BIT);
+
         // Notify ARCore session that the view size changed so that the perspective matrix and
         // the video background can be properly adjusted.
         displayRotationHelper.updateSessionIfNeeded(session);
@@ -424,10 +456,7 @@ public class AugmentedFacesActivity extends AppCompatActivity implements GLSurfa
             trackingStateHelper.updateKeepScreenOnFlag(camera.getTrackingState());
 
             // If frame is ready, render camera preview image to the GL surface.
-            long renderBackgroundTime = System.currentTimeMillis();
             backgroundRenderer.draw(frame);
-            long renderTime = System.currentTimeMillis();
-            renderBackgroundTime = renderTime - renderBackgroundTime;
 
             if (!hasTimerExtension) {
                 messageSnackbarHelper.showError(this, "OpenGL extension EXT_disjoint_timer_query is unavailable on this device");
@@ -484,11 +513,10 @@ public class AugmentedFacesActivity extends AppCompatActivity implements GLSurfa
 
                 GLES30.glEndQuery(TIME_ELAPSED_EXT);
                 queryIndex = (queryIndex + 1) % NUM_QUERIES;
-                renderTime = System.currentTimeMillis() - renderTime;
 
                 try {
                     if (fpsLog != null) {
-                        fpsLog.write(currentPhase + "," + frameTime + ",0,0,0," + queryBuffer[0] + "," + (System.currentTimeMillis() - frameTime) + "\n");
+                        fpsLog.write(currentPhase + "," + frameTime + "," + processTime + ",0," + queryBuffer[0] + "," + (System.currentTimeMillis() - frameTime) + "\n");
                     }
                 } catch (IOException e) {
                     Log.e(TAG, "Failed to log frame data", e);
@@ -511,5 +539,27 @@ public class AugmentedFacesActivity extends AppCompatActivity implements GLSurfa
         session.configure(config);
     }
 
-    String fileName;
+    private void saveLastFrame(int width, int height) {
+        int size = width * height;
+        int[] imageArray = new int[size];
+        IntBuffer intBuffer = IntBuffer.allocate(size);
+        Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+        GLES30.glReadPixels(0, 0, width, height, GLES30.GL_RGBA, GLES30.GL_UNSIGNED_BYTE, intBuffer);
+        int[] imageArray2 = intBuffer.array();
+        for (int i=0; i < height; i++) {
+            for (int j=0; j < width; j++) {
+                imageArray[(height - i - 1) * width + j] = imageArray2[i * width + j];
+            }
+        }
+        bitmap.copyPixelsFromBuffer(IntBuffer.wrap(imageArray));
+        File imageFile = new File(getExternalFilesDir(null) + "/" + this.fileName.replace(".mp4", ".jpg"));
+        try {
+            imageFile.delete();
+            FileOutputStream fileOutputStream = new FileOutputStream(imageFile);
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 50, fileOutputStream);
+            fileOutputStream.close();
+        } catch (IOException e) {
+            Log.e(TAG, "Failed to save preview image: ", e);
+        }
+    }
 }

@@ -41,11 +41,13 @@
 package benchmark.augmented_object_recognition;
 
 import android.app.Activity
+import android.graphics.Bitmap
 import android.opengl.GLES30
 import android.opengl.Matrix
 import android.util.Log
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
+import benchmark.augmented_image.AugmentedImageActivity
 import benchmark.augmented_object_generation.AugmentedObjectGenerationActivity
 import benchmark.augmented_object_recognition.classification.DetectedObjectResult
 import benchmark.augmented_object_recognition.classification.MLKitObjectDetector
@@ -62,6 +64,8 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.launch
+import java.io.File
+import java.io.FileOutputStream
 import java.io.IOException
 import java.nio.IntBuffer
 import java.util.*
@@ -119,6 +123,31 @@ class AppRenderer(val recognitionActivity: AugmentedObjectRecognitionActivity) :
     }
   }
 
+  private fun saveLastFrame(width: Int, height: Int) {
+    val size = width * height
+    val imageArray = IntArray(size)
+    val intBuffer = IntBuffer.allocate(size)
+    val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+    GLES30.glReadPixels(0, 0, width, height, GLES30.GL_RGBA, GLES30.GL_UNSIGNED_BYTE, intBuffer)
+    val imageArray2 = intBuffer.array()
+    for (i in 0 until height) {
+      for (j in 0 until width) {
+        imageArray[(height - i - 1) * width + j] = imageArray2[i * width + j]
+      }
+    }
+    bitmap.copyPixelsFromBuffer(IntBuffer.wrap(imageArray))
+    val imageFile: File =
+      File(recognitionActivity.getExternalFilesDir(null).toString() + "/" + recognitionActivity.fileName?.replace(".mp4", ".jpg"))
+    try {
+      imageFile.delete()
+      val fileOutputStream = FileOutputStream(imageFile)
+      bitmap.compress(Bitmap.CompressFormat.JPEG, 50, fileOutputStream)
+      fileOutputStream.close()
+    } catch (e: IOException) {
+      Log.e(recognitionActivity.TAG, "Failed to save preview image: ", e)
+    }
+  }
+
   override fun onResume(owner: LifecycleOwner) {
     displayRotationHelper.onResume()
   }
@@ -158,7 +187,23 @@ class AppRenderer(val recognitionActivity: AugmentedObjectRecognitionActivity) :
   override fun onDrawFrame(render: SampleRender) {
     val frameTime = System.currentTimeMillis()
 
-    val session = recognitionActivity.arCoreSessionHelper.sessionCache ?: return
+    var session = recognitionActivity.arCoreSessionHelper.sessionCache ?: return
+    if (session.playbackStatus == PlaybackStatus.FINISHED) {
+      recognitionActivity.arCoreSessionHelper.onDestroy(recognitionActivity) // close session
+      saveLastFrame(viewRecognition.render!!.viewportWidth, viewRecognition.render!!.viewportHeight)
+      try {
+        if (viewRecognition.fpsLog != null) {
+          viewRecognition.fpsLog?.flush()
+          viewRecognition.fpsLog?.close()
+          viewRecognition.fpsLog = null
+        }
+      } catch (e: IOException) {
+      }
+      recognitionActivity.setResult(Activity.RESULT_OK)
+      recognitionActivity.finish()
+      return
+    }
+    render?.clear(null, 0f, 0f, 0f, 1f)
     session.setCameraTextureNames(intArrayOf(backgroundRenderer.cameraColorTexture.textureId))
 
     // Notify ARCore session that the view size changed so that the perspective matrix and
@@ -191,8 +236,8 @@ class AppRenderer(val recognitionActivity: AugmentedObjectRecognitionActivity) :
       recognitionActivity.finish()
       return
     }
-    // Frame.acquireCameraImage must be used on the GL thread.
-    // Check if the button was pressed last frame to start processing the camera image.
+
+    // Read recording phase data.
     if (session.playbackStatus == PlaybackStatus.OK) {
       for (trackData in frame.getUpdatedTrackData(PHASE_TRACK_ID)) {
         val payload = trackData.data
@@ -204,18 +249,17 @@ class AppRenderer(val recognitionActivity: AugmentedObjectRecognitionActivity) :
       }
     }
 
+    // Read recording scan button input data.
     if (session.playbackStatus == PlaybackStatus.OK) {
       if (!frame.getUpdatedTrackData(viewRecognition.SCAN_TRACK_ID).isEmpty()) {
         scanButtonWasPressed = true
       }
     }
 
-    var renderBackgroundTime = System.currentTimeMillis()
     backgroundRenderer.updateDisplayGeometry(frame)
     backgroundRenderer.drawBackground(render)
 
     var handleInputTime = System.currentTimeMillis()
-    renderBackgroundTime = handleInputTime - renderBackgroundTime
     if (scanButtonWasPressed) {
       scanButtonWasPressed = false
       val cameraImage = frame.tryAcquireCameraImage()
@@ -244,9 +288,7 @@ class AppRenderer(val recognitionActivity: AugmentedObjectRecognitionActivity) :
       arLabeledAnchors.addAll(anchors)
     }
 
-    // Draw labels at their anchor position.
-    var renderTime = System.currentTimeMillis()
-    handleInputTime = renderTime - handleInputTime
+    handleInputTime = System.currentTimeMillis() - handleInputTime
 
     // Handle tracking failures.
     if (camera.trackingState != TrackingState.TRACKING) {
@@ -283,6 +325,7 @@ class AppRenderer(val recognitionActivity: AugmentedObjectRecognitionActivity) :
     }
     GLES30.glBeginQuery(TIME_ELAPSED_EXT, timeQueries[queryIndex])
 
+    // Draw labels at their anchor position.
     for (arDetectedObject in arLabeledAnchors) {
       val anchor = arDetectedObject.anchor
       if (anchor.trackingState != TrackingState.TRACKING) continue
@@ -297,10 +340,9 @@ class AppRenderer(val recognitionActivity: AugmentedObjectRecognitionActivity) :
 
     GLES30.glEndQuery(TIME_ELAPSED_EXT)
     queryIndex = (queryIndex + 1) % NUM_QUERIES
-    renderTime = System.currentTimeMillis() - renderTime
     if (viewRecognition.fpsLog != null) {
       val data =
-        currentPhase.toString() + "," + frameTime + ",0," + handleInputTime + ",0," + queryBuffer[0] + "," + (System.currentTimeMillis() - frameTime) + "\n";
+        currentPhase.toString() + "," + frameTime + "," + processTime + "," + handleInputTime + "," + queryBuffer[0] + "," + (System.currentTimeMillis() - frameTime) + "\n";
       viewRecognition.fpsLog!!.write(data)
     }
   }

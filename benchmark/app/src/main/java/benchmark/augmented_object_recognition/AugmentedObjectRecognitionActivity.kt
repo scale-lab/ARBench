@@ -123,6 +123,7 @@ class AugmentedObjectRecognitionActivity : AppCompatActivity() {
         .thenByDescending { 480 }
       session.setCameraConfig(configs.sortedWith(sort)[0])
 
+      // begin playback when callback is invoked
       val destination = File(getExternalFilesDir(null), fileName).absolutePath
       session.setPlaybackDataset(destination)
     }
@@ -141,15 +142,6 @@ class AugmentedObjectRecognitionActivity : AppCompatActivity() {
     viewRecognition.fpsLog = BufferedWriter(FileWriter(logPath, true));
     viewRecognition.fpsLog?.write("test " + fileName + "\n")
   }
-
-  enum class AppState {
-    Idle, Recording, Playingback
-  }
-
-  // Tracks app's specific state changes.
-  var appState = AppState.Idle
-  var requestingPlayback : Boolean = false
-  var playbackFilePath : String?  = null
 
   override fun onRequestPermissionsResult(
     requestCode: Int,
