@@ -41,18 +41,19 @@
 package benchmark.augmented_object_recognition
 
 import android.opengl.GLSurfaceView
-import android.util.Log
+import android.view.SurfaceHolder
+import android.view.SurfaceView
 import android.view.View
+import androidx.coordinatorlayout.widget.CoordinatorLayout
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
 import benchmark.benchmark.R
 import benchmark.common.helpers.SnackbarHelper
+import benchmark.common.samplerender.OffscreenRender
 import benchmark.common.samplerender.SampleRender
 import com.google.ar.core.Session
 import com.google.ar.core.exceptions.*
 import java.io.BufferedWriter
-import java.io.FileWriter
-import java.io.IOException
 import java.util.*
 
 /**
@@ -64,31 +65,53 @@ class AugmentedObjectRecognitionActivityView(val recognitionActivity: AugmentedO
 
   private val TAG = AugmentedObjectRecognitionActivityView::class.java.simpleName
   val root = View.inflate(recognitionActivity, R.layout.activity_augmented_object_recognition, null)
-  val surfaceView = root.findViewById<GLSurfaceView>(R.id.surfaceview).apply {
-    SampleRender(this, renderer, recognitionActivity.assets)
+  lateinit var render : OffscreenRender
+
+    val surfaceCallback = object : SurfaceHolder.Callback {
+        override fun surfaceCreated(holder: SurfaceHolder) {
+            render = OffscreenRender(
+                surfaceView,
+                renderer,
+                recognitionActivity.assets
+            )
+        }
+        override fun surfaceChanged(holder: SurfaceHolder, format: Int, width: Int, height: Int) {}
+        override fun surfaceDestroyed(holder: SurfaceHolder) {
+            render.stop()
+        }
+    }
+  val surfaceView : SurfaceView = SurfaceView(recognitionActivity).apply {
+    getHolder().addCallback(surfaceCallback)
   }
 
-//  val recordButton = root.findViewById<AppCompatButton>(R.id.record_button)
-//  val playbackButton = root.findViewById<AppCompatButton>(R.id.playback_button)
-  val snackbarHelper = SnackbarHelper().apply {
-    setParentView(root.findViewById(R.id.coordinatorLayout))
-    setMaxLines(6)
+  val coordinatorLayout = root.findViewById<CoordinatorLayout>(R.id.coordinatorLayout).apply {
+    addView(surfaceView)
   }
+    // Onscreen
+//  val surfaceView = root.findViewById<GLSurfaceView>(R.id.surfaceview).apply {
+//    SampleRender(this, renderer, recognitionActivity.assets)
+//  }
 
-  public val SCAN_TRACK_ID = UUID.fromString("53069eb5-21ef-4946-b71c-6ac4979216a6")
-  private val SCAN_TRACK_MIME_TYPE = "application/recording-playback-scan"
-  public val PHASE_TRACK_ID = UUID.fromString("53069eb5-21ef-4946-b71c-6ac4979216a7")
-  private val PHASE_TRACK_MIME_TYPE = "application/recording-playback-phase"
+    val snackbarHelper = SnackbarHelper().apply {
+      setParentView(root.findViewById(R.id.coordinatorLayout))
+      setMaxLines(6)
+    }
 
-  var fpsLog: BufferedWriter? = null
+    // Recording data tracks store current phase and frames where the user requests a scan.
+    public val SCAN_TRACK_ID = UUID.fromString("53069eb5-21ef-4946-b71c-6ac4979216a6")
+    private val SCAN_TRACK_MIME_TYPE = "application/recording-playback-scan"
+    public val PHASE_TRACK_ID = UUID.fromString("53069eb5-21ef-4946-b71c-6ac4979216a7")
+    private val PHASE_TRACK_MIME_TYPE = "application/recording-playback-phase"
 
-  override fun onResume(owner: LifecycleOwner) {
-    surfaceView.onResume()
+    var fpsLog: BufferedWriter? = null
+
+    override fun onResume(owner: LifecycleOwner) {
+      //surfaceView.onResume()
+    }
+
+    override fun onPause(owner: LifecycleOwner) {
+      //surfaceView.onPause()
+    }
+
+    fun post(action: Runnable) = root.post(action)
   }
-
-  override fun onPause(owner: LifecycleOwner) {
-    surfaceView.onPause()
-  }
-
-  fun post(action: Runnable) = root.post(action)
-}

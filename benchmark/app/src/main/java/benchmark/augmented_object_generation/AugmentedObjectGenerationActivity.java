@@ -45,9 +45,7 @@ import android.content.Intent;
 import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.media.Image;
-import android.opengl.EGLExt;
 import android.opengl.GLES30;
-import android.opengl.GLES32;
 import android.opengl.GLSurfaceView;
 import android.opengl.Matrix;
 import android.os.Bundle;
@@ -56,9 +54,11 @@ import android.util.Log;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
+import android.view.SurfaceView;
 import android.view.View;
 import android.widget.ImageButton;
 import android.widget.PopupMenu;
+import android.widget.RelativeLayout;
 import android.widget.Toast;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
@@ -165,7 +165,9 @@ public class AugmentedObjectGenerationActivity extends AppCompatActivity impleme
   private static final int CUBEMAP_NUMBER_OF_IMPORTANCE_SAMPLES = 32;
 
   // Rendering. The Renderers are created here, and initialized when the GL surface is created.
-  private GLSurfaceView surfaceView;
+  private SurfaceView surfaceView;
+  // private GLSurfaceView surfaceView;
+  // ^for onscreen rendering (SampleRender expects a GLSurfaceView)
 
   private boolean installRequested;
 
@@ -175,6 +177,8 @@ public class AugmentedObjectGenerationActivity extends AppCompatActivity impleme
   private final TrackingStateHelper trackingStateHelper = new TrackingStateHelper(this);
   private TapHelper tapHelper;
   private OffscreenRender render;
+  // private SampleRender render;
+  // ^for onscreen rendering
 
   private PlaneRenderer planeRenderer;
   private BackgroundRenderer backgroundRenderer;
@@ -231,6 +235,8 @@ public class AugmentedObjectGenerationActivity extends AppCompatActivity impleme
 
   // Recording filename
   String fileName;
+
+  // FPS and Runtime Log
   private BufferedWriter fpsLog;
   int currentPhase = 1;
 
@@ -246,7 +252,7 @@ public class AugmentedObjectGenerationActivity extends AppCompatActivity impleme
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     setContentView(R.layout.activity_augmented_object_generation);
-    surfaceView = findViewById(R.id.surfaceview);
+    surfaceView = new SurfaceView(this);
     displayRotationHelper = new DisplayRotationHelper(/*context=*/ this);
 
     // Set up touch listener.
@@ -271,6 +277,8 @@ public class AugmentedObjectGenerationActivity extends AppCompatActivity impleme
         render.stop();
       }
     });
+    RelativeLayout mainLayout =  findViewById(R.id.layout_main);
+    mainLayout.addView(surfaceView);
     // Onscreen
     // render = new SampleRender(surfaceView, this, getAssets());
 
@@ -294,6 +302,7 @@ public class AugmentedObjectGenerationActivity extends AppCompatActivity impleme
     int activityNumber = intent.getIntExtra(BenchmarkActivity.ACTIVITY_NUMBER, 0);
     fileName = BenchmarkActivity.ACTIVITY_RECORDINGS[activityNumber].getRecordingFileName();
     File f = new File(getExternalFilesDir(null)+"/"+fileName);
+    // Extract recording from assets into external files directory
     if (!f.exists()) try {
 
       InputStream is = getAssets().open("recordings/"+fileName);
@@ -307,6 +316,7 @@ public class AugmentedObjectGenerationActivity extends AppCompatActivity impleme
       fos.close();
     } catch (Exception e) { throw new RuntimeException(e); }
 
+    // Setup performance log.
     try {
       String logPath = getExternalFilesDir(null).getAbsolutePath() + "/frame-log";
       Log.d(TAG, "Logging FPS to " + logPath);
@@ -316,6 +326,7 @@ public class AugmentedObjectGenerationActivity extends AppCompatActivity impleme
       messageSnackbarHelper.showError(this, "Could not open file to log FPS");
     }
 
+    // Queries are initialized in onDrawFrame
     timeQueries = new int[NUM_QUERIES];
     queryBuffer = new int[1];
     queryBuffer[0] = 0;
@@ -326,6 +337,7 @@ public class AugmentedObjectGenerationActivity extends AppCompatActivity impleme
   }
 
   /** Menu button to launch feature specific settings. */
+  // leftover from HelloAR sample app
   protected boolean settingsMenuClick(MenuItem item) {
     if (item.getItemId() == R.id.depth_settings) {
       launchDepthSettingsMenuDialog();
@@ -600,6 +612,8 @@ public class AugmentedObjectGenerationActivity extends AppCompatActivity impleme
       return;
     }
 
+    render.clear(null, 0f, 0f, 0f, 1f);
+
     // Texture names should only be set once on a GL thread unless they change. This is done during
     // onDrawFrame rather than onSurfaceCreated since the session is not guaranteed to have been
     // initialized during the execution of onSurfaceCreated.
@@ -619,6 +633,7 @@ public class AugmentedObjectGenerationActivity extends AppCompatActivity impleme
     // UpdateMode.BLOCKING (it is by default), this will throttle the rendering to the
     // camera framerate.
     Frame frame;
+    // ARCore Processing Time
     long processTime = System.currentTimeMillis();
     try {
       frame = session.update();
@@ -635,6 +650,7 @@ public class AugmentedObjectGenerationActivity extends AppCompatActivity impleme
     camera.getViewMatrix(viewMatrix, 0);
     Matrix.multiplyMM(modelViewProjectionMatrix, 0, projectionMatrix, 0, viewMatrix, 0);
 
+    // Input Handling Time
     long handleInputTime = System.currentTimeMillis();
     processTime = handleInputTime - processTime;
 
@@ -645,6 +661,7 @@ public class AugmentedObjectGenerationActivity extends AppCompatActivity impleme
     // Keep the screen unlocked while tracking, but allow it to lock when tracking stops.
     trackingStateHelper.updateKeepScreenOnFlag(camera.getTrackingState());
 
+    // Read recording phase data
     if (session.getPlaybackStatus() == PlaybackStatus.OK) {
       for (TrackData trackData : frame.getUpdatedTrackData(PHASE_TRACK_ID)) {
         ByteBuffer payload = trackData.getData();
@@ -656,7 +673,6 @@ public class AugmentedObjectGenerationActivity extends AppCompatActivity impleme
       }
     }
 
-    long renderBackgroundTime = System.currentTimeMillis();
     // Update BackgroundRenderer state to match the depth settings.
     try {
       backgroundRenderer.setUseDepthVisualization(
@@ -689,9 +705,6 @@ public class AugmentedObjectGenerationActivity extends AppCompatActivity impleme
       backgroundRenderer.drawBackground(render);
     }
 
-    long renderTime = System.currentTimeMillis();
-    renderBackgroundTime = renderTime - renderBackgroundTime;
-
     // If not tracking, don't draw 3D objects.
     if (camera.getTrackingState() == TrackingState.PAUSED) {
       return;
@@ -722,6 +735,8 @@ public class AugmentedObjectGenerationActivity extends AppCompatActivity impleme
     // Update lighting parameters in the shader
     updateLightEstimation(frame.getLightEstimate(), viewMatrix);
 
+    // Setup OpenGL time queries. Queries are organized in a queueso that new queries can be made while the old result becomes
+    // available.
     if (!hasTimerExtension) {
       messageSnackbarHelper.showError(this, "OpenGL extension EXT_disjoint_timer_query is unavailable on this device");
       return;
@@ -729,6 +744,7 @@ public class AugmentedObjectGenerationActivity extends AppCompatActivity impleme
     if (timeQueries[queryIndex] < 0) {
       GLES30.glGenQueries(1, timeQueries, queryIndex);
     }
+    // Pop query off queue and fetch its result.
     if (timeQueries[(queryIndex + 1) % NUM_QUERIES] >= 0) {
       IntBuffer queryResult = IntBuffer.allocate(1);
       GLES30.glGetQueryObjectuiv(timeQueries[(queryIndex + 1) % NUM_QUERIES], GLES30.GL_QUERY_RESULT_AVAILABLE, queryResult);
@@ -736,6 +752,7 @@ public class AugmentedObjectGenerationActivity extends AppCompatActivity impleme
         GLES30.glGetQueryObjectuiv(timeQueries[(queryIndex + 1) % NUM_QUERIES], GLES30.GL_QUERY_RESULT, queryBuffer, 0);
       }
     }
+    // Begin query for current frame.
     GLES30.glBeginQuery(TIME_ELAPSED_EXT, timeQueries[queryIndex]);
 
     // Visualize anchors created by touch.
@@ -764,10 +781,9 @@ public class AugmentedObjectGenerationActivity extends AppCompatActivity impleme
 
     GLES30.glEndQuery(TIME_ELAPSED_EXT);
     queryIndex = (queryIndex + 1) % NUM_QUERIES;
-    renderTime = System.currentTimeMillis() - renderTime;
     try {
       if (fpsLog != null) {
-        fpsLog.write(currentPhase + "," + frameTime + "," + processTime + "," + handleInputTime + "," + renderTime + "," + queryBuffer[0] + "," + (System.currentTimeMillis() - frameTime) + "," + session.getAllAnchors().size() + "\n");
+        fpsLog.write(currentPhase + "," + frameTime + "," + processTime + "," + handleInputTime + "," + queryBuffer[0] + "," + (System.currentTimeMillis() - frameTime) + "\n");
       }
     } catch (IOException e) {
       Log.e(TAG, "Failed to log frame data", e);
@@ -795,6 +811,7 @@ public class AugmentedObjectGenerationActivity extends AppCompatActivity impleme
       return;
     }
 
+    // Read screen tap data from recording.
     if (session.getRecordingStatus() == RecordingStatus.OK) {
       float[] tapCoords = new float[2];
       tapCoords[0] = tap.getX();
@@ -1044,9 +1061,25 @@ public class AugmentedObjectGenerationActivity extends AppCompatActivity impleme
 
   private void saveLastFrame(int width, int height) {
     int size = width * height;
-    int[] lastFrameArray = new int[size];
-    IntBuffer lastFrameBuffer = IntBuffer.allocate(size);
-    Bitmap lastFrameBitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
-    GLES30.glReadPixels();
+    int[] imageArray = new int[size];
+    IntBuffer intBuffer = IntBuffer.allocate(size);
+    Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+    GLES30.glReadPixels(0, 0, width, height, GLES30.GL_RGBA, GLES30.GL_UNSIGNED_BYTE, intBuffer);
+    int[] imageArray2 = intBuffer.array();
+    for (int i=0; i < height; i++) {
+      for (int j=0; j < width; j++) {
+        imageArray[(height - i - 1) * width + j] = imageArray2[i * width + j];
+      }
+    }
+    bitmap.copyPixelsFromBuffer(IntBuffer.wrap(imageArray));
+    File imageFile = new File(getExternalFilesDir(null) + "/" + this.fileName.replace(".mp4", ".jpg"));
+    try {
+      imageFile.delete();
+      FileOutputStream fileOutputStream = new FileOutputStream(imageFile);
+      bitmap.compress(Bitmap.CompressFormat.JPEG, 50, fileOutputStream);
+      fileOutputStream.close();
+    } catch (IOException e) {
+      Log.e(TAG, "Failed to save preview image: ", e);
+    }
   }
 }

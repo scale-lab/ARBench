@@ -28,6 +28,8 @@ import android.Manifest;
 import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.hardware.Camera;
 import android.opengl.GLSurfaceView;
 import android.os.Bundle;
@@ -35,6 +37,7 @@ import android.util.Log;
 import android.view.View;
 import android.widget.CheckBox;
 import android.widget.FrameLayout;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
@@ -45,6 +48,7 @@ import androidx.core.app.ActivityCompat;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
@@ -61,17 +65,15 @@ public class BenchmarkActivity extends AppCompatActivity {
 
     // This is the order of activities that the app will open.
     public static final ActivityRecording[] ACTIVITY_RECORDINGS = {
-            new ActivityRecording(AugmentedObjectGenerationActivity.class, "aug-obj-gen-1.mp4", "Object Generation - Single Object"),
-            new ActivityRecording(AugmentedObjectGenerationActivity.class, "aug-obj-gen-2.mp4", "Object Generation - Multiple Objects"),
-            new ActivityRecording(AugmentedObjectGenerationActivity.class, "aug-obj-gen-3.mp4", "Object Generation - Scene Overloading"),
+            new ActivityRecording(AugmentedObjectGenerationActivity.class, "aug-obj-gen-1.mp4", "Object Generation"),
+            new ActivityRecording(AugmentedObjectGenerationActivity.class, "aug-obj-gen-2.mp4", "Multiple Objects Interaction"),
+            new ActivityRecording(AugmentedObjectGenerationActivity.class, "aug-obj-gen-3.mp4", "Scene Overloading"),
             new ActivityRecording(AugmentedFacesActivity.class, "aug-faces-1.mp4", "Augmented Faces"),
             new ActivityRecording(AugmentedImageActivity.class, "aug-img-1.mp4", "Augmented Image"),
             new ActivityRecording(AugmentedObjectRecognitionActivity.class, "aug-obj-rcg-1.mp4", "Object Recognition"),
     };
 
     private LinearLayout resultsDisplay;
-    private GLSurfaceView surfaceView;
-    private SampleRender render;
 
     private Camera camera;
 
@@ -123,8 +125,6 @@ public class BenchmarkActivity extends AppCompatActivity {
                 }
             }
         });
-
-        onStartBenchmark(null);
     }
 
     public void onStartBenchmark(View view) {
@@ -203,24 +203,34 @@ public class BenchmarkActivity extends AppCompatActivity {
             return;
         }
         for (int testNumber=0; testNumber < ACTIVITY_RECORDINGS.length; testNumber++) {
+            if (!ACTIVITY_RECORDINGS[testNumber].isEnabled()) {
+                continue;
+            }
+            String recordingName = ACTIVITY_RECORDINGS[testNumber].getRecordingFileName();
+            String sectionName = ACTIVITY_RECORDINGS[testNumber].getSectionName();
             int currentPhase = 1;
             long startTime = 0, t = 0;
-            long update = 0, maxInput = 0, renderBackground = 0, total = 0;
+            long process = 0, maxInput = 0, total = 0;
             float renderObjects = 0.f;
             try {
-                String recordingName = ACTIVITY_RECORDINGS[testNumber].getRecordingFileName();
                 if (line == null || !line.equals("test " + recordingName)) {
-                    new AlertDialog.Builder(this).setMessage("No frame data for test " + testNumber).show();
+                    new AlertDialog.Builder(this).setMessage("No frame data for test " + testNumber+1).show();
                     continue;
                 } else {
                     line = fpsLog.readLine();
                     startTime = Long.decode(line.split(",")[1]);
                 }
+                ImageView previewImage = new ImageView(this);
+                File imageFile = new File(getExternalFilesDir(null) + "/" + recordingName.replace(".mp4", ".jpg"));
+                FileInputStream fis = new FileInputStream(imageFile);
+                Bitmap bitmap = BitmapFactory.decodeStream(fis);
+                previewImage.setImageBitmap(bitmap);
+                resultsDisplay.addView(previewImage);
                 int i = 0;
                 while (true) {
                     if (line != null && !line.startsWith("test ")) {
                         String[] times = line.split(",");
-                        if (times.length < 7) {
+                        if (times.length < 6) {
                             line = fpsLog.readLine();
                             continue;
                         }
@@ -229,44 +239,40 @@ public class BenchmarkActivity extends AppCompatActivity {
                             float fps = 1000.f * (i - 1) / (t - startTime);
                             TextView results = new TextView(this);
                             results.setText(
-                                    "FPS and Runtimes - Test " + testNumber + " Phase " + currentPhase + "\n"
+                                    "FPS and Runtimes - " + sectionName + " Phase " + currentPhase + "\n"
                                             + "File name: " + recordingName + "\n"
                                             + "FPS: " + fps + "\n"
-                                            + "Update: " + (float) update / i + "\n"
-                                            + "Max Input: " + maxInput + "\n"
-                                            + "Render Background: " + (float) renderBackground / i + "\n"
-                                            + "Render Objects: " + renderObjects / i + "\n"
-                                            + "Total Runtime: " + (float) total / i + "\n");
+                                            + "ARCore Processing Time: " + (float) process / i + "\n"
+                                            + "Max Input Handling Time: " + maxInput + "\n"
+                                            + "GPU Object Rendering Time: " + renderObjects / i + "\n"
+                                            + "Total CPU Runtime per frame: " + (float) total / i + "\n");
                             resultsDisplay.addView(results);
                             startTime = Long.decode(times[1]);
                             currentPhase = phase;
-                            update = 0;
+                            process = 0;
                             maxInput = 0;
-                            renderBackground = 0;
                             renderObjects = 0;
                             total = 0;
                             i = 0;
                         }
                         t = Long.decode(times[1]);
-                        update += Integer.decode(times[2]);
+                        process += Integer.decode(times[2]);
                         maxInput = Math.max(maxInput, Integer.decode(times[3]));
-                        renderBackground += Integer.decode(times[4]);
-                        renderObjects += Float.parseFloat(times[5])/1e6;
-                        total += Integer.decode(times[6]);
+                        renderObjects += Float.parseFloat(times[4])/1e6;
+                        total += Integer.decode(times[5]);
                         i++;
                     } else {
                         float fps = 1000.f * (i - 1) / (t - startTime);
                         TextView results = new TextView(this);
                         results.setTextIsSelectable(true);
                         results.setText(
-                                "FPS and Runtimes - Test " + testNumber + " Phase " + currentPhase + "\n"
+                                "FPS and Runtimes - " + sectionName + " Phase " + currentPhase + "\n"
                                         + "File name: " + recordingName + "\n"
                                         + "FPS: " + fps + "\n"
-                                        + "Update: " + (float) update / i + "\n"
-                                        + "Max Input: " + maxInput + "\n"
-                                        + "Render Background: " + (float) renderBackground / i + "\n"
-                                        + "Render Objects: " + renderObjects / i + "\n"
-                                        + "Total Runtime: " + (float) total / i + "\n");
+                                        + "ARCore Processing Time: " + (float) process / i + "\n"
+                                        + "Max Input Handling Time: " + maxInput + "\n"
+                                        + "GPU Object Rendering Time: " + renderObjects / i + "\n"
+                                        + "Total CPU Runtime per frame: " + (float) total / i + "\n");
                         resultsDisplay.addView(results);
                         break;
                     }

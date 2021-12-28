@@ -51,6 +51,8 @@ public class ActivityRecording {
 
     public String getSectionName() { return sectionName; }
 
+    public boolean isEnabled() { return enabled; }
+
     public void setRecordingFileName(String recordingFileName) {
         this.recordingFileName = recordingFileName;
     }
