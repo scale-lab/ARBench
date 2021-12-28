@@ -1,4 +1,4 @@
-# Benchmark App
+# ARBench
 
 This app includes six sections that represent different Augmented Reality workloads. For each section chosen by the user, the app plays back a recorded user session in an AR application. The performance metrics for each section are then reported.
 
