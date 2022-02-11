@@ -18,3 +18,14 @@ The source code for ARBench can be found in the folder java/benchmark. Details o
   - AugmentedObjectRecognitionActivity.kt: Object Recognition activity launched by main benchmark application
   - AugmentedObjectRecognitionActivityView.kt: Android View associated with activity
   - YuvToRgbConverter.kt: Convert image format
+- **benchmark**: Benchmark Application
+  - ActivityRecording.java: Metadata for mp4 recordings
+  - BenchmarkActivity.java: Main activity that launches other applications and displays results
+  - CameraPreview.java: Run camera in background to emulate AR camera usage
+- **camera_translator**: OCR and translation app (not currently included in benchmark)
+- **common**: Common classes
+  - **helpers**: ARCore helper classes
+  - **rendering**: ARCore classes for rendering background, point clouds etc.
+  - **samplerender**: Renderer attached to OpenGL context
+    - SampleRender.java: Attached to GLSurfaceView for onscreen rendering
+    - OffscreenRender.java: Creates EGL context for offscreen rendering
