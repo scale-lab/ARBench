@@ -12,4 +12,9 @@ The source code for ARBench can be found in the folder java/benchmark. Details o
   - AugmentedObjectGenerationActivity.java: Object Generation activity launched by main benchmark application
 - **augmented_object_recognition**: Source code for Object Recognition
   - classification: Object detection and classification using Google ML Kit
-  - 
+  - render: Interfaces for rendering
+  - ARCoreSessionLifecycle.kt: Lifecycle object for Object Recognition activity
+  - AppRenderer.kt: Main rendering functions
+  - AugmentedObjectRecognitionActivity.kt: Object Recognition activity launched by main benchmark application
+  - AugmentedObjectRecognitionActivityView.kt: Android View associated with activity
+  - YuvToRgbConverter.kt: Convert image format
