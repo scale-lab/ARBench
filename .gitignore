@@ -1,3 +1,4 @@
 .idea
 .idea/workspace.xml
 ar-apps/geospatial/app/src/main/res/values/api_keys.xml
+ar-apps/geospatial_with_map/app/src/main/res/values/api_keys.xml
