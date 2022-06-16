@@ -1142,7 +1142,7 @@ public class GeospatialActivity extends AppCompatActivity
    */
   private void handleSetAnchorButton() {
     Earth earth = session.getEarth();
-    if (earth == null || earth.getTrackingState() != TrackingState.TRACKING) {
+    if (earth == null || earth.getTrackingState() != TrackingState.TRACKING || recordingAppState == RecordingAppState.Playingback) {
       return;
     }
 
