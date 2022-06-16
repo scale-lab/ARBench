@@ -10,4 +10,4 @@ By default, this app detects an image of Earth then attempts to draw 3D frames a
 
 ## Configuring the default image
 
-The default image can be changed by going into /augmented_image/app/src/main/assets and replacing `default.png` with your peferred image.
+The default image can be changed by going into /augmented_image/app/src/main/assets and replacing `default.png` with your preferred image.

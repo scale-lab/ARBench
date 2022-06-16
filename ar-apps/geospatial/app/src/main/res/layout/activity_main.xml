@@ -1,13 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
    Copyright 2022 Google LLC
-
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
    You may obtain a copy of the License at
-
       http://www.apache.org/licenses/LICENSE-2.0
-
    Unless required by applicable law or agreed to in writing, software
    distributed under the License is distributed on an "AS IS" BASIS,
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,14 +21,7 @@
       android:id="@+id/surfaceview"
       android:layout_width="fill_parent"
       android:layout_height="fill_parent"
-      android:layout_gravity="top" />
-
-<!--  <fragment-->
-<!--      android:id="@+id/map"-->
-<!--      android:name="com.google.android.gms.maps.SupportMapFragment"-->
-<!--      android:layout_width="match_parent"-->
-<!--      android:layout_height="match_parent"-->
-<!--      tools:context=".HelloGeoActivity" />-->
+      android:layout_gravity="top"/>
 
   <TextView
       android:id="@+id/status_text_view"
@@ -42,6 +32,15 @@
       android:background="#bf323232"
       android:padding="20dp"
       android:textColor="#ffffff" />
+
+  <TextView
+      android:id="@+id/geospatial_pose_view"
+      android:layout_width="fill_parent"
+      android:layout_height="wrap_content"
+      android:layout_gravity="top"
+      android:padding="20dp"
+      android:textColor="#ffffff"
+      android:background="#bf323232"/>
 
   <Button
       android:id="@+id/set_anchor_button"
@@ -60,36 +59,26 @@
       android:layout_alignParentBottom="true"
       android:visibility="invisible"/>
 
-  <com.google.ar.core.examples.java.geospatial.helpers.MapTouchWrapper
-      android:id="@+id/map_wrapper"
-      android:layout_width="match_parent"
-      android:layout_height="300dp"
-      android:layout_alignParentBottom="true"
-      android:layout_marginBottom="100dp">
+  <Button
+      android:id="@+id/record_button"
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:layout_alignLeft="@id/surfaceview"
+      android:layout_alignBottom="@id/surfaceview"
+      android:layout_marginBottom="100dp"
+      android:onClick="onClickRecord"
+      android:text="Record"
+      android:textColor="@android:color/holo_red_light" />
 
-    <fragment
-        android:id="@+id/map"
-        android:name="com.google.android.gms.maps.SupportMapFragment"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        tools:context=".HelloGeoActivity"
-        tools:layout_conversion_absoluteHeight="300dp"
-        tools:layout_conversion_absoluteWidth="411dp"
-        tools:layout_editor_absoluteX="0dp"
-        tools:layout_editor_absoluteY="431dp" />
-
-    <TextView
-        android:id="@+id/geospatial_pose_view"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:background="#AAFFFFFF"
-        android:fontFamily="monospace"
-        android:padding="8dp"
-        android:textColor="@android:color/black"
-        tools:layout_conversion_absoluteHeight="35dp"
-        tools:layout_conversion_absoluteWidth="16dp"
-        tools:layout_editor_absoluteX="0dp"
-        tools:layout_editor_absoluteY="431dp" />
-  </com.google.ar.core.examples.java.geospatial.helpers.MapTouchWrapper>
+  <Button
+      android:id="@+id/playback_button"
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:layout_alignEnd="@id/surfaceview"
+      android:layout_alignBottom="@id/surfaceview"
+      android:layout_marginBottom="100dp"
+      android:onClick="onClickPlayback"
+      android:text="Playback"
+      android:textColor="@android:color/holo_green_light" />
 
 </RelativeLayout>
