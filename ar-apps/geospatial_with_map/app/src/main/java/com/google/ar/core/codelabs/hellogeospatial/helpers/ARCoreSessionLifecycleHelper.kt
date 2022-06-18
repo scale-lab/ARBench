@@ -33,7 +33,6 @@ class ARCoreSessionLifecycleHelper(
 ) : DefaultLifecycleObserver {
   var installRequested = false
   var session: Session? = null
-    private set
 
   /**
    * Creating a session may fail. In this case, session will remain null, and this function will be
