@@ -19,6 +19,7 @@ import android.Manifest
 import android.app.Activity
 import android.content.ContentResolver
 import android.content.ContentValues
+import android.content.Context
 import android.content.pm.PackageManager
 import android.database.Cursor
 import android.net.Uri
@@ -261,23 +262,28 @@ class HelloGeoView(val activity: HelloGeoActivity) : DefaultLifecycleObserver {
         if (playbackStatus != PlaybackStatus.OK) { // Correctness check
             return false
         }
+        print("SET APP STATE");
+        println(HelloGeoActivity.AppState.Playingback);
         activity.appState = HelloGeoActivity.AppState.Playingback
+        println(HelloGeoActivity.AppState.Playingback);
         activity.updateRecordButton()
         activity.updatePlaybackButton()
         return true
     }
 
     public fun stopPlayingback(): Boolean {
+        if (activity.appState != HelloGeoActivity.AppState.Playingback)
+            return false;
+
         var session = activity.arCoreSessionHelper.session ?: return false
 
-        // Correctness check, only stop playing back when the app is playing back.
-        if (HelloGeoActivity().appState !== HelloGeoActivity.AppState.Playingback) return false
         pauseARCoreSession()
 
         // Close the current session and create a new session.
         session.close()
         try {
-            activity.arCoreSessionHelper.session = Session(HelloGeoActivity().applicationContext)
+            val context: Context = activity.applicationContext;
+            activity.arCoreSessionHelper.session = Session(context)
         } catch (e: UnavailableArcoreNotInstalledException) {
             Log.e(TAG, "Error in return to Idle state. Cannot create new ARCore session", e)
             return false
@@ -294,6 +300,8 @@ class HelloGeoView(val activity: HelloGeoActivity) : DefaultLifecycleObserver {
 
         val canResume = resumeARCoreSession()
         if (!canResume) return false
+
+        activity.renderer.hasSetTextureNames = false;
 
         // A new session will not have a camera texture name.
         // Manually set hasSetTextureNames to false to trigger a reset.
