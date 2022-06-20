@@ -98,7 +98,7 @@ class HelloGeoView(val activity: HelloGeoActivity) : DefaultLifecycleObserver {
     }
 
 
-    public fun pauseARCoreSession() {
+    fun pauseARCoreSession() {
         // Pause the GLSurfaceView so that it doesn't update the ARCore session.
         // Pause the ARCore session so that we can update its configuration.
         // If the GLSurfaceView is not paused,
@@ -228,6 +228,43 @@ class HelloGeoView(val activity: HelloGeoActivity) : DefaultLifecycleObserver {
             String.format("createMp4File = %s, API Level = %d", filePath, Build.VERSION.SDK_INT)
         )
         return filePath
+    }
+
+    fun startPlayingback(mp4FilePath: String?): Boolean {
+        if (mp4FilePath == null) return false
+        Log.d(
+            TAG,
+            "startPlayingback at:$mp4FilePath"
+        )
+        pauseARCoreSession()
+        try {
+            session!!.setPlaybackDataset(mp4FilePath)
+        } catch (e: PlaybackFailedException) {
+            Log.e(
+                TAG,
+                "startPlayingback - setPlaybackDataset failed",
+                e
+            )
+        }
+
+        // The session's camera texture name becomes invalid when the
+        // ARCore session is set to play back.
+        // Workaround: Reset the Texture to start Playback
+        // so it doesn't crashes with AR_ERROR_TEXTURE_NOT_SET. val canResume = resumeARCoreSession()
+        val canResume = resumeARCoreSession()
+        if (!canResume) return false
+        val playbackStatus = session!!.playbackStatus
+        Log.d(
+           TAG,
+            String.format("startPlayingback - playbackStatus %s", playbackStatus)
+        )
+        if (playbackStatus != PlaybackStatus.OK) { // Correctness check
+            return false
+        }
+        activity.appState = HelloGeoActivity.AppState.Playingback
+        activity.updateRecordButton()
+        activity.updatePlaybackButton()
+        return true
     }
 
     public fun stopPlayingback(): Boolean {

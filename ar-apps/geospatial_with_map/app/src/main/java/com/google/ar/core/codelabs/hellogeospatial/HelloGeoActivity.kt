@@ -208,13 +208,13 @@ class HelloGeoActivity : AppCompatActivity() {
     // Start file selection from Movies directory.
     // Android 10 and above requires VOLUME_EXTERNAL_PRIMARY to write to MediaStore.
     requestingPlayback = true
-    val videoCollection: Uri
-    videoCollection = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-      MediaStore.Video.Media.getContentUri(
+    val videoCollection: Uri;
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+      videoCollection = MediaStore.Video.Media.getContentUri(
         MediaStore.VOLUME_EXTERNAL_PRIMARY
       )
     } else {
-      MediaStore.Video.Media.EXTERNAL_CONTENT_URI
+      videoCollection = MediaStore.Video.Media.EXTERNAL_CONTENT_URI
     }
 
     // Create an Intent to select a file.
@@ -243,6 +243,7 @@ class HelloGeoActivity : AppCompatActivity() {
 
     // Begin playback.
     playbackFilePath = localFilePath
+    view.startPlayingback(playbackFilePath);
   }
 
   private fun copyToInternalFilePath(contentUri: Uri?): String {
