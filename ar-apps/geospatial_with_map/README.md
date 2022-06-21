@@ -1,16 +1,49 @@
-# ARCore Geospatial Codelab project
+# Geospatial with Map
 
-This repository contains the template used for the [ARCore Geospatial API Codelab](https://developers.google.com/ar/develop/geospatial/java/codelab#0).
+An [ARCore](https://developers.google.com/ar) sample app using the geospatial API which utilizes Google Earth 3D models and Street View images as well as the device's camera and oboard GPS sensors.
 
-This repository contains the following branches:
+<p align="center">
+  <img width="250" src="../../screenshots/geospatial-with-map.png">
+</p>
 
-* `main`, the starting point of the Codelab;
-* `step-position-user`, corresponding to the code that you should have at the end of [step 3: Determine the user's position](https://developers.google.com/ar/develop/geospatial/java/codelab#2);
-* `step-place-anchor`, corresponding to the code that you should have at the end of [step 4: Place an anchor using Earth coordinates](https://developers.google.com/ar/develop/geospatial/java/codelab#2).
+This sample uses the [Google Cloud Platform](https://cloud.google.com/) to use the Visual Positioning System (VPS).
 
-If you get stuck at any point in the Codelab, use `git checkout step-position-user` or `git checkout step-place-anchor` to check out the correct code so you can move on.
+# Requirements
 
-## License
+## Device Support
+
+The app requires the device to be certified to work with ARCore, a list of supported devices can be found [here](https://developers.google.com/ar/devices). The app also requires the device to have a magnetometer that meets the Geospatial API specifications. More info about this can be found [here](https://developers.google.com/ar/develop/java/geospatial/quickstart#device_support).
+
+## Set up Google Cloud Platform
+
+For the app to work, you must obtain an API key from your Google Cloud Project. You can do this by following the steps below:
+
+1. [Create project in Google Cloud Platform.](https://console.cloud.google.com/projectcreate)
+2. Click on the navigation menu then click on APIs & Services then click Library.
+3. Search for the ARCore API and enable it.
+4. Return to the library
+5. Search for the Maps SDK for Android and enable it.
+6. Navigate to the Credentials page under the APIs & Services sidebar.
+7. Click on Create Credentials in the top bar and select API key.
+8. Copy the API key that you created as it will be used in the next steps.
+
+Now your Google Cloud Project should be set up. Now you will need to connect the project with the geospatial app.
+
+1. Open the geospatial app in Android Studio.
+2. Create a file called `api_keys.xml` under app/src/main/res/values.
+3. Paste the following in the xml file: 
+    ```<?xml version="1.0" encoding="utf-8"?>
+    <resources>
+    <string name="AR_API_KEY">YOUR_API_KEY</string>
+    </resources>
+    ```
+4. Replace `YOUR_API_KEY` with the Google Cloud Project API key that you copied earlier.
+
+Your project should now be set up. Additional instructions for how to set up Google Cloud Platform can be found [here](https://developers.google.com/ar/develop/java/geospatial/developer-guide#set_up_authorization).
+
+More informaiton on using the Geospatial API can be found [here](https://developers.google.com/ar/develop/geospatial).
+
+# License
 
     Copyright 2021 Google LLC
 
