@@ -80,6 +80,8 @@ import com.google.ar.core.PlaybackStatus;
 import com.google.ar.core.RecordingConfig;
 import com.google.ar.core.RecordingStatus;
 import com.google.ar.core.Session;
+import com.google.ar.core.Track;
+import com.google.ar.core.TrackData;
 import com.google.ar.core.TrackingState;
 import com.google.ar.core.examples.java.common.helpers.CameraPermissionHelper;
 import com.google.ar.core.examples.java.common.helpers.DisplayRotationHelper;
@@ -106,15 +108,22 @@ import com.google.ar.core.exceptions.UnavailableSdkTooOldException;
 import com.google.ar.core.exceptions.UnavailableUserDeclinedInstallationException;
 import com.google.ar.core.exceptions.UnsupportedConfigurationException;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.nio.ByteBuffer;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -231,6 +240,9 @@ public class GeospatialActivity extends AppCompatActivity
     private final int REQUEST_WRITE_EXTERNAL_STORAGE = 1;
     private int REQUEST_MP4_SELECTOR = 1;
 
+    private final UUID TAP_TRACK_ID = UUID.fromString("7dee74ec-f283-11ec-b939-0242ac120002");
+    private static final String TAP_TRACK_MIME_TYPE = "application/recording-playback-tap";
+
     public enum RecordingAppState {
         Idle,
         Recording,
@@ -252,9 +264,6 @@ public class GeospatialActivity extends AppCompatActivity
         clearAnchorsButton = findViewById(R.id.clear_anchors_button);
         recordButton = findViewById(R.id.record_button);
         playbackButton = findViewById(R.id.playback_button);
-
-        setAnchorButton.setOnClickListener(view -> handleSetAnchorButton());
-        clearAnchorsButton.setOnClickListener(view -> handleClearAnchorsButton());
 
         displayRotationHelper = new DisplayRotationHelper(/*context=*/ this);
 
@@ -501,7 +510,6 @@ public class GeospatialActivity extends AppCompatActivity
             return;
         }
 
-
         // Obtain the current frame from ARSession. When the configuration is set to
         // UpdateMode.BLOCKING (it is by default), this will throttle the rendering to the
         // camera framerate.
@@ -597,6 +605,51 @@ public class GeospatialActivity extends AppCompatActivity
         // Get camera matrix and draw.
         camera.getViewMatrix(viewMatrix, 0);
 
+        if (earth != null && earth.getTrackingState() == TrackingState.TRACKING) {
+
+
+            GeospatialPose geospatialPose = earth.getCameraGeospatialPose();
+            double latitude = geospatialPose.getLatitude();
+            double longitude = geospatialPose.getLongitude();
+            double altitude = geospatialPose.getAltitude();
+            double headingDegrees = geospatialPose.getHeading();
+
+            if (session.getPlaybackStatus() == PlaybackStatus.OK) {
+                Collection<TrackData> trackDataList = frame.getUpdatedTrackData(TAP_TRACK_ID);
+
+                ArrayList<Byte> bytesArray = new ArrayList<Byte>();
+                for (TrackData trackData : trackDataList) {
+                    ByteBuffer byteBuffer = trackData.getData();
+                    bytesArray.add(byteBuffer.get());
+                }
+                Byte[] bytes = (Byte[]) bytesArray.toArray();
+
+                geospatialPose = (GeospatialPose) convertBytesToObject(bytes);
+                latitude = geospatialPose.getLatitude();
+                longitude = geospatialPose.getLongitude();
+                altitude = geospatialPose.getAltitude();
+                headingDegrees = geospatialPose.getHeading();
+            } else {
+                geospatialPose = earth.getCameraGeospatialPose();
+                latitude = geospatialPose.getLatitude();
+                longitude = geospatialPose.getLongitude();
+                altitude = geospatialPose.getAltitude();
+                headingDegrees = geospatialPose.getHeading();
+
+                if (session.getRecordingStatus() == RecordingStatus.OK) {
+                    ByteBuffer geospatialPoseData = ByteBuffer.wrap(convertObjectToBytes(geospatialPose));
+                    frame.recordTrackData(TAP_TRACK_ID, geospatialPoseData);
+                }
+            }
+
+            createAnchor(earth, latitude, longitude, altitude, headingDegrees);
+            storeAnchorParameters(latitude, longitude, altitude, headingDegrees);
+            runOnUiThread(() -> clearAnchorsButton.setVisibility(View.VISIBLE));
+            if (clearedAnchorsAmount != null) {
+                clearedAnchorsAmount = null;
+            }
+        }
+
         // Visualize anchors created by touch.
         render.clear(virtualSceneFramebuffer, 0f, 0f, 0f, 0f);
         for (Anchor anchor : anchors) {
@@ -624,7 +677,7 @@ public class GeospatialActivity extends AppCompatActivity
 
             // The app is neither recording nor playing back. The "Record" button is visible.
             case Idle:
-                if(state == State.LOCALIZED) {
+                if (state == State.LOCALIZED) {
                     recordButton.setText("Record");
                     recordButton.setVisibility(View.VISIBLE);
                 } else {
@@ -654,7 +707,7 @@ public class GeospatialActivity extends AppCompatActivity
 
                 // While recording, the "Record" button is visible and says "Stop".
             case Recording:
-                if(state == State.LOCALIZED) {
+                if (state == State.LOCALIZED) {
                     setAnchorButton.setVisibility(View.VISIBLE);
                     clearAnchorsButton.setVisibility(View.VISIBLE);
                 } else {
@@ -913,10 +966,15 @@ public class GeospatialActivity extends AppCompatActivity
 
         pauseARCoreSession();
 
+        Track tapTrack = new Track(session)
+                .setId(TAP_TRACK_ID)
+                .setMimeType(TAP_TRACK_MIME_TYPE);
+
         // Configure the ARCore session to start recording.
         RecordingConfig recordingConfig = new RecordingConfig(session)
                 .setMp4DatasetFilePath(mp4FilePath)
-                .setAutoStopOnPause(true);
+                .setAutoStopOnPause(true)
+                .addTrack(tapTrack);
 
         try {
             // Prepare the session for recording, but do not start recording yet.
@@ -1210,7 +1268,7 @@ public class GeospatialActivity extends AppCompatActivity
      */
     private void handleSetAnchorButton() {
         Earth earth = session.getEarth();
-        if (earth == null || earth.getTrackingState() != TrackingState.TRACKING || recordingAppState == RecordingAppState.Playingback) {
+        if (earth == null || earth.getTrackingState() != TrackingState.TRACKING) {
             return;
         }
 
@@ -1219,12 +1277,69 @@ public class GeospatialActivity extends AppCompatActivity
         double longitude = geospatialPose.getLongitude();
         double altitude = geospatialPose.getAltitude();
         double headingDegrees = geospatialPose.getHeading();
+
+//        if (session.getPlaybackStatus() == PlaybackStatus.OK) {
+//
+//            session.
+//                    Collection<TrackData> trackDataList = frame.getUpdatedTrackData(TAP_TRACK_ID);
+//
+//            ArrayList<Byte> bytesArray = new ArrayList<Byte>();
+//            for (TrackData trackData : trackDataList) {
+//                ByteBuffer byteBuffer = trackData.getData();
+//                bytesArray.add(byteBuffer.get());
+//            }
+//            Byte[] bytes = (Byte[]) bytesArray.toArray();
+//
+//            geospatialPose = (GeospatialPose) convertBytesToObject(bytes);
+//            latitude = geospatialPose.getLatitude();
+//            longitude = geospatialPose.getLongitude();
+//            altitude = geospatialPose.getAltitude();
+//            headingDegrees = geospatialPose.getHeading();
+//        } else {
+//            geospatialPose = earth.getCameraGeospatialPose();
+//            latitude = geospatialPose.getLatitude();
+//            longitude = geospatialPose.getLongitude();
+//            altitude = geospatialPose.getAltitude();
+//            headingDegrees = geospatialPose.getHeading();
+//
+//            if (session.getRecordingStatus() == RecordingStatus.OK) {
+//                ByteBuffer geospatialPoseData = ByteBuffer.wrap(convertObjectToBytes(geospatialPose));
+//                frame.recordTrackData(TAP_TRACK_ID, geospatialPoseData);
+//            }
+//        }
+
         createAnchor(earth, latitude, longitude, altitude, headingDegrees);
         storeAnchorParameters(latitude, longitude, altitude, headingDegrees);
         runOnUiThread(() -> clearAnchorsButton.setVisibility(View.VISIBLE));
         if (clearedAnchorsAmount != null) {
             clearedAnchorsAmount = null;
         }
+    }
+
+    public byte[] convertObjectToBytes(Object obj) {
+        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        try (ObjectOutputStream objectOutputStream = new ObjectOutputStream(byteArrayOutputStream)) {
+            objectOutputStream.writeObject(obj);
+            return byteArrayOutputStream.toByteArray();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        throw new RuntimeException();
+    }
+
+    public Object convertBytesToObject(Byte[] bytes) {
+        byte[] b = new byte[bytes.length];
+        for (int i = 0; i < bytes.length; i++) {
+            b[i] = bytes[i];
+        }
+
+        InputStream inputStream = new ByteArrayInputStream(b);
+        try (ObjectInputStream objectInputStream = new ObjectInputStream(inputStream)) {
+            return objectInputStream.readObject();
+        } catch (IOException | ClassNotFoundException e) {
+            e.printStackTrace();
+        }
+        throw new RuntimeException();
     }
 
     private void handleClearAnchorsButton() {
