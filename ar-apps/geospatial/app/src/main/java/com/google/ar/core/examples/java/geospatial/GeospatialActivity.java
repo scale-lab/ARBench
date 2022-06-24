@@ -267,6 +267,8 @@ public class GeospatialActivity extends AppCompatActivity
         recordButton = findViewById(R.id.record_button);
         playbackButton = findViewById(R.id.playback_button);
 
+        clearAnchorsButton.setOnClickListener(view -> handleClearAnchorsButton());
+
         displayRotationHelper = new DisplayRotationHelper(/*context=*/ this);
 
         // Set up renderer.
@@ -608,6 +610,7 @@ public class GeospatialActivity extends AppCompatActivity
         camera.getViewMatrix(viewMatrix, 0);
 
         if (setAnchorButton.isPressed() && earth != null && earth.getTrackingState() == TrackingState.TRACKING) {
+            System.out.println("SET ANCHOR BUTTON PRESSED");
             GeospatialPose geospatialPose = earth.getCameraGeospatialPose();
             double latitude = geospatialPose.getLatitude();
             double longitude = geospatialPose.getLongitude();
@@ -1283,31 +1286,31 @@ public class GeospatialActivity extends AppCompatActivity
                 });
     }
 
-    /**
-     * Handles the button that creates an anchor.
-     *
-     * <p>Ensure Earth is in the proper state, then create the anchor. Persist the parameters used to
-     * create the anchors so that the anchors will be loaded next time the app is launched.
-     */
-    private void handleSetAnchorButton() {
-        Earth earth = session.getEarth();
-        if (earth == null || earth.getTrackingState() != TrackingState.TRACKING) {
-            return;
-        }
-
-        GeospatialPose geospatialPose = earth.getCameraGeospatialPose();
-        double latitude = geospatialPose.getLatitude();
-        double longitude = geospatialPose.getLongitude();
-        double altitude = geospatialPose.getAltitude();
-        double headingDegrees = geospatialPose.getHeading();
-
-        createAnchor(earth, latitude, longitude, altitude, headingDegrees);
-        storeAnchorParameters(latitude, longitude, altitude, headingDegrees);
-        runOnUiThread(() -> clearAnchorsButton.setVisibility(View.VISIBLE));
-        if (clearedAnchorsAmount != null) {
-            clearedAnchorsAmount = null;
-        }
-    }
+//    /**
+//     * Handles the button that creates an anchor.
+//     *
+//     * <p>Ensure Earth is in the proper state, then create the anchor. Persist the parameters used to
+//     * create the anchors so that the anchors will be loaded next time the app is launched.
+//     */
+//    private void handleSetAnchorButton() {
+//        Earth earth = session.getEarth();
+//        if (earth == null || earth.getTrackingState() != TrackingState.TRACKING) {
+//            return;
+//        }
+//
+//        GeospatialPose geospatialPose = earth.getCameraGeospatialPose();
+//        double latitude = geospatialPose.getLatitude();
+//        double longitude = geospatialPose.getLongitude();
+//        double altitude = geospatialPose.getAltitude();
+//        double headingDegrees = geospatialPose.getHeading();
+//
+//        createAnchor(earth, latitude, longitude, altitude, headingDegrees);
+//        storeAnchorParameters(latitude, longitude, altitude, headingDegrees);
+//        runOnUiThread(() -> clearAnchorsButton.setVisibility(View.VISIBLE));
+//        if (clearedAnchorsAmount != null) {
+//            clearedAnchorsAmount = null;
+//        }
+//    }
 
     private void handleClearAnchorsButton() {
         clearedAnchorsAmount = anchors.size();
