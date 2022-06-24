@@ -116,6 +116,7 @@ import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.nio.ByteBuffer;
+import java.nio.FloatBuffer;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -605,41 +606,38 @@ public class GeospatialActivity extends AppCompatActivity
         // Get camera matrix and draw.
         camera.getViewMatrix(viewMatrix, 0);
 
-        if (earth != null && earth.getTrackingState() == TrackingState.TRACKING) {
-            GeospatialPose geospatialPose = earth.getCameraGeospatialPose();
-            double latitude = geospatialPose.getLatitude();
-            double longitude = geospatialPose.getLongitude();
-            double altitude = geospatialPose.getAltitude();
-            double headingDegrees = geospatialPose.getHeading();
-
-            if (session.getPlaybackStatus() == PlaybackStatus.OK) {
-                Collection<TrackData> trackDataList = frame.getUpdatedTrackData(TAP_TRACK_ID);
-
-                ArrayList<Byte> bytesArray = new ArrayList<Byte>();
-                for (TrackData trackData : trackDataList) {
-                    ByteBuffer byteBuffer = trackData.getData();
-                    bytesArray.add(byteBuffer.get());
-                }
-                Byte[] bytes = (Byte[]) bytesArray.toArray();
-
-                geospatialPose = (GeospatialPose) convertBytesToObject(bytes);
-                latitude = geospatialPose.getLatitude();
-                longitude = geospatialPose.getLongitude();
-                altitude = geospatialPose.getAltitude();
-                headingDegrees = geospatialPose.getHeading();
-            } else {
-                geospatialPose = earth.getCameraGeospatialPose();
-                latitude = geospatialPose.getLatitude();
-                longitude = geospatialPose.getLongitude();
-                altitude = geospatialPose.getAltitude();
-                headingDegrees = geospatialPose.getHeading();
-
-                if (session.getRecordingStatus() == RecordingStatus.OK) {
-                    ByteBuffer geospatialPoseData = ByteBuffer.wrap(convertObjectToBytes(geospatialPose));
-                    frame.recordTrackData(TAP_TRACK_ID, geospatialPoseData);
-                }
-            }
-        }
+//        if (earth != null && earth.getTrackingState() == TrackingState.TRACKING) {
+//            GeospatialPose geospatialPose = earth.getCameraGeospatialPose();
+//            double latitude = geospatialPose.getLatitude();
+//            double longitude = geospatialPose.getLongitude();
+//            double altitude = geospatialPose.getAltitude();
+//            double headingDegrees = geospatialPose.getHeading();
+//
+//            if (session.getPlaybackStatus() == PlaybackStatus.OK) {
+//                Collection<TrackData> trackDataList = frame.getUpdatedTrackData(TAP_TRACK_ID);
+//
+//                ArrayList<Byte> bytesArray = new ArrayList<Byte>();
+//                for (TrackData trackData : trackDataList) {
+//                    ByteBuffer byteBuffer = trackData.getData();
+//                    bytesArray.add(byteBuffer.get());
+//                }
+//                Byte[] bytes = (Byte[]) bytesArray.toArray();
+//
+//                geospatialPose = (GeospatialPose) convertBytesToObject(bytes);
+////                latitude = geospatialPose.getLatitude();
+////                longitude = geospatialPose.getLongitude();
+////                altitude = geospatialPose.getAltitude();
+////                headingDegrees = geospatialPose.getHeading();
+//            } else if (session.getRecordingStatus() == RecordingStatus.OK) {
+////                geospatialPose = earth.getCameraGeospatialPose();
+////                latitude = geospatialPose.getLatitude();
+////                longitude = geospatialPose.getLongitude();
+////                altitude = geospatialPose.getAltitude();
+////                headingDegrees = geospatialPose.getHeading();
+//                ByteBuffer geospatialPoseData = ByteBuffer.wrap(convertObjectToBytes(geospatialPose));
+//                frame.recordTrackData(TAP_TRACK_ID, geospatialPoseData);
+//            }
+//        }
 
         // Visualize anchors created by touch.
         render.clear(virtualSceneFramebuffer, 0f, 0f, 0f, 0f);
@@ -1269,6 +1267,23 @@ public class GeospatialActivity extends AppCompatActivity
         double altitude = geospatialPose.getAltitude();
         double headingDegrees = geospatialPose.getHeading();
 
+        if (session.getPlaybackStatus() == PlaybackStatus.OK) {
+            // Can't access frame variable here
+            for (TrackData trackData : frame.getUpdatedTrackData(TAP_TRACK_ID)) {
+                ByteBuffer payload = trackData.getData();
+                FloatBuffer floatBuffer = payload.asFloatBuffer();
+                float[] geospatialPoseData = new float[4];
+                floatBuffer.get(geospatialPoseData);
+                latitude = geospatialPoseData[0];
+                longitude = geospatialPoseData[1];
+                altitude = geospatialPoseData[2];
+                headingDegrees = geospatialPoseData[3];
+                break;
+            }
+        }
+
+
+        // TODO: somehow get updated track data without calling session.update()
 //        if (session.getPlaybackStatus() == PlaybackStatus.OK) {
 //
 //            session.
@@ -1298,6 +1313,23 @@ public class GeospatialActivity extends AppCompatActivity
 //                frame.recordTrackData(TAP_TRACK_ID, geospatialPoseData);
 //            }
 //        }
+
+        if (session.getRecordingStatus() == RecordingStatus.OK) {
+            float[] geospatialPoseData = new float[4];
+            geospatialPoseData[0] = (float) latitude;
+            geospatialPoseData[1] = (float) longitude;
+            geospatialPoseData[2] = (float) altitude;
+            geospatialPoseData[3] = (float) headingDegrees;
+            ByteBuffer payload = ByteBuffer.allocate(4 * 4);
+            FloatBuffer floatBuffer = payload.asFloatBuffer();
+            floatBuffer.put(geospatialPoseData);
+
+            try {
+                frame.recordTrackData(TAP_TRACK_ID, payload);
+            } catch (IllegalStateException e) {
+                Log.e(TAG, "Error in recording tap input into external data track.", e);
+            }
+        }
 
         createAnchor(earth, latitude, longitude, altitude, headingDegrees);
         storeAnchorParameters(latitude, longitude, altitude, headingDegrees);
