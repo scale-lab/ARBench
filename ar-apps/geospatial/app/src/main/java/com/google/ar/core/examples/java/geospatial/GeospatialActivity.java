@@ -606,8 +606,6 @@ public class GeospatialActivity extends AppCompatActivity
         camera.getViewMatrix(viewMatrix, 0);
 
         if (earth != null && earth.getTrackingState() == TrackingState.TRACKING) {
-
-
             GeospatialPose geospatialPose = earth.getCameraGeospatialPose();
             double latitude = geospatialPose.getLatitude();
             double longitude = geospatialPose.getLongitude();
@@ -640,13 +638,6 @@ public class GeospatialActivity extends AppCompatActivity
                     ByteBuffer geospatialPoseData = ByteBuffer.wrap(convertObjectToBytes(geospatialPose));
                     frame.recordTrackData(TAP_TRACK_ID, geospatialPoseData);
                 }
-            }
-
-            createAnchor(earth, latitude, longitude, altitude, headingDegrees);
-            storeAnchorParameters(latitude, longitude, altitude, headingDegrees);
-            runOnUiThread(() -> clearAnchorsButton.setVisibility(View.VISIBLE));
-            if (clearedAnchorsAmount != null) {
-                clearedAnchorsAmount = null;
             }
         }
 
