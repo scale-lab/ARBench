@@ -655,7 +655,7 @@ public class GeospatialActivity extends AppCompatActivity
                 geospatialPoseData[4] = (float) altitude;
                 geospatialPoseData[5] = (float) headingDegrees;
                 geospatialPoseData[6] = (float) headingAccuracy;
-                ByteBuffer payload = ByteBuffer.allocate(4 * 6);
+                ByteBuffer payload = ByteBuffer.allocate(4 * 7);
                 FloatBuffer floatBuffer = payload.asFloatBuffer();
                 floatBuffer.put(geospatialPoseData);
 
