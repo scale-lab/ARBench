@@ -29,12 +29,14 @@ public class ActivityRecording {
     private String recordingFileName;
     private String sectionName;
     private boolean enabled;
+    private final boolean useCloud;
 
-    public ActivityRecording(Class<?> activity, String recordingFileName, String sectionName) {
+    public ActivityRecording(Class<?> activity, String recordingFileName, String sectionName, Boolean useCloud) {
         this.activity = activity;
         this.recordingFileName = recordingFileName;
         this.sectionName = sectionName;
         this.enabled = true;
+        this.useCloud = useCloud;
     }
 
     public Class<?> getActivity() {
@@ -65,4 +67,7 @@ public class ActivityRecording {
         this.enabled = enabled;
     }
 
+    public boolean doesUseCloud() {
+        return useCloud;
+    }
 }

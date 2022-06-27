@@ -65,12 +65,13 @@ public class BenchmarkActivity extends AppCompatActivity {
 
     // This is the order of activities that the app will open.
     public static final ActivityRecording[] ACTIVITY_RECORDINGS = {
-            new ActivityRecording(AugmentedObjectGenerationActivity.class, "aug-obj-gen-1.mp4", "Object Generation"),
-            new ActivityRecording(AugmentedObjectGenerationActivity.class, "aug-obj-gen-2.mp4", "Multiple Objects Interaction"),
-            new ActivityRecording(AugmentedObjectGenerationActivity.class, "aug-obj-gen-3.mp4", "Scene Overloading"),
-            new ActivityRecording(AugmentedFacesActivity.class, "aug-faces-1.mp4", "Augmented Faces"),
-            new ActivityRecording(AugmentedImageActivity.class, "aug-img-1.mp4", "Augmented Image"),
-            new ActivityRecording(AugmentedObjectRecognitionActivity.class, "aug-obj-rcg-1.mp4", "Object Recognition"),
+            new ActivityRecording(AugmentedObjectGenerationActivity.class, "aug-obj-gen-1.mp4", "Object Generation", false),
+            new ActivityRecording(AugmentedObjectGenerationActivity.class, "aug-obj-gen-2.mp4", "Multiple Objects Interaction", false),
+            new ActivityRecording(AugmentedObjectGenerationActivity.class, "aug-obj-gen-3.mp4", "Scene Overloading", false),
+            new ActivityRecording(AugmentedFacesActivity.class, "aug-faces-1.mp4", "Augmented Faces", false),
+            new ActivityRecording(AugmentedImageActivity.class, "aug-img-1.mp4", "Augmented Image", false),
+            new ActivityRecording(AugmentedObjectRecognitionActivity.class, "aug-obj-rcg-1.mp4", "Object Recognition", false),
+            new ActivityRecording(AugmentedObjectRecognitionActivity.class, "aug-obj-rcg-1.mp4", "Object Recognition", true),
     };
 
     private LinearLayout resultsDisplay;
@@ -82,6 +83,7 @@ public class BenchmarkActivity extends AppCompatActivity {
     private FrameLayout preview;
     private CheckBox[] sectionCheckBoxes;
 
+    @SuppressLint("SetTextI18n")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -96,7 +98,7 @@ public class BenchmarkActivity extends AppCompatActivity {
 
         for (int i = 0; i < ACTIVITY_RECORDINGS.length; i++) {
             CheckBox checkBox = new CheckBox(this);
-            checkBox.setText(ACTIVITY_RECORDINGS[i].getSectionName());
+            checkBox.setText(ACTIVITY_RECORDINGS[i].getSectionName() + (ACTIVITY_RECORDINGS[i].doesUseCloud() ? " (Cloud)" : ""));
             checkBox.setChecked(true);
             sectionCheckBoxes[i] = checkBox;
             resultsDisplay.addView(checkBox);

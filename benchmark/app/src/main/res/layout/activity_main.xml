@@ -84,8 +84,8 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
                 android:id="@+id/useCamera"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:padding="13dp"
                 android:checked="true"
+                android:padding="13dp"
                 android:text="Use camera in background" />
 
         </LinearLayout>
