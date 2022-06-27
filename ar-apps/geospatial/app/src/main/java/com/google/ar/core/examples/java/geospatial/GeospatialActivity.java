@@ -80,6 +80,8 @@ import com.google.ar.core.PlaybackStatus;
 import com.google.ar.core.RecordingConfig;
 import com.google.ar.core.RecordingStatus;
 import com.google.ar.core.Session;
+import com.google.ar.core.Track;
+import com.google.ar.core.TrackData;
 import com.google.ar.core.TrackingState;
 import com.google.ar.core.examples.java.common.helpers.CameraPermissionHelper;
 import com.google.ar.core.examples.java.common.helpers.DisplayRotationHelper;
@@ -106,15 +108,24 @@ import com.google.ar.core.exceptions.UnavailableSdkTooOldException;
 import com.google.ar.core.exceptions.UnavailableUserDeclinedInstallationException;
 import com.google.ar.core.exceptions.UnsupportedConfigurationException;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.nio.ByteBuffer;
+import java.nio.FloatBuffer;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -231,6 +242,9 @@ public class GeospatialActivity extends AppCompatActivity
     private final int REQUEST_WRITE_EXTERNAL_STORAGE = 1;
     private int REQUEST_MP4_SELECTOR = 1;
 
+    private final UUID TAP_TRACK_ID = UUID.fromString("7dee74ec-f283-11ec-b939-0242ac120002");
+    private static final String TAP_TRACK_MIME_TYPE = "application/recording-playback-tap";
+
     public enum RecordingAppState {
         Idle,
         Recording,
@@ -253,7 +267,6 @@ public class GeospatialActivity extends AppCompatActivity
         recordButton = findViewById(R.id.record_button);
         playbackButton = findViewById(R.id.playback_button);
 
-        setAnchorButton.setOnClickListener(view -> handleSetAnchorButton());
         clearAnchorsButton.setOnClickListener(view -> handleClearAnchorsButton());
 
         displayRotationHelper = new DisplayRotationHelper(/*context=*/ this);
@@ -501,7 +514,6 @@ public class GeospatialActivity extends AppCompatActivity
             return;
         }
 
-
         // Obtain the current frame from ARSession. When the configuration is set to
         // UpdateMode.BLOCKING (it is by default), this will throttle the rendering to the
         // camera framerate.
@@ -597,6 +609,73 @@ public class GeospatialActivity extends AppCompatActivity
         // Get camera matrix and draw.
         camera.getViewMatrix(viewMatrix, 0);
 
+        if (setAnchorButton.isPressed() && earth != null && earth.getTrackingState() == TrackingState.TRACKING) {
+            System.out.println("SET ANCHOR BUTTON PRESSED");
+            GeospatialPose geospatialPose = earth.getCameraGeospatialPose();
+            double latitude = geospatialPose.getLatitude();
+            double longitude = geospatialPose.getLongitude();
+            double verticalAccuracy = geospatialPose.getVerticalAccuracy();
+            double horizontalAccuracy = geospatialPose.getHorizontalAccuracy();
+            double altitude = geospatialPose.getAltitude();
+            double headingDegrees = geospatialPose.getHeading();
+            double headingAccuracy = geospatialPose.getHeadingAccuracy();
+
+            if (session.getPlaybackStatus() == PlaybackStatus.OK) {
+                Collection<TrackData> trackDataList = frame.getUpdatedTrackData(TAP_TRACK_ID);
+
+                for (TrackData trackData : frame.getUpdatedTrackData(TAP_TRACK_ID)) {
+                    ByteBuffer payload = trackData.getData();
+                    FloatBuffer floatBuffer = payload.asFloatBuffer();
+                    float[] geospatialPoseData = new float[7];
+                    floatBuffer.get(geospatialPoseData);
+                    latitude = geospatialPoseData[0];
+                    longitude = geospatialPoseData[1];
+                    verticalAccuracy = geospatialPoseData[2];
+                    horizontalAccuracy = geospatialPoseData[3];
+                    altitude = geospatialPoseData[4];
+                    headingDegrees = geospatialPoseData[5];
+                    headingAccuracy = geospatialPoseData[6];
+                    break;
+                }
+
+            } else if (session.getRecordingStatus() == RecordingStatus.OK) {
+               latitude = geospatialPose.getLatitude();
+               longitude = geospatialPose.getLongitude();
+               verticalAccuracy = geospatialPose.getVerticalAccuracy();
+               horizontalAccuracy = geospatialPose.getHorizontalAccuracy();
+               altitude = geospatialPose.getAltitude();
+               headingDegrees = geospatialPose.getHeading();
+               headingAccuracy = geospatialPose.getHeadingAccuracy();
+
+                float[] geospatialPoseData = new float[7];
+                geospatialPoseData[0] = (float) latitude;
+                geospatialPoseData[1] = (float) longitude;
+                geospatialPoseData[2] = (float) verticalAccuracy;
+                geospatialPoseData[3] = (float) horizontalAccuracy;
+                geospatialPoseData[4] = (float) altitude;
+                geospatialPoseData[5] = (float) headingDegrees;
+                geospatialPoseData[6] = (float) headingAccuracy;
+                ByteBuffer payload = ByteBuffer.allocate(4 * 7);
+                FloatBuffer floatBuffer = payload.asFloatBuffer();
+                floatBuffer.put(geospatialPoseData);
+
+                System.out.println("RECORDING DATA: " + Arrays.toString(geospatialPoseData));
+
+                try {
+                    frame.recordTrackData(TAP_TRACK_ID, payload);
+                } catch (IllegalStateException e) {
+                    Log.e(TAG, "Error in recording tap input into external data track.", e);
+                }
+            }
+
+            createAnchor(earth, latitude, longitude, altitude, headingDegrees);
+            storeAnchorParameters(latitude, longitude, altitude, headingDegrees);
+            runOnUiThread(() -> clearAnchorsButton.setVisibility(View.VISIBLE));
+            if (clearedAnchorsAmount != null) {
+                clearedAnchorsAmount = null;
+            }
+        }
+
         // Visualize anchors created by touch.
         render.clear(virtualSceneFramebuffer, 0f, 0f, 0f, 0f);
         for (Anchor anchor : anchors) {
@@ -624,7 +703,7 @@ public class GeospatialActivity extends AppCompatActivity
 
             // The app is neither recording nor playing back. The "Record" button is visible.
             case Idle:
-                if(state == State.LOCALIZED) {
+                if (state == State.LOCALIZED) {
                     recordButton.setText("Record");
                     recordButton.setVisibility(View.VISIBLE);
                 } else {
@@ -654,7 +733,7 @@ public class GeospatialActivity extends AppCompatActivity
 
                 // While recording, the "Record" button is visible and says "Stop".
             case Recording:
-                if(state == State.LOCALIZED) {
+                if (state == State.LOCALIZED) {
                     setAnchorButton.setVisibility(View.VISIBLE);
                     clearAnchorsButton.setVisibility(View.VISIBLE);
                 } else {
@@ -913,10 +992,15 @@ public class GeospatialActivity extends AppCompatActivity
 
         pauseARCoreSession();
 
+        Track tapTrack = new Track(session)
+                .setId(TAP_TRACK_ID)
+                .setMimeType(TAP_TRACK_MIME_TYPE);
+
         // Configure the ARCore session to start recording.
         RecordingConfig recordingConfig = new RecordingConfig(session)
                 .setMp4DatasetFilePath(mp4FilePath)
-                .setAutoStopOnPause(true);
+                .setAutoStopOnPause(true)
+                .addTrack(tapTrack);
 
         try {
             // Prepare the session for recording, but do not start recording yet.
@@ -1202,30 +1286,31 @@ public class GeospatialActivity extends AppCompatActivity
                 });
     }
 
-    /**
-     * Handles the button that creates an anchor.
-     *
-     * <p>Ensure Earth is in the proper state, then create the anchor. Persist the parameters used to
-     * create the anchors so that the anchors will be loaded next time the app is launched.
-     */
-    private void handleSetAnchorButton() {
-        Earth earth = session.getEarth();
-        if (earth == null || earth.getTrackingState() != TrackingState.TRACKING || recordingAppState == RecordingAppState.Playingback) {
-            return;
-        }
-
-        GeospatialPose geospatialPose = earth.getCameraGeospatialPose();
-        double latitude = geospatialPose.getLatitude();
-        double longitude = geospatialPose.getLongitude();
-        double altitude = geospatialPose.getAltitude();
-        double headingDegrees = geospatialPose.getHeading();
-        createAnchor(earth, latitude, longitude, altitude, headingDegrees);
-        storeAnchorParameters(latitude, longitude, altitude, headingDegrees);
-        runOnUiThread(() -> clearAnchorsButton.setVisibility(View.VISIBLE));
-        if (clearedAnchorsAmount != null) {
-            clearedAnchorsAmount = null;
-        }
-    }
+//    /**
+//     * Handles the button that creates an anchor.
+//     *
+//     * <p>Ensure Earth is in the proper state, then create the anchor. Persist the parameters used to
+//     * create the anchors so that the anchors will be loaded next time the app is launched.
+//     */
+//    private void handleSetAnchorButton() {
+//        Earth earth = session.getEarth();
+//        if (earth == null || earth.getTrackingState() != TrackingState.TRACKING) {
+//            return;
+//        }
+//
+//        GeospatialPose geospatialPose = earth.getCameraGeospatialPose();
+//        double latitude = geospatialPose.getLatitude();
+//        double longitude = geospatialPose.getLongitude();
+//        double altitude = geospatialPose.getAltitude();
+//        double headingDegrees = geospatialPose.getHeading();
+//
+//        createAnchor(earth, latitude, longitude, altitude, headingDegrees);
+//        storeAnchorParameters(latitude, longitude, altitude, headingDegrees);
+//        runOnUiThread(() -> clearAnchorsButton.setVisibility(View.VISIBLE));
+//        if (clearedAnchorsAmount != null) {
+//            clearedAnchorsAmount = null;
+//        }
+//    }
 
     private void handleClearAnchorsButton() {
         clearedAnchorsAmount = anchors.size();
