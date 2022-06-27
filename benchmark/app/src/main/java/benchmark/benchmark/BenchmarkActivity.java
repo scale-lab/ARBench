@@ -120,7 +120,7 @@ public class BenchmarkActivity extends AppCompatActivity {
         useCameraSwitch.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if(camera != null) {
+                if (camera != null) {
                     turnCameraOff();
                 } else {
                     turnCameraOn();
@@ -187,6 +187,7 @@ public class BenchmarkActivity extends AppCompatActivity {
         }
     }
 
+    @SuppressLint("SetTextI18n")
     private void reportResults() {
         BufferedReader fpsLog;
         String logPath = getExternalFilesDir(null).getAbsolutePath() + "/frame-log";
@@ -204,7 +205,7 @@ public class BenchmarkActivity extends AppCompatActivity {
             new AlertDialog.Builder(this).setMessage("Error reading frame data").show();
             return;
         }
-        for (int testNumber=0; testNumber < ACTIVITY_RECORDINGS.length; testNumber++) {
+        for (int testNumber = 0; testNumber < ACTIVITY_RECORDINGS.length; testNumber++) {
             if (!ACTIVITY_RECORDINGS[testNumber].isEnabled()) {
                 continue;
             }
@@ -216,7 +217,7 @@ public class BenchmarkActivity extends AppCompatActivity {
             float renderObjects = 0.f;
             try {
                 if (line == null || !line.equals("test " + recordingName)) {
-                    new AlertDialog.Builder(this).setMessage("No frame data for test " + testNumber+1).show();
+                    new AlertDialog.Builder(this).setMessage("No frame data for test " + testNumber + 1).show();
                     continue;
                 } else {
                     line = fpsLog.readLine();
@@ -260,7 +261,7 @@ public class BenchmarkActivity extends AppCompatActivity {
                         t = Long.decode(times[1]);
                         process += Integer.decode(times[2]);
                         maxInput = Math.max(maxInput, Integer.decode(times[3]));
-                        renderObjects += Float.parseFloat(times[4])/1e6;
+                        renderObjects += Float.parseFloat(times[4]) / 1e6;
                         total += Integer.decode(times[5]);
                         i++;
                     } else {
