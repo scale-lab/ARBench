@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.google.ar.core.examples.java.geospatial;
+package benchmark.geospatial;
 
 import android.app.AlertDialog;
 import android.app.Dialog;
