@@ -22,6 +22,8 @@
   <string translatable="false" name="options_title_with_depth">Your device supports depth</string>
   <string translatable="false" name="options_title_without_depth">Your device does not support depth</string>
   <string translatable="false" name="done">Done</string>
+  <string translatable="false" name="geospatial_pose_not_tracking">GEOSPATIAL POSE: Not tracking</string>
+  <string translatable="false" name="geospatial_pose">LAT/LNG: %.6f˚, %.6f˚\n\t\t\tACCURACY: %.2fm\nALTITUDE: %.2fm\n\t\t\tACCURACY: %.2fm\nHEADING: %.1f˚\n\t\t\tACCURACY: %.1f˚</string>
   <string-array translatable="false" name="depth_options_array">
     <item>Enable depth</item>
     <item>Show depth map</item>

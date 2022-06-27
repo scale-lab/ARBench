@@ -38,7 +38,7 @@
  * limitations under the License.
  */
 
-package com.google.ar.core.examples.java.geospatial;
+package benchmark.geospatial;
 
 import android.Manifest;
 import android.app.Activity;
@@ -49,7 +49,9 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
+import android.graphics.Bitmap;
 import android.net.Uri;
+import android.opengl.GLES30;
 import android.opengl.GLSurfaceView;
 import android.opengl.Matrix;
 import android.os.Build;
@@ -58,8 +60,10 @@ import android.os.Environment;
 import android.provider.DocumentsContract;
 import android.provider.MediaStore;
 import android.util.Log;
+import android.view.SurfaceHolder;
 import android.view.View;
 import android.widget.Button;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -80,20 +84,8 @@ import com.google.ar.core.PlaybackStatus;
 import com.google.ar.core.RecordingConfig;
 import com.google.ar.core.RecordingStatus;
 import com.google.ar.core.Session;
+import com.google.ar.core.TrackData;
 import com.google.ar.core.TrackingState;
-import com.google.ar.core.examples.java.common.helpers.CameraPermissionHelper;
-import com.google.ar.core.examples.java.common.helpers.DisplayRotationHelper;
-import com.google.ar.core.examples.java.common.helpers.FullScreenHelper;
-import com.google.ar.core.examples.java.common.helpers.LocationPermissionHelper;
-import com.google.ar.core.examples.java.common.helpers.SnackbarHelper;
-import com.google.ar.core.examples.java.common.helpers.TrackingStateHelper;
-import com.google.ar.core.examples.java.common.samplerender.Framebuffer;
-import com.google.ar.core.examples.java.common.samplerender.Mesh;
-import com.google.ar.core.examples.java.common.samplerender.SampleRender;
-import com.google.ar.core.examples.java.common.samplerender.Shader;
-import com.google.ar.core.examples.java.common.samplerender.Texture;
-import com.google.ar.core.examples.java.common.samplerender.arcore.BackgroundRenderer;
-import com.google.ar.core.examples.java.geospatial.PrivacyNoticeDialogFragment.NoticeDialogListener;
 import com.google.ar.core.exceptions.CameraNotAvailableException;
 import com.google.ar.core.exceptions.FineLocationPermissionNotGrantedException;
 import com.google.ar.core.exceptions.GooglePlayServicesLocationLibraryNotLinkedException;
@@ -106,16 +98,42 @@ import com.google.ar.core.exceptions.UnavailableSdkTooOldException;
 import com.google.ar.core.exceptions.UnavailableUserDeclinedInstallationException;
 import com.google.ar.core.exceptions.UnsupportedConfigurationException;
 
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.ByteBuffer;
+import java.nio.FloatBuffer;
+import java.nio.IntBuffer;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+
+import benchmark.augmented_faces.AugmentedFacesActivity;
+import benchmark.benchmark.BenchmarkActivity;
+import benchmark.benchmark.R;
+import benchmark.common.helpers.CameraPermissionHelper;
+import benchmark.common.helpers.DisplayRotationHelper;
+import benchmark.common.helpers.FullScreenHelper;
+import benchmark.common.helpers.LocationPermissionHelper;
+import benchmark.common.helpers.SnackbarHelper;
+import benchmark.common.helpers.TrackingStateHelper;
+import benchmark.common.samplerender.Framebuffer;
+import benchmark.common.samplerender.Mesh;
+import benchmark.common.samplerender.OffscreenRender;
+import benchmark.common.samplerender.SampleRender;
+import benchmark.common.samplerender.Shader;
+import benchmark.common.samplerender.Texture;
+import benchmark.common.samplerender.arcore.BackgroundRenderer;
 
 /**
  * Main activity for the Geospatial API example.
@@ -125,7 +143,7 @@ import java.util.concurrent.TimeUnit;
  * and will be recreated once localized.
  */
 public class GeospatialActivity extends AppCompatActivity
-        implements SampleRender.Renderer, NoticeDialogListener {
+        implements SampleRender.Renderer, PrivacyNoticeDialogFragment.NoticeDialogListener {
 
     private static final String TAG = GeospatialActivity.class.getSimpleName();
 
@@ -173,23 +191,12 @@ public class GeospatialActivity extends AppCompatActivity
          * The Geospatial API has encountered an unrecoverable error.
          */
         EARTH_STATE_ERROR,
-        /**
-         * The Session has started, but {@link Earth} isn't {@link TrackingState.TRACKING} yet.
-         */
         PRETRACKING,
-        /**
-         * {@link Earth} is {@link TrackingState.TRACKING}, but the desired positioning confidence
-         * hasn't been reached yet.
-         */
         LOCALIZING,
         /**
          * The desired positioning confidence wasn't reached in time.
          */
         LOCALIZING_FAILED,
-        /**
-         * {@link Earth} is {@link TrackingState.TRACKING} and the desired positioning confidence has
-         * been reached.
-         */
         LOCALIZED
     }
 
@@ -199,7 +206,6 @@ public class GeospatialActivity extends AppCompatActivity
     private final SnackbarHelper messageSnackbarHelper = new SnackbarHelper();
     private DisplayRotationHelper displayRotationHelper;
     private final TrackingStateHelper trackingStateHelper = new TrackingStateHelper(this);
-    private SampleRender render;
     private SharedPreferences sharedPreferences;
 
     private String lastStatusText;
@@ -231,6 +237,20 @@ public class GeospatialActivity extends AppCompatActivity
     private final int REQUEST_WRITE_EXTERNAL_STORAGE = 1;
     private int REQUEST_MP4_SELECTOR = 1;
 
+    private BufferedWriter fpsLog;
+    String fileName;
+    private int currentPhase = 1;
+
+    private boolean hasTimerExtension;
+    private static final int TIME_ELAPSED_EXT = 0x88BF;
+    private static final int NUM_QUERIES = 10;
+    private int[] timeQueries;
+    private int[] queryBuffer;
+    private int queryIndex;
+    private OffscreenRender render;
+
+    private final UUID TAP_TRACK_ID = UUID.fromString("7dee74ec-f283-11ec-b939-0242ac120002");
+
     public enum RecordingAppState {
         Idle,
         Recording,
@@ -247,26 +267,100 @@ public class GeospatialActivity extends AppCompatActivity
         setContentView(R.layout.activity_main);
         surfaceView = findViewById(R.id.surfaceview);
         geospatialPoseTextView = findViewById(R.id.geospatial_pose_view);
-        statusTextView = findViewById(R.id.status_text_view);
-        setAnchorButton = findViewById(R.id.set_anchor_button);
-        clearAnchorsButton = findViewById(R.id.clear_anchors_button);
-        recordButton = findViewById(R.id.record_button);
-        playbackButton = findViewById(R.id.playback_button);
-
-        setAnchorButton.setOnClickListener(view -> handleSetAnchorButton());
-        clearAnchorsButton.setOnClickListener(view -> handleClearAnchorsButton());
 
         displayRotationHelper = new DisplayRotationHelper(/*context=*/ this);
 
         // Set up renderer.
-        render = new SampleRender(surfaceView, this, getAssets());
+        // Offscreen
+        surfaceView.getHolder().addCallback(new SurfaceHolder.Callback() {
+            @Override
+            public void surfaceCreated(SurfaceHolder holder) {
+                render = new OffscreenRender(surfaceView, GeospatialActivity.this, getAssets());
+            }
+
+            @Override
+            public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
+
+            }
+
+            @Override
+            public void surfaceDestroyed(SurfaceHolder holder) {
+                render.stop();
+            }
+        });
+        RelativeLayout mainLayout =  findViewById(R.id.layout_main);
+        mainLayout.addView(surfaceView);
+        // Onscreen
+//        surfaceView.setPreserveEGLContextOnPause(true);
+//        surfaceView.setEGLContextClientVersion(2);
+//        surfaceView.setEGLConfigChooser(8, 8, 8, 8, 16, 0); // Alpha used for plane blending.
+//        surfaceView.setRenderer(this);
+//        surfaceView.setRenderMode(GLSurfaceView.RENDERMODE_CONTINUOUSLY);
+//        surfaceView.setWillNotDraw(false);
 
         installRequested = false;
-        clearedAnchorsAmount = null;
+
+        Intent intent = getIntent();
+        int activityNumber = intent.getIntExtra(BenchmarkActivity.ACTIVITY_NUMBER, 0);
+        fileName = BenchmarkActivity.ACTIVITY_RECORDINGS[activityNumber].getRecordingFileName();
+        File f = new File(getExternalFilesDir(null) + "/" + fileName);
+        if (!f.exists()) try {
+
+            InputStream is = getAssets().open("recordings/" + fileName);
+            int len;
+            byte[] buffer = new byte[1024];
+            FileOutputStream fos = new FileOutputStream(f);
+            while ((len = is.read(buffer)) > 0) {
+                fos.write(buffer, 0, len);
+            }
+            is.close();
+            fos.close();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        try {
+            String logPath = getExternalFilesDir(null).getAbsolutePath() + "/frame-log";
+            Log.d(TAG, "Logging FPS to " + logPath);
+            fpsLog = new BufferedWriter(new FileWriter(logPath, true));
+            fpsLog.write("test " + fileName + "\n");
+        } catch (IOException e) {
+            messageSnackbarHelper.showError(this, "Could not open file to log FPS");
+        }
+
+        timeQueries = new int[NUM_QUERIES];
+        queryBuffer = new int[1];
+        queryBuffer[0] = 0;
+        queryIndex = 0;
+        for (int i=0; i < NUM_QUERIES; i++) {
+            timeQueries[i] = -1;
+        }
+    }
+
+    private void cleanupCollectionResources() {
+        try {
+            if (fpsLog != null) {
+                fpsLog.flush();
+                fpsLog.close();
+            }
+            for (int i=0; i < NUM_QUERIES; i++) {
+                if (timeQueries[i] >= 0) {
+                    GLES30.glDeleteQueries(1, timeQueries, i);
+                }
+            }
+        } catch (IOException e) {
+            Log.e(TAG, "Exception closing frame log: ", e);
+        }
     }
 
     @Override
     protected void onDestroy() {
+        try {
+            if (fpsLog != null) {
+                fpsLog.close();
+            }
+        } catch (IOException e) {
+
+        }
         if (session != null) {
             // Explicitly close ARCore Session to release native resources.
             // Review the API reference for important considerations before calling close() in apps with
@@ -275,7 +369,7 @@ public class GeospatialActivity extends AppCompatActivity
             session.close();
             session = null;
         }
-
+        cleanupCollectionResources();
         super.onDestroy();
     }
 
@@ -353,12 +447,8 @@ public class GeospatialActivity extends AppCompatActivity
         // Note that order matters - see the note in onPause(), the reverse applies here.
         try {
             configureSession();
-            // To record a live camera session for later playback, call
-            // `session.startRecording(recordingConfig)` at anytime. To playback a previously recorded AR
-            // session instead of using the live camera feed, call
-            // `session.setPlaybackDatasetUri(Uri)` before calling `session.resume()`. To
-            // learn more about recording and playback, see:
-            // https://developers.google.com/ar/develop/java/recording-and-playback
+            String destination = new File(getExternalFilesDir(null), fileName).getAbsolutePath();
+            session.setPlaybackDataset(destination);
             session.resume();
         } catch (CameraNotAvailableException e) {
             message = "Camera not available. Try restarting the app.";
@@ -375,6 +465,10 @@ public class GeospatialActivity extends AppCompatActivity
         } catch (SecurityException e) {
             message = "Camera failure or the internet permission has not been granted.";
             exception = e;
+        } catch (PlaybackFailedException e) {
+            setResult(RESULT_CANCELED);
+            cleanupCollectionResources();
+            finish();
         }
 
         if (message != null) {
@@ -475,9 +569,28 @@ public class GeospatialActivity extends AppCompatActivity
 
     @Override
     public void onDrawFrame(SampleRender render) {
+        long frameTime = System.currentTimeMillis();
         if (session == null) {
             return;
         }
+        if (session.getPlaybackStatus() == PlaybackStatus.FINISHED) {
+            session.close();
+            session = null;
+            saveLastFrame(this.render.getViewportWidth(), this.render.getViewportHeight());
+            try {
+                if (fpsLog != null) {
+                    fpsLog.flush();
+                    fpsLog.close();
+                    fpsLog = null;
+                }
+            } catch (IOException e) {
+
+            }
+            setResult(RESULT_OK);
+            finish();
+            return;
+        }
+        render.clear(null, 0f, 0f, 0f, 1f);
 
         // Texture names should only be set once on a GL thread unless they change. This is done during
         // onDrawFrame rather than onSurfaceCreated since the session is not guaranteed to have been
@@ -494,18 +607,12 @@ public class GeospatialActivity extends AppCompatActivity
         // the video background can be properly adjusted.
         displayRotationHelper.updateSessionIfNeeded(session);
 
-        if (recordingAppState == RecordingAppState.Playingback
-                && session.getPlaybackStatus() == PlaybackStatus.FINISHED
-        ) {
-            runOnUiThread(this::stopPlayingback);
-            return;
-        }
-
-
         // Obtain the current frame from ARSession. When the configuration is set to
         // UpdateMode.BLOCKING (it is by default), this will throttle the rendering to the
         // camera framerate.
         Frame frame;
+        // ARCore Processing Time
+        long processTime = System.currentTimeMillis();
         try {
             frame = session.update();
         } catch (CameraNotAvailableException e) {
@@ -524,57 +631,57 @@ public class GeospatialActivity extends AppCompatActivity
 
         Earth earth = session.getEarth();
         if (earth != null) {
-            updateGeospatialState(earth);
+            return;
         }
 
-        // Show a message based on whether tracking has failed, if planes are detected, and if the user
-        // has placed any objects.
-        String message = null;
-        switch (state) {
-            case UNINITIALIZED:
-                break;
-            case UNSUPPORTED:
-                message = getResources().getString(R.string.status_unsupported);
-                break;
-            case PRETRACKING:
-                message = getResources().getString(R.string.status_pretracking);
-                break;
-            case EARTH_STATE_ERROR:
-                message = getResources().getString(R.string.status_earth_state_error);
-                break;
-            case LOCALIZING:
-                message = getResources().getString(R.string.status_localize_hint);
-                break;
-            case LOCALIZING_FAILED:
-                message = getResources().getString(R.string.status_localize_timeout);
-                break;
-            case LOCALIZED:
-                if (anchors.size() > 0) {
-                    message =
-                            getResources()
-                                    .getQuantityString(R.plurals.status_anchors_set, anchors.size(), anchors.size());
-
-                } else if (clearedAnchorsAmount != null) {
-                    message =
-                            getResources()
-                                    .getQuantityString(
-                                            R.plurals.status_anchors_cleared, clearedAnchorsAmount, clearedAnchorsAmount);
-                } else {
-                    message = getResources().getString(R.string.status_localize_complete);
-                }
-                break;
-        }
-        if (message == null) {
-            lastStatusText = null;
-            runOnUiThread(() -> statusTextView.setVisibility(View.INVISIBLE));
-        } else if (lastStatusText != message) {
-            lastStatusText = message;
-            runOnUiThread(
-                    () -> {
-                        statusTextView.setVisibility(View.VISIBLE);
-                        statusTextView.setText(lastStatusText);
-                    });
-        }
+//        // Show a message based on whether tracking has failed, if planes are detected, and if the user
+//        // has placed any objects.
+//        String message = null;
+//        switch (state) {
+//            case UNINITIALIZED:
+//                break;
+//            case UNSUPPORTED:
+//                message = getResources().getString(R.string.status_unsupported);
+//                break;
+//            case PRETRACKING:
+//                message = getResources().getString(R.string.status_pretracking);
+//                break;
+//            case EARTH_STATE_ERROR:
+//                message = getResources().getString(R.string.status_earth_state_error);
+//                break;
+//            case LOCALIZING:
+//                message = getResources().getString(R.string.status_localize_hint);
+//                break;
+//            case LOCALIZING_FAILED:
+//                message = getResources().getString(R.string.status_localize_timeout);
+//                break;
+//            case LOCALIZED:
+//                if (anchors.size() > 0) {
+//                    message =
+//                            getResources()
+//                                    .getQuantityString(R.plurals.status_anchors_set, anchors.size(), anchors.size());
+//
+//                } else if (clearedAnchorsAmount != null) {
+//                    message =
+//                            getResources()
+//                                    .getQuantityString(
+//                                            R.plurals.status_anchors_cleared, clearedAnchorsAmount, clearedAnchorsAmount);
+//                } else {
+//                    message = getResources().getString(R.string.status_localize_complete);
+//                }
+//                break;
+//        }
+//        if (message == null) {
+//            lastStatusText = null;
+//            runOnUiThread(() -> statusTextView.setVisibility(View.INVISIBLE));
+//        } else if (lastStatusText != message) {
+//            lastStatusText = message;
+//            runOnUiThread(
+//                    () -> {
+//                        statusTextView.setVisibility(View.VISIBLE);
+//                        statusTextView.setText(lastStatusText);
+//                    });
+//        }
 
         // -- Draw background
 
@@ -597,6 +704,78 @@ public class GeospatialActivity extends AppCompatActivity
         // Get camera matrix and draw.
         camera.getViewMatrix(viewMatrix, 0);
 
+        // Input Handling Time
+        long handleInputTime = System.currentTimeMillis();
+        processTime = handleInputTime - processTime;
+
+        if (setAnchorButton.isPressed() && earth != null && earth.getTrackingState() == TrackingState.TRACKING) {
+            System.out.println("SET ANCHOR BUTTON PRESSED");
+            GeospatialPose geospatialPose = earth.getCameraGeospatialPose();
+            double latitude = geospatialPose.getLatitude();
+            double longitude = geospatialPose.getLongitude();
+            double verticalAccuracy = geospatialPose.getVerticalAccuracy();
+            double horizontalAccuracy = geospatialPose.getHorizontalAccuracy();
+            double altitude = geospatialPose.getAltitude();
+            double headingDegrees = geospatialPose.getHeading();
+            double headingAccuracy = geospatialPose.getHeadingAccuracy();
+
+            if (session.getPlaybackStatus() == PlaybackStatus.OK) {
+                Collection<TrackData> trackDataList = frame.getUpdatedTrackData(TAP_TRACK_ID);
+
+                for (TrackData trackData : frame.getUpdatedTrackData(TAP_TRACK_ID)) {
+                    ByteBuffer payload = trackData.getData();
+                    FloatBuffer floatBuffer = payload.asFloatBuffer();
+                    float[] geospatialPoseData = new float[7];
+                    floatBuffer.get(geospatialPoseData);
+                    latitude = geospatialPoseData[0];
+                    longitude = geospatialPoseData[1];
+                    verticalAccuracy = geospatialPoseData[2];
+                    horizontalAccuracy = geospatialPoseData[3];
+                    altitude = geospatialPoseData[4];
+                    headingDegrees = geospatialPoseData[5];
+                    headingAccuracy = geospatialPoseData[6];
+                    break;
+                }
+            } else if (session.getRecordingStatus() == RecordingStatus.OK) {
+                latitude = geospatialPose.getLatitude();
+                longitude = geospatialPose.getLongitude();
+                verticalAccuracy = geospatialPose.getVerticalAccuracy();
+                horizontalAccuracy = geospatialPose.getHorizontalAccuracy();
+                altitude = geospatialPose.getAltitude();
+                headingDegrees = geospatialPose.getHeading();
+                headingAccuracy = geospatialPose.getHeadingAccuracy();
+
+                float[] geospatialPoseData = new float[7];
+                geospatialPoseData[0] = (float) latitude;
+                geospatialPoseData[1] = (float) longitude;
+                geospatialPoseData[2] = (float) verticalAccuracy;
+                geospatialPoseData[3] = (float) horizontalAccuracy;
+                geospatialPoseData[4] = (float) altitude;
+                geospatialPoseData[5] = (float) headingDegrees;
+                geospatialPoseData[6] = (float) headingAccuracy;
+                ByteBuffer payload = ByteBuffer.allocate(4 * 7);
+                FloatBuffer floatBuffer = payload.asFloatBuffer();
+                floatBuffer.put(geospatialPoseData);
+
+                System.out.println("RECORDING DATA: " + Arrays.toString(geospatialPoseData));
+
+                try {
+                    frame.recordTrackData(TAP_TRACK_ID, payload);
+                } catch (IllegalStateException e) {
+                    Log.e(TAG, "Error in recording tap input into external data track.", e);
+                }
+            }
+
+            createAnchor(earth, latitude, longitude, altitude, headingDegrees);
+            storeAnchorParameters(latitude, longitude, altitude, headingDegrees);
+            runOnUiThread(() -> clearAnchorsButton.setVisibility(View.VISIBLE));
+            if (clearedAnchorsAmount != null) {
+                clearedAnchorsAmount = null;
+            }
+        }
+
+        handleInputTime = System.currentTimeMillis() - handleInputTime;
+
         // Visualize anchors created by touch.
         render.clear(virtualSceneFramebuffer, 0f, 0f, 0f, 0f);
         for (Anchor anchor : anchors) {
@@ -618,148 +797,28 @@ public class GeospatialActivity extends AppCompatActivity
         backgroundRenderer.drawVirtualScene(render, virtualSceneFramebuffer, Z_NEAR, Z_FAR);
     }
 
-
-    private void updateRecordButton() {
-        switch (recordingAppState) {
-
-            // The app is neither recording nor playing back. The "Record" button is visible.
-            case Idle:
-                if(state == State.LOCALIZED) {
-                    recordButton.setText("Record");
-                    recordButton.setVisibility(View.VISIBLE);
-                } else {
-                    recordButton.setText("Record");
-                    recordButton.setVisibility(View.INVISIBLE);
-                }
-                break;
-
-            // While recording, the "Record" button is visible and says "Stop".
-            case Recording:
-                recordButton.setText("Stop");
-                recordButton.setVisibility(View.VISIBLE);
-                break;
-
-            // During playback, the "Record" button is not visible.
-            case Playingback:
-                recordButton.setVisibility(View.INVISIBLE);
-                break;
-        }
-    }
-
-    private void updateAnchorButtons() {
-        switch (recordingAppState) {
-
-            // The app is neither recording nor playing back. The "Record" button is visible.
-            case Idle:
-
-                // While recording, the "Record" button is visible and says "Stop".
-            case Recording:
-                if(state == State.LOCALIZED) {
-                    setAnchorButton.setVisibility(View.VISIBLE);
-                    clearAnchorsButton.setVisibility(View.VISIBLE);
-                } else {
-                    setAnchorButton.setVisibility(View.INVISIBLE);
-                    clearAnchorsButton.setVisibility(View.INVISIBLE);
-                }
-                break;
-
-            // During playback, the "Record" button is not visible.
-            case Playingback:
-                setAnchorButton.setVisibility(View.INVISIBLE);
-                clearAnchorsButton.setVisibility(View.INVISIBLE);
-                break;
-        }
-    }
-
-    public void onClickRecord(View view) {
-        Log.d(TAG, "onClickRecord");
-
-        // Check the app's internal state and switch to the new state if needed.
-        switch (recordingAppState) {
-            // If the app is not recording, begin recording.
-            case Idle: {
-                boolean hasStarted = startRecording();
-                Log.d(TAG, String.format("onClickRecord start: hasStarted %b", hasStarted));
-
-                if (hasStarted)
-                    recordingAppState = RecordingAppState.Recording;
-
-                break;
+    private void saveLastFrame(int width, int height) {
+        int size = width * height;
+        int[] imageArray = new int[size];
+        IntBuffer intBuffer = IntBuffer.allocate(size);
+        Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+        GLES30.glReadPixels(0, 0, width, height, GLES30.GL_RGBA, GLES30.GL_UNSIGNED_BYTE, intBuffer);
+        int[] imageArray2 = intBuffer.array();
+        for (int i=0; i < height; i++) {
+            for (int j=0; j < width; j++) {
+                imageArray[(height - i - 1) * width + j] = imageArray2[i * width + j];
             }
-
-            // If the app is recording, stop recording.
-            case Recording: {
-                boolean hasStopped = stopRecording();
-                Log.d(TAG, String.format("onClickRecord stop: hasStopped %b", hasStopped));
-
-                if (hasStopped)
-                    recordingAppState = RecordingAppState.Idle;
-
-                break;
-            }
-
-            default:
-                // Do nothing.
-                break;
         }
-
-        updateRecordButton();
-        updatePlaybackButton();
-        updateAnchorButtons();
-    }
-
-    public void onClickPlayback(View view) {
-        Log.d(TAG, "onClickPlayback");
-
-        switch (recordingAppState) {
-
-            // If the app is not playing back, open the file picker.
-            case Idle: {
-                boolean hasStarted = selectFileToPlayback();
-                Log.d(TAG, String.format("onClickPlayback start: selectFileToPlayback %b", hasStarted));
-                break;
-            }
-
-            // If the app is playing back, stop playing back.
-            case Playingback: {
-                boolean hasStopped = stopPlayingback();
-                Log.d(TAG, String.format("onClickPlayback stop: hasStopped %b", hasStopped));
-                break;
-            }
-
-            default:
-                // Recording - do nothing.
-                break;
+        bitmap.copyPixelsFromBuffer(IntBuffer.wrap(imageArray));
+        File imageFile = new File(getExternalFilesDir(null) + "/" + this.fileName.replace(".mp4", ".jpg"));
+        try {
+            imageFile.delete();
+            FileOutputStream fileOutputStream = new FileOutputStream(imageFile);
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 50, fileOutputStream);
+            fileOutputStream.close();
+        } catch (IOException e) {
+            Log.e(TAG, "Failed to save preview image: ", e);
         }
-
-        // Update the UI for the "Record" and "Playback" buttons.
-        updateRecordButton();
-        updatePlaybackButton();
-        updateAnchorButtons();
-    }
-
-    private boolean selectFileToPlayback() {
-        // Start file selection from Movies directory.
-        // Android 10 and above requires VOLUME_EXTERNAL_PRIMARY to write to MediaStore.
-        Uri videoCollection;
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            videoCollection = MediaStore.Video.Media.getContentUri(
-                    MediaStore.VOLUME_EXTERNAL_PRIMARY);
-        } else {
-            videoCollection = MediaStore.Video.Media.EXTERNAL_CONTENT_URI;
-        }
-
-        // Create an Intent to select a file.
-        Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
-
-        // Add file filters such as the MIME type, the default directory and the file category.
-        intent.setType(MP4_VIDEO_MIME_TYPE); // Only select *.mp4 files
-        intent.putExtra(DocumentsContract.EXTRA_INITIAL_URI, videoCollection); // Set default directory
-        intent.addCategory(Intent.CATEGORY_OPENABLE); // Must be files that can be opened
-
-        this.startActivityForResult(intent, REQUEST_MP4_SELECTOR);
-
-        return true;
     }
 
     @Override
@@ -773,304 +832,7 @@ public class GeospatialActivity extends AppCompatActivity
 
         Uri mp4Uri = data.getData();
         Log.d(TAG, String.format("onActivityResult result is %s", mp4Uri));
-
-        // Copy to app internal storage to get a file path.
-        String localFilePath = copyToInternalFilePath(mp4Uri);
-
-        // Begin playback.
-        startPlayingback(localFilePath);
     }
-
-    private String copyToInternalFilePath(Uri contentUri) {
-        // Create a file path in the app's internal storage.
-        String tempPlaybackFilePath = new File(this.getExternalFilesDir(null), "temp-playback.mp4").getAbsolutePath();
-
-        // Copy the binary content from contentUri to tempPlaybackFilePath.
-        try (InputStream inputStream = this.getContentResolver().openInputStream(contentUri);
-             java.io.OutputStream tempOutputFileStream = new java.io.FileOutputStream(tempPlaybackFilePath)) {
-
-            byte[] buffer = new byte[1024 * 1024]; // 1MB
-            int bytesRead = inputStream.read(buffer);
-            while (bytesRead != -1) {
-                tempOutputFileStream.write(buffer, 0, bytesRead);
-                bytesRead = inputStream.read(buffer);
-            }
-
-        } catch (java.io.FileNotFoundException e) {
-            Log.e(TAG, "copyToInternalFilePath FileNotFoundException", e);
-            return null;
-        } catch (IOException e) {
-            Log.e(TAG, "copyToInternalFilePath IOException", e);
-            return null;
-        }
-
-        // Return the absolute file path of the copied file.
-        return tempPlaybackFilePath;
-    }
-
-    private boolean startPlayingback(String mp4FilePath) {
-        if (mp4FilePath == null)
-            return false;
-
-        Log.d(TAG, "startPlayingback at:" + mp4FilePath);
-
-        pauseARCoreSession();
-
-        try {
-            session.setPlaybackDataset(mp4FilePath);
-        } catch (PlaybackFailedException e) {
-            Log.e(TAG, "startPlayingback - setPlaybackDataset failed", e);
-        }
-
-        // The session's camera texture name becomes invalid when the
-        // ARCore session is set to play back.
-        // Workaround: Reset the Texture to start Playback
-        // so it doesn't crashes with AR_ERROR_TEXTURE_NOT_SET.
-        hasSetTextureNames = false;
-
-        boolean canResume = resumeARCoreSession();
-        if (!canResume)
-            return false;
-
-        PlaybackStatus playbackStatus = session.getPlaybackStatus();
-        Log.d(TAG, String.format("startPlayingback - playbackStatus %s", playbackStatus));
-
-
-        if (playbackStatus != PlaybackStatus.OK) { // Correctness check
-            return false;
-        }
-
-        recordingAppState = RecordingAppState.Playingback;
-        updateRecordButton();
-        updatePlaybackButton();
-        updateAnchorButtons();
-        return true;
-    }
-
-    private boolean stopPlayingback() {
-        // Correctness check, only stop playing back when the app is playing back.
-        if (recordingAppState != recordingAppState.Playingback)
-            return false;
-
-        pauseARCoreSession();
-
-        // Close the current session and create a new session.
-        session.close();
-        try {
-            session = new Session(this);
-        } catch (UnavailableArcoreNotInstalledException
-                | UnavailableApkTooOldException
-                | UnavailableSdkTooOldException
-                | UnavailableDeviceNotCompatibleException e) {
-            Log.e(TAG, "Error in return to Idle state. Cannot create new ARCore session", e);
-            return false;
-        }
-        configureSession();
-
-        boolean canResume = resumeARCoreSession();
-        if (!canResume)
-            return false;
-
-        // A new session will not have a camera texture name.
-        // Manually set hasSetTextureNames to false to trigger a reset.
-        hasSetTextureNames = false;
-
-        // Reset appState to Idle, and update the "Record" and "Playback" buttons.
-        recordingAppState = RecordingAppState.Idle;
-        updateRecordButton();
-        updatePlaybackButton();
-        updateAnchorButtons();
-        return true;
-    }
-
-    private void updatePlaybackButton() {
-        switch (recordingAppState) {
-            // The app is neither recording nor playing back. The "Playback" button is visible.
-            case Idle:
-                playbackButton.setText("Playback");
-                playbackButton.setVisibility(View.VISIBLE);
-                break;
-
-            // While playing back, the "Playback" button is visible and says "Stop".
-            case Playingback:
-                playbackButton.setText("Stop");
-                playbackButton.setVisibility(View.VISIBLE);
-                break;
-
-            // During recording, the "Playback" button is not visible.
-            case Recording:
-                playbackButton.setVisibility(View.INVISIBLE);
-                break;
-        }
-    }
-
-    private boolean startRecording() {
-        String mp4FilePath = createMp4File();
-        if (mp4FilePath == null)
-            return false;
-
-        Log.d(TAG, "startRecording at: " + mp4FilePath);
-
-        pauseARCoreSession();
-
-        // Configure the ARCore session to start recording.
-        RecordingConfig recordingConfig = new RecordingConfig(session)
-                .setMp4DatasetFilePath(mp4FilePath)
-                .setAutoStopOnPause(true);
-
-        try {
-            // Prepare the session for recording, but do not start recording yet.
-            session.startRecording(recordingConfig);
-        } catch (RecordingFailedException e) {
-            Log.e(TAG, "startRecording - Failed to prepare to start recording", e);
-            return false;
-        }
-
-        boolean canResume = resumeARCoreSession();
-        if (!canResume)
-            return false;
-
-        // Correctness checking: check the ARCore session's RecordingState.
-        RecordingStatus recordingStatus = session.getRecordingStatus();
-        Log.d(TAG, String.format("startRecording - recordingStatus %s", recordingStatus));
-        return recordingStatus == RecordingStatus.OK;
-    }
-
-    private void pauseARCoreSession() {
-        // Pause the GLSurfaceView so that it doesn't update the ARCore session.
-        // Pause the ARCore session so that we can update its configuration.
-        // If the GLSurfaceView is not paused,
-        //   onDrawFrame() will try to update the ARCore session
-        //   while it's paused, resulting in a crash.
-        surfaceView.onPause();
-        session.pause();
-    }
-
-    private boolean resumeARCoreSession() {
-        // We must resume the ARCore session before the GLSurfaceView.
-        // Otherwise, the GLSurfaceView will try to update the ARCore session.
-        try {
-            session.resume();
-        } catch (CameraNotAvailableException e) {
-            Log.e(TAG, "CameraNotAvailableException in resumeARCoreSession", e);
-            return false;
-        }
-
-        surfaceView.onResume();
-        return true;
-    }
-
-    private boolean stopRecording() {
-        try {
-            session.stopRecording();
-        } catch (RecordingFailedException e) {
-            Log.e(TAG, "stopRecording - Failed to stop recording", e);
-            return false;
-        }
-
-        // Correctness checking: check if the session stopped recording.
-        return session.getRecordingStatus() == RecordingStatus.NONE;
-    }
-
-    private String createMp4File() {
-        if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.Q) {
-            if (!checkAndRequestStoragePermission()) {
-                Log.i(TAG, String.format(
-                        "Didn't createMp4File. No storage permission, API Level = %d",
-                        Build.VERSION.SDK_INT));
-                return null;
-            }
-        }
-
-        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyyMMdd_HHmmss");
-        String mp4FileName = "arcore-" + dateFormat.format(new Date()) + ".mp4";
-
-        ContentResolver resolver = this.getContentResolver();
-
-        Uri videoCollection = null;
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            videoCollection = MediaStore.Video.Media.getContentUri(
-                    MediaStore.VOLUME_EXTERNAL_PRIMARY);
-        } else {
-            videoCollection = MediaStore.Video.Media.EXTERNAL_CONTENT_URI;
-        }
-
-        // Create a new Media file record.
-        ContentValues newMp4FileDetails = new ContentValues();
-        newMp4FileDetails.put(MediaStore.Video.Media.DISPLAY_NAME, mp4FileName);
-        newMp4FileDetails.put(MediaStore.Video.Media.MIME_TYPE, MP4_VIDEO_MIME_TYPE);
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            // The Relative_Path column is only available since API Level 29.
-            newMp4FileDetails.put(MediaStore.Video.Media.RELATIVE_PATH, Environment.DIRECTORY_MOVIES);
-        } else {
-            // Use the Data column to set path for API Level <= 28.
-            File mp4FileDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_MOVIES);
-            String absoluteMp4FilePath = new File(mp4FileDir, mp4FileName).getAbsolutePath();
-            newMp4FileDetails.put(MediaStore.Video.Media.DATA, absoluteMp4FilePath);
-        }
-
-        Uri newMp4FileUri = resolver.insert(videoCollection, newMp4FileDetails);
-
-        // Ensure that this file exists and can be written.
-        if (newMp4FileUri == null) {
-            Log.e(TAG, String.format("Failed to insert Video entity in MediaStore. API Level = %d", Build.VERSION.SDK_INT));
-            return null;
-        }
-
-        // This call ensures the file exist before we pass it to the ARCore API.
-        if (!testFileWriteAccess(newMp4FileUri)) {
-            return null;
-        }
-
-        String filePath = getMediaFilePath(newMp4FileUri);
-        Log.d(TAG, String.format("createMp4File = %s, API Level = %d", filePath, Build.VERSION.SDK_INT));
-
-        return filePath;
-    }
-
-    // Test if the file represented by the content Uri can be open with write access.
-    private boolean testFileWriteAccess(Uri contentUri) {
-        try (java.io.OutputStream mp4File = this.getContentResolver().openOutputStream(contentUri)) {
-            Log.d(TAG, String.format("Success in testFileWriteAccess %s", contentUri.toString()));
-            return true;
-        } catch (java.io.FileNotFoundException e) {
-            Log.e(TAG, String.format("FileNotFoundException in testFileWriteAccess %s", contentUri.toString()), e);
-        } catch (java.io.IOException e) {
-            Log.e(TAG, String.format("IOException in testFileWriteAccess %s", contentUri.toString()), e);
-        }
-
-        return false;
-    }
-
-    // Query the Media.DATA column to get file path from MediaStore content:// Uri
-    private String getMediaFilePath(Uri mediaStoreUri) {
-        String[] projection = {MediaStore.Images.Media.DATA};
-
-        CursorLoader loader = new CursorLoader(this, mediaStoreUri, projection, null, null, null);
-        Cursor cursor = loader.loadInBackground();
-        cursor.moveToFirst();
-
-        int data_column_index = cursor.getColumnIndexOrThrow(projection[0]);
-        String data_result = cursor.getString(data_column_index);
-
-        cursor.close();
-
-        return data_result;
-    }
-
-    public boolean checkAndRequestStoragePermission() {
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
-                != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this,
-                    new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
-                    REQUEST_WRITE_EXTERNAL_STORAGE);
-            return false;
-        }
-
-        return true;
-    }
-
     /**
      * Configures the session with feature settings.
      */
@@ -1088,45 +850,6 @@ public class GeospatialActivity extends AppCompatActivity
         localizingStartTimestamp = System.currentTimeMillis();
     }
 
-    /**
-     * Change behavior depending on the current {@link State} of the application.
-     */
-    private void updateGeospatialState(Earth earth) {
-        if (state == State.PRETRACKING) {
-            updatePretrackingState(earth);
-        } else if (state == State.LOCALIZING) {
-            updateLocalizingState(earth);
-        } else if (state == State.LOCALIZED) {
-            updateLocalizedState(earth);
-        }
-    }
-
-    /**
-     * Handles the updating for {@link State.PRETRACKING}. In this state, wait for {@link Earth} to
-     * have {@link TrackingState.TRACKING}. If it hasn't been enabled by now, then we've encountered
-     * an unrecoverable {@link State.EARTH_STATE_ERROR}.
-     */
-    private void updatePretrackingState(Earth earth) {
-        if (earth.getTrackingState() == TrackingState.TRACKING) {
-            state = State.LOCALIZING;
-            return;
-        }
-
-        if (earth.getEarthState() != Earth.EarthState.ENABLED) {
-            state = State.EARTH_STATE_ERROR;
-            return;
-        }
-
-        runOnUiThread(() -> geospatialPoseTextView.setText(R.string.geospatial_pose_not_tracking));
-    }
-
-    /**
-     * Handles the updating for {@link State.LOCALIZING}. In this state, wait for the horizontal and
-     * heading threshold to improve until it reaches your threshold.
-     *
-     * <p>If it takes too long for the threshold to be reached, this could mean that GPS data isn't
-     * accurate enough, or that the user is in an area that can't be localized with StreetView.
-     */
     private void updateLocalizingState(Earth earth) {
         GeospatialPose geospatialPose = earth.getCameraGeospatialPose();
         if (geospatialPose.getHorizontalAccuracy() <= LOCALIZING_HORIZONTAL_ACCURACY_THRESHOLD_METERS
@@ -1135,12 +858,6 @@ public class GeospatialActivity extends AppCompatActivity
             if (anchors.isEmpty()) {
                 createAnchorFromSharedPreferences(earth);
             }
-            runOnUiThread(
-                    () -> {
-                        setAnchorButton.setVisibility(View.VISIBLE);
-                        updateRecordButton();
-                        updatePlaybackButton();
-                    });
             return;
         }
 
@@ -1153,11 +870,6 @@ public class GeospatialActivity extends AppCompatActivity
         updateGeospatialPoseText(geospatialPose);
     }
 
-    /**
-     * Handles the updating for {@link State.LOCALIZED}. In this state, check the accuracy for
-     * degradation and return to {@link State.LOCALIZING} if the position accuracies have dropped too
-     * low.
-     */
     private void updateLocalizedState(Earth earth) {
         GeospatialPose geospatialPose = earth.getCameraGeospatialPose();
         // Check if either accuracy has degraded to the point we should enter back into the LOCALIZING
@@ -1200,31 +912,6 @@ public class GeospatialActivity extends AppCompatActivity
                 () -> {
                     geospatialPoseTextView.setText(poseText);
                 });
-    }
-
-    /**
-     * Handles the button that creates an anchor.
-     *
-     * <p>Ensure Earth is in the proper state, then create the anchor. Persist the parameters used to
-     * create the anchors so that the anchors will be loaded next time the app is launched.
-     */
-    private void handleSetAnchorButton() {
-        Earth earth = session.getEarth();
-        if (earth == null || earth.getTrackingState() != TrackingState.TRACKING || recordingAppState == RecordingAppState.Playingback) {
-            return;
-        }
-
-        GeospatialPose geospatialPose = earth.getCameraGeospatialPose();
-        double latitude = geospatialPose.getLatitude();
-        double longitude = geospatialPose.getLongitude();
-        double altitude = geospatialPose.getAltitude();
-        double headingDegrees = geospatialPose.getHeading();
-        createAnchor(earth, latitude, longitude, altitude, headingDegrees);
-        storeAnchorParameters(latitude, longitude, altitude, headingDegrees);
-        runOnUiThread(() -> clearAnchorsButton.setVisibility(View.VISIBLE));
-        if (clearedAnchorsAmount != null) {
-            clearedAnchorsAmount = null;
-        }
     }
 
     private void handleClearAnchorsButton() {
