@@ -72,6 +72,7 @@ public class BenchmarkActivity extends AppCompatActivity {
             new ActivityRecording(AugmentedImageActivity.class, "aug-img-1.mp4", "Augmented Image", false),
             new ActivityRecording(AugmentedObjectRecognitionActivity.class, "aug-obj-rcg-1.mp4", "Object Recognition", false),
             new ActivityRecording(AugmentedObjectRecognitionActivity.class, "aug-obj-rcg-1.mp4", "Object Recognition", true),
+//            new ActivityRecording(AugmentedObjectRecognitionActivity.class, "aug-geo.mp4", "Geospatial", true),
     };
 
     private LinearLayout resultsDisplay;
