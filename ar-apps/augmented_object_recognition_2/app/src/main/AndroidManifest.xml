@@ -40,7 +40,8 @@
     <activity
         android:name="com.google.ar.core.examples.java.ml.MainActivity"
         android:screenOrientation="fullSensor"
-        android:configChanges="orientation|screenSize|screenLayout|keyboardHidden">
+        android:configChanges="orientation|screenSize|screenLayout|keyboardHidden"
+        android:exported="true">
       <intent-filter>
         <action android:name="android.intent.action.MAIN" />
 
