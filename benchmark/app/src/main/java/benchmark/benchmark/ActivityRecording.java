@@ -29,7 +29,19 @@ public class ActivityRecording {
     private String recordingFileName;
     private String sectionName;
     private boolean enabled;
-    private final boolean useCloud;
+    private boolean useCloud;
+    private boolean requiresCredentialsFile;
+    private boolean requiresGCPKeys;
+
+    public ActivityRecording(Class<?> activity, String recordingFileName, String sectionName, Boolean useCloud, Boolean requiresGCPKeys, Boolean requiresCredentialsFile) {
+        this.activity = activity;
+        this.recordingFileName = recordingFileName;
+        this.sectionName = sectionName;
+        this.enabled = true;
+        this.useCloud = useCloud;
+        this.requiresCredentialsFile = requiresCredentialsFile;
+        this.requiresGCPKeys = requiresGCPKeys;
+    }
 
     public ActivityRecording(Class<?> activity, String recordingFileName, String sectionName, Boolean useCloud) {
         this.activity = activity;
@@ -51,9 +63,13 @@ public class ActivityRecording {
         return recordingFileName;
     }
 
-    public String getSectionName() { return sectionName; }
+    public String getSectionName() {
+        return sectionName;
+    }
 
-    public boolean isEnabled() { return enabled; }
+    public boolean isEnabled() {
+        return enabled;
+    }
 
     public void setRecordingFileName(String recordingFileName) {
         this.recordingFileName = recordingFileName;
@@ -69,5 +85,13 @@ public class ActivityRecording {
 
     public boolean doesUseCloud() {
         return useCloud;
+    }
+
+    public boolean doesRequireCredentialsFile() {
+        return requiresCredentialsFile;
+    }
+
+    public boolean doesRequireGCPKeys() {
+        return requiresGCPKeys;
     }
 }

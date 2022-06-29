@@ -166,7 +166,7 @@ class AppRenderer(val activity: MainActivity) : DefaultLifecycleObserver, Sample
         currentAnalyzer = if (gcpConfigured) gcpAnalyzer else mlKitAnalyzer
 
         if (!gcpConfigured) {
-            //showSnackbar("Google Cloud Vision isn't configured (see README). The Cloud ML switch will be disabled.")
+            showSnackbar("Google Cloud Vision isn't configured (see README). The Cloud ML switch will be disabled.")
         }
 
         view.resetButton.setOnClickListener {
