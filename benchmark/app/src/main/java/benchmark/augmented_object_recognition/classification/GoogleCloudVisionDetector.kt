@@ -16,6 +16,7 @@
 
 package benchmark.augmented_object_recognition.classification
 
+import android.app.Activity
 import android.media.Image
 import android.util.Log
 import benchmark.augmented_object_recognition.AugmentedObjectRecognitionActivity
@@ -37,7 +38,7 @@ import com.google.cloud.vision.v1.Image as GCVImage
  *
  * Finds detected objects ([DetectedObjectResult]s) given an [android.media.Image].
  */
-class GoogleCloudVisionDetector(val recognitionActivity: AugmentedObjectRecognitionActivity) : ObjectDetector(recognitionActivity) {
+class GoogleCloudVisionDetector(val activity: Activity) : ObjectDetector(activity) {
   companion object {
     val TAG = "GoogleCloudVisionDetector"
   }
@@ -45,9 +46,9 @@ class GoogleCloudVisionDetector(val recognitionActivity: AugmentedObjectRecognit
   val credentials = try {
     // Providing GCP credentials is not mandatory for this app, so the existence of R.raw.credentials
     // is not guaranteed. Instead, use getIdentifier to determine an optional resource.
-    val res = recognitionActivity.resources.getIdentifier("credentials", "raw", recognitionActivity.packageName)
+    val res = activity.resources.getIdentifier("credentials", "raw", activity.packageName)
     if (res == 0) error("Missing GCP credentials in res/raw/credentials.json.")
-    GoogleCredentials.fromStream(recognitionActivity.resources.openRawResource(res))
+    GoogleCredentials.fromStream(activity.resources.openRawResource(res))
   } catch (e: Exception) {
     Log.e(TAG, "Unable to create Google credentials from res/raw/credentials.json. Cloud ML will be disabled.", e)
     null

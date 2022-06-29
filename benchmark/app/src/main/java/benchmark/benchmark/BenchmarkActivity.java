@@ -26,7 +26,9 @@ package benchmark.benchmark;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.content.Intent;
+import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -36,6 +38,7 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.CheckBox;
+import android.widget.CompoundButton;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -56,8 +59,10 @@ import java.io.IOException;
 import benchmark.augmented_faces.AugmentedFacesActivity;
 import benchmark.augmented_image.AugmentedImageActivity;
 import benchmark.augmented_object_recognition.AugmentedObjectRecognitionActivity;
+import benchmark.augmented_object_recognition.classification.GoogleCloudVisionDetector;
 import benchmark.common.samplerender.SampleRender;
 import benchmark.augmented_object_generation.AugmentedObjectGenerationActivity;
+import benchmark.geospatial.GeospatialActivity;
 
 public class BenchmarkActivity extends AppCompatActivity {
     private static final String TAG = BenchmarkActivity.class.getSimpleName();
@@ -72,7 +77,7 @@ public class BenchmarkActivity extends AppCompatActivity {
             new ActivityRecording(AugmentedImageActivity.class, "aug-img-1.mp4", "Augmented Image", false),
             new ActivityRecording(AugmentedObjectRecognitionActivity.class, "aug-obj-rcg-1.mp4", "Object Recognition", false),
             new ActivityRecording(AugmentedObjectRecognitionActivity.class, "aug-obj-rcg-1.mp4", "Object Recognition", true),
-//            new ActivityRecording(AugmentedObjectRecognitionActivity.class, "aug-geo.mp4", "Geospatial", true),
+            new ActivityRecording(GeospatialActivity.class, "aug-geo.mp4", "Geospatial", true),
     };
 
     private LinearLayout resultsDisplay;
@@ -83,6 +88,8 @@ public class BenchmarkActivity extends AppCompatActivity {
     private CameraPreview cameraPreview;
     private FrameLayout preview;
     private CheckBox[] sectionCheckBoxes;
+
+    GoogleCloudVisionDetector gcpAnalyzer = new GoogleCloudVisionDetector(this);
 
     @SuppressLint("SetTextI18n")
     @Override
@@ -98,9 +105,43 @@ public class BenchmarkActivity extends AppCompatActivity {
         sectionCheckBoxes = new CheckBox[ACTIVITY_RECORDINGS.length];
 
         for (int i = 0; i < ACTIVITY_RECORDINGS.length; i++) {
+            ActivityRecording activityRecording = ACTIVITY_RECORDINGS[i];
             CheckBox checkBox = new CheckBox(this);
-            checkBox.setText(ACTIVITY_RECORDINGS[i].getSectionName() + (ACTIVITY_RECORDINGS[i].doesUseCloud() ? " (Cloud)" : ""));
             checkBox.setChecked(true);
+            checkBox.setText(activityRecording.getSectionName() + (activityRecording.doesUseCloud() ? " (Cloud)" : ""));
+
+            if (activityRecording.doesUseCloud()) {
+                if (activityRecording.doesRequireGCPKeys()) {
+                    if (hasGCPKeys()) {
+                        checkBox.setEnabled(true);
+                    } else {
+                        checkBox.setEnabled(false);
+                        checkBox.setText(checkBox.getText() + " (Missing GCP Keys)");
+                        checkBox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+                            @Override
+                            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                                if(isChecked) buttonView.setChecked(false);
+                            }
+                        });
+                    }
+                }
+
+                if (activityRecording.doesRequireCredentialsFile()) {
+                    if (hasCredentialsFile()) {
+                        checkBox.setEnabled(true);
+                    } else {
+                        checkBox.setEnabled(false);
+                        checkBox.setText(checkBox.getText() + " (Missing Credentials File)");
+                        checkBox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+                            @Override
+                            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                                if(isChecked) buttonView.setChecked(false);
+                            }
+                        });
+                    }
+                }
+            }
+
             sectionCheckBoxes[i] = checkBox;
             resultsDisplay.addView(checkBox);
         }
@@ -128,6 +169,24 @@ public class BenchmarkActivity extends AppCompatActivity {
                 }
             }
         });
+    }
+
+    private boolean hasGCPKeys() {
+        return true;
+//        try {
+//            ApplicationInfo applicationInfo = getPackageManager().getApplicationInfo(getPackageName(), PackageManager.GET_META_DATA);
+//            Bundle bundle = applicationInfo.metaData;
+//            String geoAPIKey = bundle.getString("com.google.android.geo.API_KEY");
+//            String arAPIKey = bundle.getString("com.google.android.ar.API_KEY");
+//            return geoAPIKey != null && arAPIKey != null;
+//        } catch (PackageManager.NameNotFoundException e) {
+//            e.printStackTrace();
+//            return false;
+//        }
+    }
+
+    private boolean hasCredentialsFile() {
+        return gcpAnalyzer.getCredentials() != null;
     }
 
     public void onStartBenchmark(View view) {

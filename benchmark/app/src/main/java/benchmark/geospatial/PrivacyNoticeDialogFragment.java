@@ -25,6 +25,8 @@ import android.net.Uri;
 import android.os.Bundle;
 import androidx.fragment.app.DialogFragment;
 
+import benchmark.benchmark.R;
+
 /** A DialogFragment for the Privacy Notice Dialog Box. */
 public class PrivacyNoticeDialogFragment extends DialogFragment {
 
