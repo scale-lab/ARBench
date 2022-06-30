@@ -62,6 +62,8 @@ import benchmark.augmented_faces.AugmentedFacesActivity;
 import benchmark.augmented_image.AugmentedImageActivity;
 import benchmark.augmented_object_recognition.AugmentedObjectRecognitionActivity;
 import benchmark.augmented_object_recognition.classification.GoogleCloudVisionDetector;
+import benchmark.common.helpers.CameraPermissionHelper;
+import benchmark.common.helpers.LocationPermissionHelper;
 import benchmark.common.samplerender.SampleRender;
 import benchmark.augmented_object_generation.AugmentedObjectGenerationActivity;
 import benchmark.geospatial.GeospatialActivity;
@@ -148,9 +150,13 @@ public class BenchmarkActivity extends AppCompatActivity {
             resultsDisplay.addView(checkBox);
         }
 
-        int permission = ActivityCompat.checkSelfPermission(this, Manifest.permission.CAMERA);
-        if (permission != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.CAMERA}, 1);
+        if (!CameraPermissionHelper.hasCameraPermission(this)) {
+            CameraPermissionHelper.requestCameraPermission(this);
+            return;
+        }
+        if (!LocationPermissionHelper.hasFineLocationPermission(this)) {
+            LocationPermissionHelper.requestFineLocationPermission(this);
+            return;
         }
 
         useCameraSwitch = findViewById(R.id.useCamera);
