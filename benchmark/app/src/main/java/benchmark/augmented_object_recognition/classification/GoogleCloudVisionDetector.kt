@@ -38,7 +38,7 @@ import com.google.cloud.vision.v1.Image as GCVImage
  *
  * Finds detected objects ([DetectedObjectResult]s) given an [android.media.Image].
  */
-class GoogleCloudVisionDetector(val activity: Activity) : ObjectDetector(activity) {
+class GoogleCloudVisionDetector(val activity: AugmentedObjectRecognitionActivity) : ObjectDetector(activity) {
   companion object {
     val TAG = "GoogleCloudVisionDetector"
   }
