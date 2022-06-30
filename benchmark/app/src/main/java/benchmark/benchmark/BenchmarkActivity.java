@@ -49,6 +49,8 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.SwitchCompat;
 import androidx.core.app.ActivityCompat;
 
+import com.google.auth.oauth2.GoogleCredentials;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
@@ -76,8 +78,8 @@ public class BenchmarkActivity extends AppCompatActivity {
             new ActivityRecording(AugmentedFacesActivity.class, "aug-faces-1.mp4", "Augmented Faces", false),
             new ActivityRecording(AugmentedImageActivity.class, "aug-img-1.mp4", "Augmented Image", false),
             new ActivityRecording(AugmentedObjectRecognitionActivity.class, "aug-obj-rcg-1.mp4", "Object Recognition", false),
-            new ActivityRecording(AugmentedObjectRecognitionActivity.class, "aug-obj-rcg-1.mp4", "Object Recognition", true),
-            new ActivityRecording(GeospatialActivity.class, "aug-geo.mp4", "Geospatial", true),
+            new ActivityRecording(AugmentedObjectRecognitionActivity.class, "aug-obj-rcg-1.mp4", "Object Recognition", true, false, true),
+            new ActivityRecording(GeospatialActivity.class, "aug-geo.mp4", "Geospatial", true, true, false),
     };
 
     private LinearLayout resultsDisplay;
@@ -88,8 +90,6 @@ public class BenchmarkActivity extends AppCompatActivity {
     private CameraPreview cameraPreview;
     private FrameLayout preview;
     private CheckBox[] sectionCheckBoxes;
-
-    GoogleCloudVisionDetector gcpAnalyzer = new GoogleCloudVisionDetector(this);
 
     @SuppressLint("SetTextI18n")
     @Override
@@ -115,14 +115,15 @@ public class BenchmarkActivity extends AppCompatActivity {
                     if (hasGCPKeys()) {
                         checkBox.setEnabled(true);
                     } else {
+                        checkBox.setChecked(false);
                         checkBox.setEnabled(false);
-                        checkBox.setText(checkBox.getText() + " (Missing GCP Keys)");
-                        checkBox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-                            @Override
-                            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                                if(isChecked) buttonView.setChecked(false);
-                            }
-                        });
+                        checkBox.setText(checkBox.getText() + "\nMissing GCP Keys");
+//                        checkBox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+//                            @Override
+//                            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+//                                if (isChecked) buttonView.setChecked(false);
+//                            }
+//                        });
                     }
                 }
 
@@ -130,14 +131,15 @@ public class BenchmarkActivity extends AppCompatActivity {
                     if (hasCredentialsFile()) {
                         checkBox.setEnabled(true);
                     } else {
+                        checkBox.setChecked(false);
                         checkBox.setEnabled(false);
-                        checkBox.setText(checkBox.getText() + " (Missing Credentials File)");
-                        checkBox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-                            @Override
-                            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                                if(isChecked) buttonView.setChecked(false);
-                            }
-                        });
+                        checkBox.setText(checkBox.getText() + "\nMissing Credentials File");
+//                        checkBox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+//                            @Override
+//                            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+//                                if (isChecked) buttonView.setChecked(false);
+//                            }
+//                        });
                     }
                 }
             }
@@ -172,21 +174,32 @@ public class BenchmarkActivity extends AppCompatActivity {
     }
 
     private boolean hasGCPKeys() {
-        return true;
-//        try {
-//            ApplicationInfo applicationInfo = getPackageManager().getApplicationInfo(getPackageName(), PackageManager.GET_META_DATA);
-//            Bundle bundle = applicationInfo.metaData;
-//            String geoAPIKey = bundle.getString("com.google.android.geo.API_KEY");
-//            String arAPIKey = bundle.getString("com.google.android.ar.API_KEY");
-//            return geoAPIKey != null && arAPIKey != null;
-//        } catch (PackageManager.NameNotFoundException e) {
-//            e.printStackTrace();
-//            return false;
-//        }
+        try {
+            ApplicationInfo applicationInfo = getPackageManager().getApplicationInfo(getPackageName(), PackageManager.GET_META_DATA);
+            Bundle bundle = applicationInfo.metaData;
+            String geoAPIKey = bundle.getString("com.google.android.geo.API_KEY");
+            String arAPIKey = bundle.getString("com.google.android.ar.API_KEY");
+            return geoAPIKey != null && arAPIKey != null;
+        } catch (PackageManager.NameNotFoundException e) {
+            e.printStackTrace();
+            return false;
+        }
     }
 
     private boolean hasCredentialsFile() {
-        return gcpAnalyzer.getCredentials() != null;
+        System.out.println("hasCredentialsFile");
+        try {
+            int res = this.getResources().getIdentifier("credentials", "raw", this.getPackageName());
+            if (res == 0) {
+                Log.e(TAG, "Missing GCP credentials in res/raw/credentials.json.");
+                return false;
+            }
+            GoogleCredentials.fromStream(this.getResources().openRawResource(res));
+            return true;
+        } catch (IOException e) {
+            e.printStackTrace();
+            return false;
+        }
     }
 
     public void onStartBenchmark(View view) {
