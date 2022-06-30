@@ -61,6 +61,7 @@ import android.provider.DocumentsContract;
 import android.provider.MediaStore;
 import android.util.Log;
 import android.view.SurfaceHolder;
+import android.view.SurfaceView;
 import android.view.View;
 import android.widget.Button;
 import android.widget.RelativeLayout;
@@ -168,7 +169,7 @@ public class GeospatialActivity extends AppCompatActivity
     private static final int MAXIMUM_ANCHORS = 10;
 
     // Rendering. The Renderers are created here, and initialized when the GL surface is created.
-    private GLSurfaceView surfaceView;
+    private SurfaceView surfaceView;
 
     private boolean installRequested;
     private Integer clearedAnchorsAmount = null;
@@ -264,8 +265,8 @@ public class GeospatialActivity extends AppCompatActivity
         super.onCreate(savedInstanceState);
         sharedPreferences = getPreferences(Context.MODE_PRIVATE);
 
-        setContentView(R.layout.activity_main);
-        surfaceView = findViewById(R.id.surfaceview);
+        setContentView(R.layout.geospatial);
+        surfaceView = new SurfaceView(this);
         geospatialPoseTextView = findViewById(R.id.geospatial_pose_view);
 
         displayRotationHelper = new DisplayRotationHelper(/*context=*/ this);
@@ -383,7 +384,7 @@ public class GeospatialActivity extends AppCompatActivity
             showPrivacyNoticeDialog();
         }
 
-        surfaceView.onResume();
+//        surfaceView.onResume();
         displayRotationHelper.onResume();
     }
 
@@ -487,7 +488,7 @@ public class GeospatialActivity extends AppCompatActivity
             // to query the session. If Session is paused before GLSurfaceView, GLSurfaceView may
             // still call session.update() and get a SessionPausedException.
             displayRotationHelper.onPause();
-            surfaceView.onPause();
+//            surfaceView.onPause();
             session.pause();
         }
     }
