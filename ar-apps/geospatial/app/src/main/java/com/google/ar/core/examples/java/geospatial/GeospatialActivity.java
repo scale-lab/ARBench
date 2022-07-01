@@ -609,16 +609,14 @@ public class GeospatialActivity extends AppCompatActivity
         // Get camera matrix and draw.
         camera.getViewMatrix(viewMatrix, 0);
 
-        if (setAnchorButton.isPressed() && earth != null && earth.getTrackingState() == TrackingState.TRACKING) {
-            System.out.println("SET ANCHOR BUTTON PRESSED");
-            GeospatialPose geospatialPose = earth.getCameraGeospatialPose();
-            double latitude = geospatialPose.getLatitude();
-            double longitude = geospatialPose.getLongitude();
-            double verticalAccuracy = geospatialPose.getVerticalAccuracy();
-            double horizontalAccuracy = geospatialPose.getHorizontalAccuracy();
-            double altitude = geospatialPose.getAltitude();
-            double headingDegrees = geospatialPose.getHeading();
-            double headingAccuracy = geospatialPose.getHeadingAccuracy();
+        if (earth != null && earth.getTrackingState() == TrackingState.TRACKING) {
+            double latitude;
+            double longitude;
+            double verticalAccuracy;
+            double horizontalAccuracy;
+            double altitude;
+            double headingDegrees;
+            double headingAccuracy;
 
             if (session.getPlaybackStatus() == PlaybackStatus.OK) {
                 Collection<TrackData> trackDataList = frame.getUpdatedTrackData(TAP_TRACK_ID);
@@ -638,38 +636,41 @@ public class GeospatialActivity extends AppCompatActivity
                     break;
                 }
 
-            } else if (session.getRecordingStatus() == RecordingStatus.OK) {
-               latitude = geospatialPose.getLatitude();
-               longitude = geospatialPose.getLongitude();
-               verticalAccuracy = geospatialPose.getVerticalAccuracy();
-               horizontalAccuracy = geospatialPose.getHorizontalAccuracy();
-               altitude = geospatialPose.getAltitude();
-               headingDegrees = geospatialPose.getHeading();
-               headingAccuracy = geospatialPose.getHeadingAccuracy();
+            } else if (setAnchorButton.isPressed()){
+                System.out.println("SET ANCHOR BUTTON PRESSED");
+                GeospatialPose geospatialPose = earth.getCameraGeospatialPose();
+                latitude = geospatialPose.getLatitude();
+                longitude = geospatialPose.getLongitude();
+                verticalAccuracy = geospatialPose.getVerticalAccuracy();
+                horizontalAccuracy = geospatialPose.getHorizontalAccuracy();
+                altitude = geospatialPose.getAltitude();
+                headingDegrees = geospatialPose.getHeading();
+                headingAccuracy = geospatialPose.getHeadingAccuracy();
+                if (session.getRecordingStatus() == RecordingStatus.OK) {
+                    float[] geospatialPoseData = new float[7];
+                    geospatialPoseData[0] = (float) latitude;
+                    geospatialPoseData[1] = (float) longitude;
+                    geospatialPoseData[2] = (float) verticalAccuracy;
+                    geospatialPoseData[3] = (float) horizontalAccuracy;
+                    geospatialPoseData[4] = (float) altitude;
+                    geospatialPoseData[5] = (float) headingDegrees;
+                    geospatialPoseData[6] = (float) headingAccuracy;
+                    ByteBuffer payload = ByteBuffer.allocate(4 * 7);
+                    FloatBuffer floatBuffer = payload.asFloatBuffer();
+                    floatBuffer.put(geospatialPoseData);
 
-                float[] geospatialPoseData = new float[7];
-                geospatialPoseData[0] = (float) latitude;
-                geospatialPoseData[1] = (float) longitude;
-                geospatialPoseData[2] = (float) verticalAccuracy;
-                geospatialPoseData[3] = (float) horizontalAccuracy;
-                geospatialPoseData[4] = (float) altitude;
-                geospatialPoseData[5] = (float) headingDegrees;
-                geospatialPoseData[6] = (float) headingAccuracy;
-                ByteBuffer payload = ByteBuffer.allocate(4 * 7);
-                FloatBuffer floatBuffer = payload.asFloatBuffer();
-                floatBuffer.put(geospatialPoseData);
+                    System.out.println("RECORDING DATA: " + Arrays.toString(geospatialPoseData));
 
-                System.out.println("RECORDING DATA: " + Arrays.toString(geospatialPoseData));
-
-                try {
-                    frame.recordTrackData(TAP_TRACK_ID, payload);
-                } catch (IllegalStateException e) {
-                    Log.e(TAG, "Error in recording tap input into external data track.", e);
+                    try {
+                        frame.recordTrackData(TAP_TRACK_ID, payload);
+                    } catch (IllegalStateException e) {
+                        Log.e(TAG, "Error in recording tap input into external data track.", e);
+                    }
                 }
             }
 
             createAnchor(earth, latitude, longitude, altitude, headingDegrees);
-            storeAnchorParameters(latitude, longitude, altitude, headingDegrees);
+            //storeAnchorParameters(latitude, longitude, altitude, headingDegrees);
             runOnUiThread(() -> clearAnchorsButton.setVisibility(View.VISIBLE));
             if (clearedAnchorsAmount != null) {
                 clearedAnchorsAmount = null;
@@ -1216,9 +1217,9 @@ public class GeospatialActivity extends AppCompatActivity
         if (geospatialPose.getHorizontalAccuracy() <= LOCALIZING_HORIZONTAL_ACCURACY_THRESHOLD_METERS
                 && geospatialPose.getHeadingAccuracy() <= LOCALIZING_HEADING_ACCURACY_THRESHOLD_DEGREES) {
             state = State.LOCALIZED;
-            if (anchors.isEmpty()) {
-                createAnchorFromSharedPreferences(earth);
-            }
+//            if (anchors.isEmpty()) {
+//                createAnchorFromSharedPreferences(earth);
+//            }
             runOnUiThread(
                     () -> {
                         setAnchorButton.setVisibility(View.VISIBLE);
