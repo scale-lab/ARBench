@@ -50,6 +50,7 @@ import androidx.lifecycle.LifecycleOwner
 import benchmark.augmented_image.AugmentedImageActivity
 import benchmark.augmented_object_generation.AugmentedObjectGenerationActivity
 import benchmark.augmented_object_recognition.classification.DetectedObjectResult
+import benchmark.augmented_object_recognition.classification.GoogleCloudVisionDetector
 import benchmark.augmented_object_recognition.classification.MLKitObjectDetector
 import benchmark.augmented_object_recognition.classification.ObjectDetector
 import benchmark.augmented_object_recognition.render.LabelRender
@@ -98,6 +99,7 @@ class AppRenderer(val recognitionActivity: AugmentedObjectRecognitionActivity) :
   var scanButtonWasPressed = false
 
   val mlKitAnalyzer = MLKitObjectDetector(recognitionActivity)
+  val gcpAnalyzer = GoogleCloudVisionDetector(recognitionActivity)
 
   var currentAnalyzer: ObjectDetector = mlKitAnalyzer
   var currentPhase = 1
@@ -159,6 +161,11 @@ class AppRenderer(val recognitionActivity: AugmentedObjectRecognitionActivity) :
   fun bindView(viewRecognition: AugmentedObjectRecognitionActivityView) {
     this.viewRecognition = viewRecognition
 
+    val gcpConfigured = gcpAnalyzer.credentials != null
+    currentAnalyzer = if (gcpConfigured && recognitionActivity.useCloud) gcpAnalyzer else mlKitAnalyzer
+    println("gcpConfigured: $gcpConfigured")
+    println("recognitionActivity.useCloud: ${recognitionActivity.useCloud}")
+    println("CURRENT ANALYZER: $currentAnalyzer")
     trackingStateHelper = TrackingStateHelper(viewRecognition.recognitionActivity)
   }
 

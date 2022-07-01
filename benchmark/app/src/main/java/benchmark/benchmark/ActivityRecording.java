@@ -67,6 +67,10 @@ public class ActivityRecording {
         return sectionName;
     }
 
+    public boolean isUsingCloud() {
+        return useCloud;
+    }
+
     public boolean isEnabled() {
         return enabled;
     }
