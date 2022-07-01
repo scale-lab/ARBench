@@ -636,12 +636,12 @@ public class GeospatialActivity extends AppCompatActivity
                         headingAccuracy = geospatialPoseData[6];
                         break;
                     }
-                }
-                createAnchor(earth, latitude, longitude, altitude, headingDegrees);
-                //storeAnchorParameters(latitude, longitude, altitude, headingDegrees);
-                runOnUiThread(() -> clearAnchorsButton.setVisibility(View.VISIBLE));
-                if (clearedAnchorsAmount != null) {
-                    clearedAnchorsAmount = null;
+                    createAnchor(earth, latitude, longitude, altitude, headingDegrees);
+                    //storeAnchorParameters(latitude, longitude, altitude, headingDegrees);
+                    runOnUiThread(() -> clearAnchorsButton.setVisibility(View.VISIBLE));
+                    if (clearedAnchorsAmount != null) {
+                        clearedAnchorsAmount = null;
+                    }
                 }
             } else if (setAnchorButton.isPressed()) {
                 System.out.println("SET ANCHOR BUTTON PRESSED");
