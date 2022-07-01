@@ -621,22 +621,29 @@ public class GeospatialActivity extends AppCompatActivity
             if (session.getPlaybackStatus() == PlaybackStatus.OK) {
                 Collection<TrackData> trackDataList = frame.getUpdatedTrackData(TAP_TRACK_ID);
 
-                for (TrackData trackData : frame.getUpdatedTrackData(TAP_TRACK_ID)) {
-                    ByteBuffer payload = trackData.getData();
-                    FloatBuffer floatBuffer = payload.asFloatBuffer();
-                    float[] geospatialPoseData = new float[7];
-                    floatBuffer.get(geospatialPoseData);
-                    latitude = geospatialPoseData[0];
-                    longitude = geospatialPoseData[1];
-                    verticalAccuracy = geospatialPoseData[2];
-                    horizontalAccuracy = geospatialPoseData[3];
-                    altitude = geospatialPoseData[4];
-                    headingDegrees = geospatialPoseData[5];
-                    headingAccuracy = geospatialPoseData[6];
-                    break;
+                if !trackDataList.isEmpty() {
+                    for (TrackData trackData : frame.getUpdatedTrackData(TAP_TRACK_ID)) {
+                        ByteBuffer payload = trackData.getData();
+                        FloatBuffer floatBuffer = payload.asFloatBuffer();
+                        float[] geospatialPoseData = new float[7];
+                        floatBuffer.get(geospatialPoseData);
+                        latitude = geospatialPoseData[0];
+                        longitude = geospatialPoseData[1];
+                        verticalAccuracy = geospatialPoseData[2];
+                        horizontalAccuracy = geospatialPoseData[3];
+                        altitude = geospatialPoseData[4];
+                        headingDegrees = geospatialPoseData[5];
+                        headingAccuracy = geospatialPoseData[6];
+                        break;
+                    }
                 }
-
-            } else if (setAnchorButton.isPressed()){
+                createAnchor(earth, latitude, longitude, altitude, headingDegrees);
+                //storeAnchorParameters(latitude, longitude, altitude, headingDegrees);
+                runOnUiThread(() -> clearAnchorsButton.setVisibility(View.VISIBLE));
+                if (clearedAnchorsAmount != null) {
+                    clearedAnchorsAmount = null;
+                }
+            } else if (setAnchorButton.isPressed()) {
                 System.out.println("SET ANCHOR BUTTON PRESSED");
                 GeospatialPose geospatialPose = earth.getCameraGeospatialPose();
                 latitude = geospatialPose.getLatitude();
@@ -667,13 +674,12 @@ public class GeospatialActivity extends AppCompatActivity
                         Log.e(TAG, "Error in recording tap input into external data track.", e);
                     }
                 }
-            }
-
-            createAnchor(earth, latitude, longitude, altitude, headingDegrees);
-            //storeAnchorParameters(latitude, longitude, altitude, headingDegrees);
-            runOnUiThread(() -> clearAnchorsButton.setVisibility(View.VISIBLE));
-            if (clearedAnchorsAmount != null) {
-                clearedAnchorsAmount = null;
+                createAnchor(earth, latitude, longitude, altitude, headingDegrees);
+                //storeAnchorParameters(latitude, longitude, altitude, headingDegrees);
+                runOnUiThread(() -> clearAnchorsButton.setVisibility(View.VISIBLE));
+                if (clearedAnchorsAmount != null) {
+                    clearedAnchorsAmount = null;
+                }
             }
         }
 
