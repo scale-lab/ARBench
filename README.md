@@ -2,7 +2,7 @@
 Benchmark for Mobile Augmented Reality Applications. For citations, please use this information:\
 S. Chetoui, R. Shah, S. Abdelaziz, A. Golas, F. Hijaz and S. Reda
 [ARBench: Augmented Reality Benchmark For Mobile Devices](https://ieeexplore.ieee.org/abstract/document/9804625/)
-IEEE Symposium on Performance Analysis of Systems and Software (ISPASS)
+IEEE Symposium on Performance Analysis of Systems and Software (ISPASS), 2022.
 
 ## Getting Started
 
