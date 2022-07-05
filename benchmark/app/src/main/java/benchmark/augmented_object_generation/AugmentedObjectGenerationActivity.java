@@ -736,7 +736,7 @@ public class AugmentedObjectGenerationActivity extends AppCompatActivity impleme
     // Update lighting parameters in the shader
     updateLightEstimation(frame.getLightEstimate(), viewMatrix);
 
-    // Setup OpenGL time queries. Queries are organized in a queueso that new queries can be made while the old result becomes
+    // Setup OpenGL time queries. Queries are organized in a queues that new queries can be made while the old result becomes
     // available.
     if (!hasTimerExtension) {
       messageSnackbarHelper.showError(this, "OpenGL extension EXT_disjoint_timer_query is unavailable on this device");
