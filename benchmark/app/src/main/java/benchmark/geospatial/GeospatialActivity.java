@@ -129,6 +129,7 @@ import benchmark.common.helpers.LocationPermissionHelper;
 import benchmark.common.helpers.SnackbarHelper;
 import benchmark.common.helpers.TrackingStateHelper;
 import benchmark.common.samplerender.Framebuffer;
+import benchmark.common.samplerender.GLError;
 import benchmark.common.samplerender.Mesh;
 import benchmark.common.samplerender.OffscreenRender;
 import benchmark.common.samplerender.SampleRender;
@@ -564,12 +565,16 @@ public class GeospatialActivity extends AppCompatActivity
             Log.e(TAG, "Failed to read a required asset file", e);
             messageSnackbarHelper.showError(this, "Failed to read a required asset file: " + e);
         }
+
+        String extensions = GLES30.glGetString(GLES30.GL_EXTENSIONS);
+        hasTimerExtension = extensions.contains(" GL_EXT_disjoint_timer_query ");
     }
 
     @Override
     public void onSurfaceChanged(SampleRender render, int width, int height) {
         displayRotationHelper.onSurfaceChanged(width, height);
         virtualSceneFramebuffer.resize(width, height);
+        GLES30.glViewport(0, 0, width, height);
     }
 
     @Override
@@ -595,8 +600,6 @@ public class GeospatialActivity extends AppCompatActivity
             finish();
             return;
         }
-
-        render.clear(null, 0f, 0f, 0f, 1f);
 
         // Texture names should only be set once on a GL thread unless they change. This is done during
         // onDrawFrame rather than onSurfaceCreated since the session is not guaranteed to have been
@@ -785,8 +788,29 @@ public class GeospatialActivity extends AppCompatActivity
 
         handleInputTime = System.currentTimeMillis() - handleInputTime;
 
+        // Setup OpenGL time queries. Queries are organized in a queues that new queries can be made while the old result becomes
+        // available.
+        if (!hasTimerExtension) {
+            messageSnackbarHelper.showError(this, "OpenGL extension EXT_disjoint_timer_query is unavailable on this device");
+            return;
+        }
+        if (timeQueries[queryIndex] < 0) {
+            GLES30.glGenQueries(1, timeQueries, queryIndex);
+        }
+        // Pop query off queue and fetch its result.
+        if (timeQueries[(queryIndex + 1) % NUM_QUERIES] >= 0) {
+            IntBuffer queryResult = IntBuffer.allocate(1);
+            GLES30.glGetQueryObjectuiv(timeQueries[(queryIndex + 1) % NUM_QUERIES], GLES30.GL_QUERY_RESULT_AVAILABLE, queryResult);
+            if (queryResult.get() == GLES30.GL_TRUE) {
+                GLES30.glGetQueryObjectuiv(timeQueries[(queryIndex + 1) % NUM_QUERIES], GLES30.GL_QUERY_RESULT, queryBuffer, 0);
+            }
+        }
+        // Begin query for current frame.
+        GLES30.glBeginQuery(TIME_ELAPSED_EXT, timeQueries[queryIndex]);
+
         // Visualize anchors created by touch.
         render.clear(virtualSceneFramebuffer, 0f, 0f, 0f, 0f);
+
         for (Anchor anchor : anchors) {
             // Get the current pose of an Anchor in world space. The Anchor pose is updated
             // during calls to session.update() as ARCore refines its estimate of the world.
@@ -800,6 +824,17 @@ public class GeospatialActivity extends AppCompatActivity
             virtualObjectShader.setMat4("u_ModelViewProjection", modelViewProjectionMatrix);
 
             render.draw(virtualObjectMesh, virtualObjectShader, virtualSceneFramebuffer);
+
+            GLES30.glEndQuery(TIME_ELAPSED_EXT);
+            queryIndex = (queryIndex + 1) % NUM_QUERIES;
+            try {
+                if (fpsLog != null) {
+                    fpsLog.write(currentPhase + "," + frameTime + "," + processTime + "," + handleInputTime + "," + queryBuffer[0] + "," + (System.currentTimeMillis() - frameTime) + "\n");
+                }
+            } catch (IOException e) {
+                Log.e(TAG, "Failed to log frame data", e);
+            }
+
         }
 
         // Compose the virtual scene with the background.
