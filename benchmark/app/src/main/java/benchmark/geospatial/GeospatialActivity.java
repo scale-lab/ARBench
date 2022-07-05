@@ -291,6 +291,7 @@ public class GeospatialActivity extends AppCompatActivity
         });
         RelativeLayout mainLayout =  findViewById(R.id.layout_main);
         mainLayout.addView(surfaceView);
+
         // Onscreen
 //        surfaceView.setPreserveEGLContextOnPause(true);
 //        surfaceView.setEGLContextClientVersion(2);
@@ -328,6 +329,7 @@ public class GeospatialActivity extends AppCompatActivity
             messageSnackbarHelper.showError(this, "Could not open file to log FPS");
         }
 
+        // Queries are initialized in onDrawFrame
         timeQueries = new int[NUM_QUERIES];
         queryBuffer = new int[1];
         queryBuffer[0] = 0;
@@ -531,6 +533,8 @@ public class GeospatialActivity extends AppCompatActivity
 
     @Override
     public void onSurfaceCreated(SampleRender render) {
+        GLES30.glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+
         // Prepare the rendering objects. This involves reading shaders and 3D model files, so may throw
         // an IOException.
         try {
@@ -591,6 +595,7 @@ public class GeospatialActivity extends AppCompatActivity
             finish();
             return;
         }
+
         render.clear(null, 0f, 0f, 0f, 1f);
 
         // Texture names should only be set once on a GL thread unless they change. This is done during
@@ -621,6 +626,7 @@ public class GeospatialActivity extends AppCompatActivity
             messageSnackbarHelper.showError(this, "Camera not available. Try restarting the app.");
             return;
         }
+
         Camera camera = frame.getCamera();
 
         // BackgroundRenderer.updateDisplayGeometry must be called every frame to update the coordinates
@@ -704,6 +710,7 @@ public class GeospatialActivity extends AppCompatActivity
 
         // Get camera matrix and draw.
         camera.getViewMatrix(viewMatrix, 0);
+        Matrix.multiplyMM(modelViewProjectionMatrix, 0, projectionMatrix, 0, viewMatrix, 0);
 
         // Input Handling Time
         long handleInputTime = System.currentTimeMillis();
@@ -711,6 +718,7 @@ public class GeospatialActivity extends AppCompatActivity
 
         if (setAnchorButton.isPressed() && earth != null && earth.getTrackingState() == TrackingState.TRACKING) {
             System.out.println("SET ANCHOR BUTTON PRESSED");
+            handleInputTime = System.currentTimeMillis() - handleInputTime;
             GeospatialPose geospatialPose = earth.getCameraGeospatialPose();
             double latitude = geospatialPose.getLatitude();
             double longitude = geospatialPose.getLongitude();
