@@ -80,7 +80,7 @@ public class BenchmarkActivity extends AppCompatActivity {
             new ActivityRecording(AugmentedFacesActivity.class, "aug-faces-1.mp4", "Augmented Faces", false),
             new ActivityRecording(AugmentedImageActivity.class, "aug-img-1.mp4", "Augmented Image", false),
             new ActivityRecording(AugmentedObjectRecognitionActivity.class, "aug-obj-rcg-1.mp4", "Object Recognition", false),
-//            new ActivityRecording(AugmentedObjectRecognitionActivity.class, "aug-obj-rcg-2.mp4", "Object Recognition", true, false, true),
+            new ActivityRecording(AugmentedObjectRecognitionActivity.class, "aug-obj-rcg-1.mp4", "Object Recognition", true, false, true),
             new ActivityRecording(GeospatialActivity.class, "aug-geo-1.mp4", "Geospatial", true, true, false),
     };
 
@@ -120,12 +120,6 @@ public class BenchmarkActivity extends AppCompatActivity {
                         checkBox.setChecked(false);
                         checkBox.setEnabled(false);
                         checkBox.setText(checkBox.getText() + "\nMissing GCP Keys");
-//                        checkBox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-//                            @Override
-//                            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-//                                if (isChecked) buttonView.setChecked(false);
-//                            }
-//                        });
                     }
                 }
 
@@ -136,12 +130,6 @@ public class BenchmarkActivity extends AppCompatActivity {
                         checkBox.setChecked(false);
                         checkBox.setEnabled(false);
                         checkBox.setText(checkBox.getText() + "\nMissing Credentials File");
-//                        checkBox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-//                            @Override
-//                            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-//                                if (isChecked) buttonView.setChecked(false);
-//                            }
-//                        });
                     }
                 }
             }
@@ -222,6 +210,7 @@ public class BenchmarkActivity extends AppCompatActivity {
             if (ACTIVITY_RECORDINGS[i].isEnabled()) {
                 Intent intent = new Intent(this, ACTIVITY_RECORDINGS[i].getActivity());
                 intent.putExtra(ACTIVITY_NUMBER, i);
+                intent.putExtra("useCloud", ACTIVITY_RECORDINGS[i].isUsingCloud());
                 startActivityForResult(intent, i);
                 break;
             }
@@ -255,6 +244,7 @@ public class BenchmarkActivity extends AppCompatActivity {
             if (ACTIVITY_RECORDINGS[i].isEnabled()) {
                 Intent intent = new Intent(this, ACTIVITY_RECORDINGS[i].getActivity());
                 intent.putExtra(ACTIVITY_NUMBER, i);
+                intent.putExtra("useCloud", ACTIVITY_RECORDINGS[i].isUsingCloud());
                 startActivityForResult(intent, i);
                 flag = true;
                 break;
@@ -289,7 +279,7 @@ public class BenchmarkActivity extends AppCompatActivity {
                 continue;
             }
             String recordingName = ACTIVITY_RECORDINGS[testNumber].getRecordingFileName();
-            String sectionName = ACTIVITY_RECORDINGS[testNumber].getSectionName();
+            String sectionName = ACTIVITY_RECORDINGS[testNumber].getSectionName() + (ACTIVITY_RECORDINGS[testNumber].isUsingCloud() ? " (Cloud)" : "");
             int currentPhase = 1;
             long startTime = 0, t = 0;
             long process = 0, maxInput = 0, total = 0;
