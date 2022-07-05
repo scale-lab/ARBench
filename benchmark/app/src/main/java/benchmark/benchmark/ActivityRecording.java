@@ -29,7 +29,7 @@ public class ActivityRecording {
     private String recordingFileName;
     private String sectionName;
     private boolean enabled;
-    private boolean useCloud;
+    private final boolean useCloud;
     private boolean requiresCredentialsFile;
     private boolean requiresGCPKeys;
 
@@ -67,16 +67,12 @@ public class ActivityRecording {
         return sectionName;
     }
 
+    public boolean isUsingCloud() {
+        return useCloud;
+    }
+
     public boolean isEnabled() {
         return enabled;
-    }
-
-    public void setRecordingFileName(String recordingFileName) {
-        this.recordingFileName = recordingFileName;
-    }
-
-    public void setSectionName(String sectionName) {
-        this.sectionName = sectionName;
     }
 
     public void setEnabled(boolean enabled) {
