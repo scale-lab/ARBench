@@ -108,13 +108,9 @@ import com.google.ar.core.exceptions.UnavailableSdkTooOldException;
 import com.google.ar.core.exceptions.UnavailableUserDeclinedInstallationException;
 import com.google.ar.core.exceptions.UnsupportedConfigurationException;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
 import java.text.SimpleDateFormat;
@@ -248,7 +244,7 @@ public class GeospatialActivity extends AppCompatActivity
     public enum RecordingAppState {
         Idle,
         Recording,
-        Playingback
+        Playback
     }
 
     private RecordingAppState recordingAppState = RecordingAppState.Idle;
@@ -259,7 +255,6 @@ public class GeospatialActivity extends AppCompatActivity
         sharedPreferences = getPreferences(Context.MODE_PRIVATE);
 
         setContentView(R.layout.activity_main);
-        surfaceView = findViewById(R.id.surfaceview);
         geospatialPoseTextView = findViewById(R.id.geospatial_pose_view);
         statusTextView = findViewById(R.id.status_text_view);
         setAnchorButton = findViewById(R.id.set_anchor_button);
@@ -394,7 +389,6 @@ public class GeospatialActivity extends AppCompatActivity
             session = null;
             messageSnackbarHelper.showError(this, message);
             Log.e(TAG, "Exception configuring and resuming the session", exception);
-            return;
         }
     }
 
@@ -507,10 +501,10 @@ public class GeospatialActivity extends AppCompatActivity
         // the video background can be properly adjusted.
         displayRotationHelper.updateSessionIfNeeded(session);
 
-        if (recordingAppState == RecordingAppState.Playingback
+        if (recordingAppState == RecordingAppState.Playback
                 && session.getPlaybackStatus() == PlaybackStatus.FINISHED
         ) {
-            runOnUiThread(this::stopPlayingback);
+            runOnUiThread(this::stopPlayback);
             return;
         }
 
@@ -711,7 +705,7 @@ public class GeospatialActivity extends AppCompatActivity
                 break;
 
             // During playback, the "Record" button is not visible.
-            case Playingback:
+            case Playback:
                 recordButton.setVisibility(View.INVISIBLE);
                 break;
         }
@@ -735,7 +729,7 @@ public class GeospatialActivity extends AppCompatActivity
                 break;
 
             // During playback, the "Record" button is not visible.
-            case Playingback:
+            case Playback:
                 setAnchorButton.setVisibility(View.INVISIBLE);
                 clearAnchorsButton.setVisibility(View.INVISIBLE);
                 break;
@@ -792,8 +786,8 @@ public class GeospatialActivity extends AppCompatActivity
             }
 
             // If the app is playing back, stop playing back.
-            case Playingback: {
-                boolean hasStopped = stopPlayingback();
+            case Playback: {
+                boolean hasStopped = stopPlayback();
                 Log.d(TAG, String.format("onClickPlayback stop: hasStopped %b", hasStopped));
                 break;
             }
@@ -849,7 +843,7 @@ public class GeospatialActivity extends AppCompatActivity
         String localFilePath = copyToInternalFilePath(mp4Uri);
 
         // Begin playback.
-        startPlayingback(localFilePath);
+        startPlayback(localFilePath);
     }
 
     private String copyToInternalFilePath(Uri contentUri) {
@@ -879,18 +873,18 @@ public class GeospatialActivity extends AppCompatActivity
         return tempPlaybackFilePath;
     }
 
-    private boolean startPlayingback(String mp4FilePath) {
+    private boolean startPlayback(String mp4FilePath) {
         if (mp4FilePath == null)
             return false;
 
-        Log.d(TAG, "startPlayingback at:" + mp4FilePath);
+        Log.d(TAG, "startPlayback at:" + mp4FilePath);
 
         pauseARCoreSession();
 
         try {
             session.setPlaybackDataset(mp4FilePath);
         } catch (PlaybackFailedException e) {
-            Log.e(TAG, "startPlayingback - setPlaybackDataset failed", e);
+            Log.e(TAG, "startPlayback - setPlaybackDataset failed", e);
         }
 
         // The session's camera texture name becomes invalid when the
@@ -904,23 +898,23 @@ public class GeospatialActivity extends AppCompatActivity
             return false;
 
         PlaybackStatus playbackStatus = session.getPlaybackStatus();
-        Log.d(TAG, String.format("startPlayingback - playbackStatus %s", playbackStatus));
+        Log.d(TAG, String.format("startPlayback - playbackStatus %s", playbackStatus));
 
 
         if (playbackStatus != PlaybackStatus.OK) { // Correctness check
             return false;
         }
 
-        recordingAppState = RecordingAppState.Playingback;
+        recordingAppState = RecordingAppState.Playback;
         updateRecordButton();
         updatePlaybackButton();
         updateAnchorButtons();
         return true;
     }
 
-    private boolean stopPlayingback() {
+    private boolean stopPlayback() {
         // Correctness check, only stop playing back when the app is playing back.
-        if (recordingAppState != recordingAppState.Playingback)
+        if (recordingAppState != recordingAppState.Playback)
             return false;
 
         pauseARCoreSession();
@@ -963,7 +957,7 @@ public class GeospatialActivity extends AppCompatActivity
                 break;
 
             // While playing back, the "Playback" button is visible and says "Stop".
-            case Playingback:
+            case Playback:
                 playbackButton.setText("Stop");
                 playbackButton.setVisibility(View.VISIBLE);
                 break;

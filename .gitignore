@@ -4,3 +4,4 @@ ar-apps/geospatial/app/src/main/res/values/api_keys.xml
 ar-apps/geospatial_with_map/app/src/main/res/values/api_keys.xml
 benchmark/app/src/main/res/values/api_keys.xml
 benchmark/app/src/main/res/raw/credentials.json
+benchmark/app/src/main/assets/recordings/aug-geo-1.mp4
