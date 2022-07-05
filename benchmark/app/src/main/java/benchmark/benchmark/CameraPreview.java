@@ -24,16 +24,18 @@ public class CameraPreview extends TextureView implements TextureView.SurfaceTex
         setLayoutParams(new FrameLayout.LayoutParams(
                 previewSize.width, previewSize.height, Gravity.CENTER));
 
-        try{
+        try {
             camera.setPreviewTexture(surface);
-        } catch (IOException t) {}
+        } catch (IOException t) {
+        }
 
         camera.startPreview();
         this.setVisibility(INVISIBLE);
     }
 
     @Override
-    public void onSurfaceTextureSizeChanged(SurfaceTexture surface, int width, int height) { }
+    public void onSurfaceTextureSizeChanged(SurfaceTexture surface, int width, int height) {
+    }
 
     @Override
     public boolean onSurfaceTextureDestroyed(SurfaceTexture surface) {
@@ -41,5 +43,6 @@ public class CameraPreview extends TextureView implements TextureView.SurfaceTex
     }
 
     @Override
-    public void onSurfaceTextureUpdated(SurfaceTexture surface) { }
+    public void onSurfaceTextureUpdated(SurfaceTexture surface) {
+    }
 }

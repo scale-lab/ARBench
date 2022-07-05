@@ -65,12 +65,14 @@ class AugmentedObjectRecognitionActivity : AppCompatActivity() {
 
   var fileName: String? = null
   var currentPhase = 1
+  var useCloud = false;
 
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
 
     val intent = getIntent()
     val activityNumber = intent.getIntExtra(BenchmarkActivity.ACTIVITY_NUMBER, 0)
+    useCloud = intent.getBooleanExtra("useCloud", false);
     fileName = BenchmarkActivity.ACTIVITY_RECORDINGS[activityNumber].recordingFileName
     val f = File(getExternalFilesDir(null).toString() + "/" + fileName)
     if (!f.exists()) try {

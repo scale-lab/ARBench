@@ -279,6 +279,7 @@ public class AugmentedObjectGenerationActivity extends AppCompatActivity impleme
     });
     RelativeLayout mainLayout =  findViewById(R.id.layout_main);
     mainLayout.addView(surfaceView);
+
     // Onscreen
     // render = new SampleRender(surfaceView, this, getAssets());
 

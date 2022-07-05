@@ -19,8 +19,11 @@
     package="benchmark.benchmark">
 
   <uses-permission android:name="android.permission.CAMERA"/>
-  <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
-      android:maxSdkVersion="29" />
+  <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+  <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
+  <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
+  <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
+  <uses-permission android:name="android.permission.INTERNET"/>
 
   <!-- Limits app visibility in the Google Play Store to ARCore supported devices
        (https://developers.google.com/ar/discover/supported-devices). -->
@@ -97,6 +100,18 @@
 
     <activity
         android:name="benchmark.augmented_object_recognition.AugmentedObjectRecognitionActivity"
+        android:parentActivityName="benchmark.benchmark.BenchmarkActivity"
+        android:configChanges="orientation|screenSize"
+        android:exported="true"
+        android:theme="@style/Theme.AppCompat.NoActionBar"
+        android:screenOrientation="locked">
+      <meta-data
+          android:name="android.support.PARENT_ACTIVITY"
+          android:value="benchmark.benchmark.BenchmarkActivity"/>
+    </activity>
+
+    <activity
+        android:name="benchmark.geospatial.GeospatialActivity"
         android:parentActivityName="benchmark.benchmark.BenchmarkActivity"
         android:configChanges="orientation|screenSize"
         android:exported="true"
