@@ -105,7 +105,7 @@ public class BenchmarkActivity extends AppCompatActivity {
         for (int i = 0; i < ACTIVITY_RECORDINGS.length; i++) {
             ActivityRecording activityRecording = ACTIVITY_RECORDINGS[i];
             ConstraintLayout constraintLayout = new ConstraintLayout(this);
- 
+
 
             CheckBox checkBox = new CheckBox(this);
             checkBox.setChecked(true);
