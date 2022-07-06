@@ -26,12 +26,24 @@ package benchmark.benchmark;
 
 public class ActivityRecording {
     private Class<?> activity;
-    private String recordingFileName;
-    private String sectionName;
+    private final String recordingFileName;
+    private final String sectionName;
     private boolean enabled;
     private final boolean useCloud;
+    private final boolean isConfigurable;
     private boolean requiresCredentialsFile;
     private boolean requiresGCPKeys;
+
+    public ActivityRecording(Class<?> activity, String recordingFileName, String sectionName, Boolean useCloud, Boolean requiresGCPKeys, Boolean requiresCredentialsFile, Boolean isConfigurable) {
+        this.activity = activity;
+        this.recordingFileName = recordingFileName;
+        this.sectionName = sectionName;
+        this.enabled = true;
+        this.useCloud = useCloud;
+        this.requiresCredentialsFile = requiresCredentialsFile;
+        this.requiresGCPKeys = requiresGCPKeys;
+        this.isConfigurable = isConfigurable;
+    }
 
     public ActivityRecording(Class<?> activity, String recordingFileName, String sectionName, Boolean useCloud, Boolean requiresGCPKeys, Boolean requiresCredentialsFile) {
         this.activity = activity;
@@ -41,6 +53,7 @@ public class ActivityRecording {
         this.useCloud = useCloud;
         this.requiresCredentialsFile = requiresCredentialsFile;
         this.requiresGCPKeys = requiresGCPKeys;
+        this.isConfigurable = false;
     }
 
     public ActivityRecording(Class<?> activity, String recordingFileName, String sectionName, Boolean useCloud) {
@@ -49,6 +62,7 @@ public class ActivityRecording {
         this.sectionName = sectionName;
         this.enabled = true;
         this.useCloud = useCloud;
+        this.isConfigurable = false;
     }
 
     public Class<?> getActivity() {
@@ -73,6 +87,10 @@ public class ActivityRecording {
 
     public boolean isEnabled() {
         return enabled;
+    }
+
+    public boolean isConfigurable() {
+        return isConfigurable;
     }
 
     public void setEnabled(boolean enabled) {

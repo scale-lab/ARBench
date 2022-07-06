@@ -30,12 +30,14 @@ import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.drawable.Icon;
 import android.hardware.Camera;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.CheckBox;
 import android.widget.FrameLayout;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -43,6 +45,7 @@ import android.widget.TextView;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.SwitchCompat;
+import androidx.constraintlayout.widget.ConstraintLayout;
 
 import com.google.auth.oauth2.GoogleCredentials;
 
@@ -74,7 +77,7 @@ public class BenchmarkActivity extends AppCompatActivity {
             new ActivityRecording(AugmentedImageActivity.class, "aug-img-1.mp4", "Augmented Image", false),
             new ActivityRecording(GeospatialActivity.class, "aug-geo-1.mp4", "Geospatial", true, true, false),
             new ActivityRecording(AugmentedObjectRecognitionActivity.class, "aug-obj-rcg-1.mp4", "Object Recognition", false),
-            new ActivityRecording(AugmentedObjectRecognitionActivity.class, "aug-obj-rcg-1.mp4", "Object Recognition", true, false, true),
+            new ActivityRecording(AugmentedObjectRecognitionActivity.class, "aug-obj-rcg-1.mp4", "Object Recognition", true, false, true, true),
     };
 
     private LinearLayout resultsDisplay;
@@ -91,7 +94,7 @@ public class BenchmarkActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        resultsDisplay = (LinearLayout) findViewById(R.id.results_display);
+        resultsDisplay = findViewById(R.id.results_display);
 
         Log.i(TAG, "MARAbenchmark External Files Directory: " + getExternalFilesDir(null).getAbsolutePath());
         TextView textView = new TextView(this);
@@ -101,9 +104,13 @@ public class BenchmarkActivity extends AppCompatActivity {
 
         for (int i = 0; i < ACTIVITY_RECORDINGS.length; i++) {
             ActivityRecording activityRecording = ACTIVITY_RECORDINGS[i];
+            ConstraintLayout constraintLayout = new ConstraintLayout(this);
+ 
+
             CheckBox checkBox = new CheckBox(this);
             checkBox.setChecked(true);
             checkBox.setText(activityRecording.getSectionName() + (activityRecording.doesUseCloud() ? " (Cloud)" : ""));
+            constraintLayout.addView(checkBox);
 
             if (activityRecording.doesUseCloud()) {
                 if (activityRecording.doesRequireGCPKeys()) {
@@ -125,10 +132,16 @@ public class BenchmarkActivity extends AppCompatActivity {
                         checkBox.setText(checkBox.getText() + "\nMissing Credentials File");
                     }
                 }
+
+                if(activityRecording.isConfigurable()) {
+                    ImageButton configureButton = new ImageButton(this);
+                    configureButton.setImageResource(R.drawable.ic_settings);
+                    constraintLayout.addView(configureButton);
+                }
             }
 
             sectionCheckBoxes[i] = checkBox;
-            resultsDisplay.addView(checkBox);
+            resultsDisplay.addView(constraintLayout);
         }
 
         if (!CameraPermissionHelper.hasCameraPermission(this)) {
