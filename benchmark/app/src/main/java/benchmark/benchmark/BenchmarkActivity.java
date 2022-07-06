@@ -72,9 +72,9 @@ public class BenchmarkActivity extends AppCompatActivity {
             new ActivityRecording(AugmentedObjectGenerationActivity.class, "aug-obj-gen-3.mp4", "Scene Overloading", false),
             new ActivityRecording(AugmentedFacesActivity.class, "aug-faces-1.mp4", "Augmented Faces", false),
             new ActivityRecording(AugmentedImageActivity.class, "aug-img-1.mp4", "Augmented Image", false),
+            new ActivityRecording(GeospatialActivity.class, "aug-geo-1.mp4", "Geospatial", true, true, false),
             new ActivityRecording(AugmentedObjectRecognitionActivity.class, "aug-obj-rcg-1.mp4", "Object Recognition", false),
             new ActivityRecording(AugmentedObjectRecognitionActivity.class, "aug-obj-rcg-1.mp4", "Object Recognition", true, false, true),
-            new ActivityRecording(GeospatialActivity.class, "aug-geo-1.mp4", "Geospatial", true, true, false),
     };
 
     private LinearLayout resultsDisplay;
@@ -204,6 +204,7 @@ public class BenchmarkActivity extends AppCompatActivity {
                 Intent intent = new Intent(this, ACTIVITY_RECORDINGS[i].getActivity());
                 intent.putExtra(ACTIVITY_NUMBER, i);
                 intent.putExtra("useCloud", ACTIVITY_RECORDINGS[i].isUsingCloud());
+                intent.addCategory(Intent.CATEGORY_OPENABLE);
                 startActivityForResult(intent, i);
                 break;
             }
