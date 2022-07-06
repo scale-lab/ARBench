@@ -279,7 +279,7 @@ public class BenchmarkActivity extends AppCompatActivity {
             float renderObjects = 0.f;
             try {
                 if (line == null || !line.equals("test " + recordingName)) {
-                    new AlertDialog.Builder(this).setMessage("No frame data for test " + testNumber + 1).show();
+                    new AlertDialog.Builder(this).setMessage(recordingName + ": No frame data for test " + testNumber + 1).show();
                     continue;
                 } else {
                     line = fpsLog.readLine();
