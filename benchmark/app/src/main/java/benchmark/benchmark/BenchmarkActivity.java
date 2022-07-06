@@ -24,21 +24,17 @@
 
 package benchmark.benchmark;
 
-import android.Manifest;
 import android.annotation.SuppressLint;
-import android.app.Activity;
 import android.content.Intent;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.hardware.Camera;
-import android.opengl.GLSurfaceView;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.CheckBox;
-import android.widget.CompoundButton;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -47,7 +43,6 @@ import android.widget.TextView;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.SwitchCompat;
-import androidx.core.app.ActivityCompat;
 
 import com.google.auth.oauth2.GoogleCredentials;
 
@@ -60,12 +55,10 @@ import java.io.IOException;
 
 import benchmark.augmented_faces.AugmentedFacesActivity;
 import benchmark.augmented_image.AugmentedImageActivity;
+import benchmark.augmented_object_generation.AugmentedObjectGenerationActivity;
 import benchmark.augmented_object_recognition.AugmentedObjectRecognitionActivity;
-import benchmark.augmented_object_recognition.classification.GoogleCloudVisionDetector;
 import benchmark.common.helpers.CameraPermissionHelper;
 import benchmark.common.helpers.LocationPermissionHelper;
-import benchmark.common.samplerender.SampleRender;
-import benchmark.augmented_object_generation.AugmentedObjectGenerationActivity;
 import benchmark.geospatial.GeospatialActivity;
 
 public class BenchmarkActivity extends AppCompatActivity {
