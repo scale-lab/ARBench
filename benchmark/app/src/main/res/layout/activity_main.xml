@@ -54,16 +54,6 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 
-    <ImageButton
-        android:id="@+id/settings_button"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentTop="true"
-        android:layout_alignParentEnd="true"
-        android:layout_margin="25dp"
-        android:background="@android:color/transparent"
-        android:src="@drawable/ic_settings" />
-
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent">
