@@ -35,6 +35,7 @@ import android.hardware.Camera;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.CheckBox;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
@@ -45,7 +46,6 @@ import android.widget.TextView;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.SwitchCompat;
-import androidx.constraintlayout.widget.ConstraintLayout;
 
 import com.google.auth.oauth2.GoogleCredentials;
 
@@ -104,13 +104,14 @@ public class BenchmarkActivity extends AppCompatActivity {
 
         for (int i = 0; i < ACTIVITY_RECORDINGS.length; i++) {
             ActivityRecording activityRecording = ACTIVITY_RECORDINGS[i];
-            ConstraintLayout constraintLayout = new ConstraintLayout(this);
-
+            LinearLayout linearLayout = new LinearLayout(this);
+            linearLayout.setOrientation(LinearLayout.HORIZONTAL);
+            linearLayout.setMinimumHeight(150);
 
             CheckBox checkBox = new CheckBox(this);
             checkBox.setChecked(true);
             checkBox.setText(activityRecording.getSectionName() + (activityRecording.doesUseCloud() ? " (Cloud)" : ""));
-            constraintLayout.addView(checkBox);
+            linearLayout.addView(checkBox);
 
             if (activityRecording.doesUseCloud()) {
                 if (activityRecording.doesRequireGCPKeys()) {
@@ -136,12 +137,17 @@ public class BenchmarkActivity extends AppCompatActivity {
                 if(activityRecording.isConfigurable()) {
                     ImageButton configureButton = new ImageButton(this);
                     configureButton.setImageResource(R.drawable.ic_settings);
-                    constraintLayout.addView(configureButton);
+                    configureButton.setLayoutParams(new ViewGroup.LayoutParams(100, 100));
+                    configureButton.setScaleType(ImageView.ScaleType.CENTER);
+                    configureButton.setAdjustViewBounds(true);
+                    configureButton.setBackground(null);
+                    configureButton.setPadding(10, 10, 10, 10);
+                    linearLayout.addView(configureButton);
                 }
             }
 
             sectionCheckBoxes[i] = checkBox;
-            resultsDisplay.addView(constraintLayout);
+            resultsDisplay.addView(linearLayout);
         }
 
         if (!CameraPermissionHelper.hasCameraPermission(this)) {
