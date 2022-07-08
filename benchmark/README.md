@@ -2,6 +2,10 @@
 
 This app includes six sections that represent different Augmented Reality workloads. For each section chosen by the user, the app plays back a recorded user session in an AR application. The performance metrics for each section are then reported.
 
+## Prerequisites
+ * [Obtain a credentials.json file (Required for Geospatial section)](https://github.com/scale-lab/ARBench/tree/main/ar-apps/geospatial)
+ * [Obtain a object recognition model and a Google Cloud API key (Required for Augmented Object Recognition section)](https://github.com/scale-lab/ARBench/tree/main/ar-apps/augmented_object_recognition)
+
 ## Running the Benchmark
 1. Open the project in Android Studio. Click Run to launch the app on your device.
 2. Select the sections to run and click on Start Benchmark.
