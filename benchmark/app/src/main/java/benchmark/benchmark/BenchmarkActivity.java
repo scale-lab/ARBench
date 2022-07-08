@@ -34,6 +34,8 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.drawable.Icon;
 import android.hardware.Camera;
+import android.media.MediaMetadataRetriever;
+import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -276,10 +278,14 @@ public class BenchmarkActivity extends AppCompatActivity {
 
         for (int i = 0; i < ACTIVITY_RECORDINGS.length; i++) {
             if (ACTIVITY_RECORDINGS[i].isEnabled()) {
+                File imageFile = new File(getExternalFilesDir(null) + "/" + ACTIVITY_RECORDINGS[i].getRecordingFileName().replace(".mp4", ".jpg"));
+                long ms = getVideoDuration(imageFile);
+
                 Intent intent = new Intent(this, ACTIVITY_RECORDINGS[i].getActivity());
                 intent.putExtra(ACTIVITY_NUMBER, i);
                 intent.putExtra("useCloud", ACTIVITY_RECORDINGS[i].isUsingCloud());
                 intent.putExtra("cloudPercentage", ACTIVITY_RECORDINGS[i].getCloudPercentage());
+                intent.putExtra("duration", ms);
                 intent.addCategory(Intent.CATEGORY_OPENABLE);
                 startActivityForResult(intent, i);
                 break;
@@ -424,6 +430,15 @@ public class BenchmarkActivity extends AppCompatActivity {
                 new AlertDialog.Builder(this).setMessage("Error reading frame data").show();
             }
         }
+    }
+
+    private long getVideoDuration(File videoFile) {
+        MediaMetadataRetriever retriever = new MediaMetadataRetriever();
+        retriever.setDataSource(this, Uri.fromFile(videoFile));
+        String time = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION);
+        long ms = Long.parseLong(time);
+        retriever.release();
+        return ms;
     }
 
     protected void onDestroy() {
