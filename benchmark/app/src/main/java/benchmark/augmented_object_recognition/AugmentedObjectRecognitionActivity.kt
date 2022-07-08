@@ -52,7 +52,6 @@ import com.google.ar.core.Config
 import com.google.ar.core.exceptions.*
 import java.io.*
 
-
 class AugmentedObjectRecognitionActivity : AppCompatActivity() {
   val TAG = "AugmentedObjectActivity"
   lateinit var arCoreSessionHelper: ARCoreSessionLifecycleHelper
@@ -64,8 +63,10 @@ class AugmentedObjectRecognitionActivity : AppCompatActivity() {
   private val REQUEST_MP4_SELECTOR = 1
 
   var fileName: String? = null
-  var currentPhase = 1
-  var useCloud = false;
+  var useCloud = false
+  var videoDuration: Long = 0
+  var cloudPercentage = 0
+  var currentTimestamp: Long = 0
 
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
@@ -74,6 +75,8 @@ class AugmentedObjectRecognitionActivity : AppCompatActivity() {
     val activityNumber = intent.getIntExtra(BenchmarkActivity.ACTIVITY_NUMBER, 0)
     useCloud = intent.getBooleanExtra("useCloud", false);
     fileName = BenchmarkActivity.ACTIVITY_RECORDINGS[activityNumber].recordingFileName
+    cloudPercentage = intent.getIntExtra("cloudPercentage", 0);
+    videoDuration = intent.getLongExtra("duration", 0);
     val f = File(getExternalFilesDir(null).toString() + "/" + fileName)
     if (!f.exists()) try {
       val `is`: InputStream = assets.open("recordings/$fileName")
@@ -143,6 +146,8 @@ class AugmentedObjectRecognitionActivity : AppCompatActivity() {
     Log.d(TAG, "Logging FPS to " + logPath);
     viewRecognition.fpsLog = BufferedWriter(FileWriter(logPath, true));
     viewRecognition.fpsLog?.write("test " + fileName + "\n")
+
+    currentTimestamp = System.currentTimeMillis()
   }
 
   override fun onRequestPermissionsResult(

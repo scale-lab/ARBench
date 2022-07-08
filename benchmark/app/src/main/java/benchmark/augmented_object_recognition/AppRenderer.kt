@@ -47,8 +47,6 @@ import android.opengl.Matrix
 import android.util.Log
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
-import benchmark.augmented_image.AugmentedImageActivity
-import benchmark.augmented_object_generation.AugmentedObjectGenerationActivity
 import benchmark.augmented_object_recognition.classification.DetectedObjectResult
 import benchmark.augmented_object_recognition.classification.GoogleCloudVisionDetector
 import benchmark.augmented_object_recognition.classification.MLKitObjectDetector
@@ -60,7 +58,8 @@ import benchmark.common.helpers.TrackingStateHelper
 import benchmark.common.samplerender.SampleRender
 import benchmark.common.samplerender.arcore.BackgroundRenderer
 import com.google.ar.core.*
-import com.google.ar.core.exceptions.*
+import com.google.ar.core.exceptions.CameraNotAvailableException
+import com.google.ar.core.exceptions.NotYetAvailableException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.MainScope
@@ -110,6 +109,8 @@ class AppRenderer(val recognitionActivity: AugmentedObjectRecognitionActivity) :
   private var timeQueries: IntArray = IntArray(NUM_QUERIES)
   private var queryBuffer: IntArray = IntArray(1)
   private var queryIndex = 0
+
+  var useLocal = false;
 
   private fun cleanupCollectionResources() {
     try {
@@ -162,7 +163,7 @@ class AppRenderer(val recognitionActivity: AugmentedObjectRecognitionActivity) :
     this.viewRecognition = viewRecognition
 
     val gcpConfigured = gcpAnalyzer.credentials != null
-    currentAnalyzer = if (gcpConfigured && recognitionActivity.useCloud) gcpAnalyzer else mlKitAnalyzer
+    currentAnalyzer = if (gcpConfigured && recognitionActivity.useCloud && !useLocal) gcpAnalyzer else mlKitAnalyzer
     println("gcpConfigured: $gcpConfigured")
     println("recognitionActivity.useCloud: ${recognitionActivity.useCloud}")
     println("CURRENT ANALYZER: $currentAnalyzer")
@@ -195,9 +196,16 @@ class AppRenderer(val recognitionActivity: AugmentedObjectRecognitionActivity) :
     val frameTime = System.currentTimeMillis()
 
     var session = recognitionActivity.arCoreSessionHelper.sessionCache ?: return
+
+    var durationPercentage = (frameTime - recognitionActivity.currentTimestamp) / recognitionActivity.videoDuration;
+    if(session.playbackStatus == PlaybackStatus.OK && durationPercentage >= recognitionActivity.cloudPercentage) {
+      useLocal = true;
+      bindView(viewRecognition);
+    }
+
     if (session.playbackStatus == PlaybackStatus.FINISHED) {
       recognitionActivity.arCoreSessionHelper.onDestroy(recognitionActivity) // close session
-      saveLastFrame(viewRecognition.render!!.viewportWidth, viewRecognition.render!!.viewportHeight)
+      saveLastFrame(viewRecognition.render.viewportWidth, viewRecognition.render.viewportHeight)
       try {
         if (viewRecognition.fpsLog != null) {
           viewRecognition.fpsLog?.flush()
