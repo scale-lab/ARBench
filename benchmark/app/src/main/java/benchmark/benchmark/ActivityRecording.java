@@ -33,6 +33,7 @@ public class ActivityRecording {
     private final boolean isConfigurable;
     private boolean requiresCredentialsFile;
     private boolean requiresGCPKeys;
+    private int cloudPercentage;
 
     public ActivityRecording(Class<?> activity, String recordingFileName, String sectionName, Boolean useCloud, Boolean requiresGCPKeys, Boolean requiresCredentialsFile, Boolean isConfigurable) {
         this.activity = activity;
@@ -43,6 +44,7 @@ public class ActivityRecording {
         this.requiresCredentialsFile = requiresCredentialsFile;
         this.requiresGCPKeys = requiresGCPKeys;
         this.isConfigurable = isConfigurable;
+        cloudPercentage = this.useCloud ? 100 : 0;
     }
 
     public ActivityRecording(Class<?> activity, String recordingFileName, String sectionName, Boolean useCloud, Boolean requiresGCPKeys, Boolean requiresCredentialsFile) {
@@ -54,6 +56,8 @@ public class ActivityRecording {
         this.requiresCredentialsFile = requiresCredentialsFile;
         this.requiresGCPKeys = requiresGCPKeys;
         this.isConfigurable = false;
+        cloudPercentage = this.useCloud ? 100 : 0;
+
     }
 
     public ActivityRecording(Class<?> activity, String recordingFileName, String sectionName, Boolean useCloud) {
@@ -63,6 +67,7 @@ public class ActivityRecording {
         this.enabled = true;
         this.useCloud = useCloud;
         this.isConfigurable = false;
+        cloudPercentage = this.useCloud ? 100 : 0;
     }
 
     public Class<?> getActivity() {
@@ -107,5 +112,13 @@ public class ActivityRecording {
 
     public boolean doesRequireGCPKeys() {
         return requiresGCPKeys;
+    }
+
+    public void setCloudPercentage(int cloudPercentage) {
+        this.cloudPercentage = cloudPercentage;
+    }
+
+    public int getCloudPercentage() {
+        return this.getCloudPercentage();
     }
 }
