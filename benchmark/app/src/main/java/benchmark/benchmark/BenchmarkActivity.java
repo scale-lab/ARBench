@@ -25,6 +25,8 @@
 package benchmark.benchmark;
 
 import android.annotation.SuppressLint;
+import android.app.ActionBar;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
@@ -34,6 +36,7 @@ import android.graphics.drawable.Icon;
 import android.hardware.Camera;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.CheckBox;
@@ -41,12 +44,15 @@ import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.SeekBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.SwitchCompat;
 
+import com.google.android.material.slider.Slider;
 import com.google.auth.oauth2.GoogleCredentials;
 
 import java.io.BufferedReader;
@@ -106,7 +112,7 @@ public class BenchmarkActivity extends AppCompatActivity {
             ActivityRecording activityRecording = ACTIVITY_RECORDINGS[i];
             LinearLayout linearLayout = new LinearLayout(this);
             linearLayout.setOrientation(LinearLayout.HORIZONTAL);
-            linearLayout.setMinimumHeight(150);
+            linearLayout.setMinimumHeight(100);
 
             CheckBox checkBox = new CheckBox(this);
             checkBox.setChecked(true);
@@ -142,6 +148,54 @@ public class BenchmarkActivity extends AppCompatActivity {
                     configureButton.setAdjustViewBounds(true);
                     configureButton.setBackground(null);
                     configureButton.setPadding(10, 10, 10, 10);
+
+                    FrameLayout frameLayout = new FrameLayout(this);
+                    frameLayout.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+
+                    LinearLayout sliderLayout = new LinearLayout(this);
+                    sliderLayout.setOrientation(LinearLayout.HORIZONTAL);
+                    sliderLayout.setMinimumHeight(200);
+                    sliderLayout.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+
+                    SeekBar cloudSlider = new SeekBar(this);
+                    cloudSlider.setLayoutParams(new ViewGroup.LayoutParams(100, ViewGroup.LayoutParams.WRAP_CONTENT));
+                    cloudSlider.setMax(100);
+                    cloudSlider.setProgress(100);
+
+                    TextView sliderStartText = new TextView(this);
+                    sliderStartText.setText("0%");
+                    TextView sliderEndText = new TextView(this);
+                    sliderEndText.setText(cloudSlider.getMax() + " %");
+
+                    sliderLayout.addView(sliderStartText);
+                    sliderLayout.addView(cloudSlider);
+                    sliderLayout.addView(sliderEndText);
+                    frameLayout.addView(sliderLayout);
+
+                    cloudSlider.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+                        @Override
+                        public void onProgressChanged(SeekBar seekBar, int i, boolean b) {
+                            Toast.makeText(getApplicationContext(),"Cloud Usage: " + i + "%", Toast.LENGTH_LONG).show();
+                        }
+
+                        @Override
+                        public void onStartTrackingTouch(SeekBar seekBar) {
+
+                        }
+
+                        @Override
+                        public void onStopTrackingTouch(SeekBar seekBar) {
+
+                        }
+                    });
+
+                    configureButton.setOnClickListener(c -> {
+                        new AlertDialog.Builder(this)
+                                .setTitle("Configure Cloud Usage")
+                                .setView(frameLayout)
+                                .show();
+                    });
+
                     linearLayout.addView(configureButton);
                 }
             }
