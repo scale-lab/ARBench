@@ -150,22 +150,23 @@ public class BenchmarkActivity extends AppCompatActivity {
                     configureButton.setPadding(10, 10, 10, 10);
 
                     FrameLayout frameLayout = new FrameLayout(this);
-                    frameLayout.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+                    frameLayout.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
 
                     LinearLayout sliderLayout = new LinearLayout(this);
+                    sliderLayout.setPadding(50, 50, 0, 0);
                     sliderLayout.setOrientation(LinearLayout.HORIZONTAL);
                     sliderLayout.setMinimumHeight(200);
                     sliderLayout.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
 
                     SeekBar cloudSlider = new SeekBar(this);
-                    cloudSlider.setLayoutParams(new ViewGroup.LayoutParams(100, ViewGroup.LayoutParams.WRAP_CONTENT));
+                    cloudSlider.setLayoutParams(new ViewGroup.LayoutParams(600, ViewGroup.LayoutParams.WRAP_CONTENT));
                     cloudSlider.setMax(100);
                     cloudSlider.setProgress(100);
 
                     TextView sliderStartText = new TextView(this);
                     sliderStartText.setText("0%");
                     TextView sliderEndText = new TextView(this);
-                    sliderEndText.setText(cloudSlider.getMax() + " %");
+                    sliderEndText.setText(cloudSlider.getMax() + "%");
 
                     sliderLayout.addView(sliderStartText);
                     sliderLayout.addView(cloudSlider);
@@ -176,6 +177,7 @@ public class BenchmarkActivity extends AppCompatActivity {
                         @Override
                         public void onProgressChanged(SeekBar seekBar, int i, boolean b) {
                             Toast.makeText(getApplicationContext(),"Cloud Usage: " + i + "%", Toast.LENGTH_LONG).show();
+                            activityRecording.setCloudPercentage(i);
                         }
 
                         @Override
@@ -277,6 +279,7 @@ public class BenchmarkActivity extends AppCompatActivity {
                 Intent intent = new Intent(this, ACTIVITY_RECORDINGS[i].getActivity());
                 intent.putExtra(ACTIVITY_NUMBER, i);
                 intent.putExtra("useCloud", ACTIVITY_RECORDINGS[i].isUsingCloud());
+                intent.putExtra("cloudPercentage", ACTIVITY_RECORDINGS[i].getCloudPercentage());
                 intent.addCategory(Intent.CATEGORY_OPENABLE);
                 startActivityForResult(intent, i);
                 break;
