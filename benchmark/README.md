@@ -52,3 +52,30 @@ The recordings for each section can be found in the assets folder under **app/sr
   <img width="250" src="../screenshots/test-5.jpg">
   <img width="250" src="../screenshots/test-6.jpg">
 </p>
+
+## Adding new benchmarks
+1. Open the BenchmarkActivity.java file located in `benchmark/app/src/main/java/benchmark/benchmark/BenchmarkActivity.java`
+2. Locate the ACTIVITY_RECORDINGS array at the top of the activity.
+3. Create a new ActivityRecording object inside the array.
+4. Refer to the ActivityRecording.java class and the documentation below to configure your ActivityRecording.
+```
+Class<?> activity: The activity class the benchmark will run.
+
+String recordingFileName
+  The name of the video file that will be played back.
+
+String sectionName
+  The name in which the section will appear in the benchmark app.
+
+boolean enabled
+  Tells the app whether it should play this section or skip it.
+
+boolean useCloud
+  Should be set to true if the activity uses the cloud for some of its tasks.
+
+boolean requiresCredentialsFile
+  If the section requires a credentials file to work. The app will disable the section if this value is set to true and the credentials file is missing.
+
+boolean requiresGCPKeys
+  If the section requires Google Cloud Platform keys to work. will disable the section if this value is set to true and the keys are missing.
+```
