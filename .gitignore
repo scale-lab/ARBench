@@ -4,3 +4,8 @@ ar-apps/geospatial/app/src/main/res/values/api_keys.xml
 ar-apps/geospatial_with_map/app/src/main/res/values/api_keys.xml
 benchmark/app/src/main/res/values/api_keys.xml
 benchmark/app/src/main/res/raw/credentials.json
+benchmark/app/src/main/assets/recordings/*.mp4
+benchmark/app/src/main/assets/tessdata/configs
+benchmark/app/src/main/assets/tessdata/*.traineddata
+benchmark/app/src/main/assets/tessdata/*.ttf
+benchmark/app/src/main/assets/tessdata/*.ttx

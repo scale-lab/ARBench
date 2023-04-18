@@ -9,6 +9,8 @@ IEEE Symposium on Performance Analysis of Systems and Software (ISPASS), 2022.
 ### Prerequisites
  * An ARCore compatible device running [Google Play Services for AR](https://play.google.com/store/apps/details?id=com.google.ar.core) (ARCore) 1.24 or later
  * Android Studio 4.1 or later
+ * Download the app assets using the provided script:
+```python download_assets.py```
 
 ### Building and Running
 Most apps have their own README with more detailed instructions on how to run and configure them. These instructions contain the barebone steps to run the apps.
